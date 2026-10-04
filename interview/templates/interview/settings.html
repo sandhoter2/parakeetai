@@ -1,0 +1,131 @@
+{% extends "interview/base.html" %}
+{% block title %}Settings — ParakeetAI Local{% endblock %}
+
+{% block extra_style %}
+.settings-wrap { max-width: 600px; margin: 36px auto; }
+.settings-wrap h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.settings-wrap .subtitle { color: var(--text2); margin-bottom: 28px; }
+.settings-section { margin-bottom: 32px; }
+.settings-section-title {
+  font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase;
+  letter-spacing: 0.6px; margin-bottom: 16px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.key-preview {
+  font-family: monospace; font-size: 13px; color: var(--accent2);
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 10px; margin-top: 6px; word-break: break-all;
+}
+.msg-banner {
+  padding: 12px 16px; border-radius: 8px; font-size: 13px;
+  margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+}
+.msg-success { background: #0f2a1e; border: 1px solid #34d39940; color: var(--green); }
+.msg-error   { background: #2a0f0f; border: 1px solid #f8717140; color: var(--red); }
+.form-actions { display: flex; gap: 12px; margin-top: 28px; }
+{% endblock %}
+
+{% block navbar_actions %}
+<a href="/" class="btn btn-secondary btn-sm">← Sessions</a>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="settings-wrap">
+    <h1>⚙️ Settings</h1>
+    <p class="subtitle">Configure your API keys and AI models. Changes take effect after restarting the server.</p>
+
+    {% if msg %}
+    <div class="msg-banner msg-{{ msg.0 }}">
+      {% if msg.0 == 'success' %}✓{% else %}✗{% endif %}
+      {{ msg.1 }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/settings/">
+      {% csrf_token %}
+
+      <div class="settings-section">
+        <div class="settings-section-title">Groq API</div>
+
+        <div class="form-group">
+          <label for="api_key">API Key</label>
+          <input type="password" id="api_key" name="api_key" class="form-control"
+                 placeholder="gsk_…  (leave blank to keep current)"
+                 autocomplete="off">
+          {% if current.api_key %}
+          <div class="key-preview">
+            Current: {{ current.api_key|slice:":8" }}…{{ current.api_key|slice:"-4:" }}
+            <span style="color:var(--green);margin-left:8px">✓ set</span>
+          </div>
+          {% else %}
+          <div class="form-hint" style="color:var(--red)">⚠ Not set — transcription and AI chat will not work.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">AI Models</div>
+
+        <div class="form-group">
+          <label for="model">Chat / Answer Model</label>
+          <input type="text" id="model" name="model" class="form-control"
+                 value="{{ current.model }}"
+                 placeholder="e.g. openai/gpt-oss-120b">
+          <div class="form-hint">Used for generating interview answers. Must be available on your Groq tier.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="whisper_model">Transcription Model</label>
+          <input type="text" id="whisper_model" name="whisper_model" class="form-control"
+                 value="{{ current.whisper_model }}"
+                 placeholder="e.g. whisper-large-v3-turbo">
+          <div class="form-hint">Used for mic audio transcription via Groq Whisper.</div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Available Groq Models</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:13px;color:var(--text2)">
+            <strong style="color:var(--accent2)">openai/gpt-oss-120b</strong>
+            — Recommended chat model (120B)
+          </div>
+          <div style="font-size:13px;color:var(--text2)">
+            <strong style="color:var(--accent2)">llama-3.3-70b-versatile</strong>
+            — Llama 3.3 70B (may require higher tier)
+          </div>
+          <div style="font-size:13px;color:var(--text2)">
+            <strong style="color:var(--accent2)">llama3-70b-8192</strong>
+            — Llama 3 70B (widely available)
+          </div>
+          <div style="font-size:13px;color:var(--text2)">
+            <strong style="color:var(--accent2)">whisper-large-v3-turbo</strong>
+            — Recommended transcription model
+          </div>
+          <div style="font-size:13px;color:var(--text2)">
+            <strong style="color:var(--accent2)">whisper-large-v3</strong>
+            — Highest accuracy transcription
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">💾 Save Settings</button>
+        <a href="/" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+
+    <div class="settings-section" style="margin-top:40px">
+      <div class="settings-section-title">After Saving</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+        Settings are saved to <code style="color:var(--accent2);font-size:12px">.env</code> in the project root.
+        You must restart the Django server for changes to take effect:<br>
+        <code style="display:inline-block;margin-top:8px;padding:6px 12px;background:var(--bg3);border-radius:6px;color:var(--text);font-size:12px">
+          python manage.py runserver 8000
+        </code>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

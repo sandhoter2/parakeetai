@@ -1,0 +1,258 @@
+{% extends "interview/base.html" %}
+{% block title %}{{ session.title }} — Review{% endblock %}
+
+{% block extra_style %}
+.detail-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.detail-header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.detail-header .meta { color: var(--text2); font-size: 14px; }
+
+.stats-row { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat-chip {
+  padding: 10px 16px; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; text-align: center; min-width: 90px;
+}
+.stat-chip .v { font-size: 20px; font-weight: 700; color: var(--accent2); }
+.stat-chip .l { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+.section-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+
+.transcript-list { display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow-y: auto; }
+.transcript-list::-webkit-scrollbar { width: 4px; }
+.transcript-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.t-entry { padding: 10px 14px; border-radius: 8px; background: var(--bg3); border-left: 3px solid var(--accent); }
+.t-entry.system { border-left-color: var(--yellow); }
+.t-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent2); margin-bottom: 3px; display: flex; align-items: center; justify-content: space-between; }
+.t-entry.system .t-label { color: var(--yellow); }
+.t-time { font-size: 10px; color: var(--text3); font-weight: 400; }
+.t-text { font-size: 14px; }
+
+.ai-list { display: flex; flex-direction: column; gap: 14px; max-height: 520px; overflow-y: auto; }
+.ai-list::-webkit-scrollbar { width: 4px; }
+.ai-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.ai-entry { padding: 14px; border-radius: 8px; background: var(--bg3); position: relative; }
+.ai-q { font-size: 12px; color: var(--text3); margin-bottom: 8px; font-style: italic; }
+.ai-a { font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+.ai-entry-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+.empty { color: var(--text3); font-size: 14px; padding: 20px 0; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
+{% endblock %}
+
+{% block navbar_actions %}
+<a href="/" class="btn btn-secondary btn-sm">← Sessions</a>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="detail-header">
+    <div>
+      <h1>{{ session.title }}</h1>
+      <div class="meta">
+        {% if session.company %}<strong style="color:var(--accent2)">{{ session.company }}</strong> · {% endif %}
+        {{ session.created_at|date:"M j, Y g:i A" }}
+        · <span class="badge badge-{{ session.status }}">{{ session.status }}</span>
+        {% if session.ended_at %} · Ended {{ session.ended_at|date:"g:i A" }}{% endif %}
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      {% if session.status != "ended" %}
+      <a href="/session/{{ session.id }}/" class="btn btn-primary btn-sm">▶ Resume</a>
+      {% endif %}
+      <button class="btn btn-secondary btn-sm" onclick="exportSession('txt')">⬇ Export TXT</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportSession('md')">⬇ Export MD</button>
+      <button class="btn btn-secondary btn-sm" onclick="openModal('editModal')">✏️ Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSessionAndRedirect('{{ session.id }}', '{{ session.title|escapejs }}')">🗑 Delete</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-chip">
+      <div class="v">{{ transcripts.count }}</div>
+      <div class="l">Transcript entries</div>
+    </div>
+    <div class="stat-chip">
+      <div class="v">{{ ai_messages.count }}</div>
+      <div class="l">AI answers</div>
+    </div>
+    <div class="stat-chip">
+      <div class="v" id="wordCount">—</div>
+      <div class="l">Words spoken</div>
+    </div>
+    {% if session.ended_at %}
+    <div class="stat-chip">
+      <div class="v" id="duration">—</div>
+      <div class="l">Duration</div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if session.job_description or session.extra_context %}
+  <div class="card" style="margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      {% if session.job_description %}
+      <div>
+        <div class="section-title">Job Description</div>
+        <div style="font-size:13px;color:var(--text2);white-space:pre-wrap;max-height:200px;overflow-y:auto">{{ session.job_description }}</div>
+      </div>
+      {% endif %}
+      {% if session.extra_context %}
+      <div>
+        <div class="section-title">Your Background</div>
+        <div style="font-size:13px;color:var(--text2);white-space:pre-wrap;max-height:200px;overflow-y:auto">{{ session.extra_context }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="detail-grid">
+    <div class="card">
+      <div class="section-title">
+        🎙️ Transcript ({{ transcripts.count }})
+        <button class="btn btn-ghost btn-xs" onclick="copyTranscript()">📋 Copy all</button>
+      </div>
+      {% if transcripts %}
+      <div class="transcript-list" id="transcriptList">
+        {% for entry in transcripts %}
+        <div class="t-entry {{ entry.speaker_type }}">
+          <div class="t-label">
+            {{ entry.speaker_type }}
+            <span class="t-time">{{ entry.created_at|date:"g:i:s A" }}</span>
+          </div>
+          <div class="t-text">{{ entry.content }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty">No transcript entries.</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="section-title">
+        ✨ AI Answers ({{ ai_messages.count }})
+        <button class="btn btn-ghost btn-xs" onclick="copyAllAI()">📋 Copy all</button>
+      </div>
+      {% if ai_messages %}
+      <div class="ai-list">
+        {% for msg in ai_messages %}
+        <div class="ai-entry">
+          {% if msg.trigger_text %}<div class="ai-q">Q: {{ msg.trigger_text }}</div>{% endif %}
+          <div class="ai-a" id="ai-{{ msg.id }}">{{ msg.content }}</div>
+          <div class="ai-entry-actions">
+            <button class="btn btn-ghost btn-xs" onclick="copyText(document.getElementById('ai-{{ msg.id }}').textContent, 'Answer')">📋 Copy</button>
+            <span style="font-size:11px;color:var(--text3);margin-left:auto">{{ msg.created_at|date:"g:i A" }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty">No AI answers yet.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Edit Session</div>
+    <div class="form-group">
+      <label>Job Title</label>
+      <input type="text" class="form-control" id="editTitle" value="{{ session.title }}">
+    </div>
+    <div class="form-group">
+      <label>Company</label>
+      <input type="text" class="form-control" id="editCompany" value="{{ session.company }}">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Word count
+const texts = document.querySelectorAll('.t-text');
+let words = 0;
+texts.forEach(t => words += t.textContent.trim().split(/\s+/).filter(Boolean).length);
+document.getElementById('wordCount').textContent = words.toLocaleString();
+
+// Duration
+{% if session.ended_at %}
+const start = new Date('{{ session.created_at|date:"c" }}');
+const end = new Date('{{ session.ended_at|date:"c" }}');
+const mins = Math.round((end - start) / 60000);
+document.getElementById('duration').textContent = mins >= 60 ? Math.floor(mins/60)+'h '+( mins%60)+'m' : mins+'m';
+{% endif %}
+
+function copyTranscript() {
+  const lines = [];
+  document.querySelectorAll('.t-entry').forEach(e => {
+    const label = e.querySelector('.t-label').childNodes[0].textContent.trim();
+    const text = e.querySelector('.t-text').textContent.trim();
+    lines.push(`[${label.toUpperCase()}]: ${text}`);
+  });
+  copyText(lines.join('\n\n'), 'Transcript');
+}
+
+function copyAllAI() {
+  const lines = [];
+  document.querySelectorAll('.ai-entry').forEach(e => {
+    const q = e.querySelector('.ai-q');
+    const a = e.querySelector('.ai-a');
+    if (q) lines.push('Q: ' + q.textContent.replace('Q: ', ''));
+    if (a) lines.push(a.textContent);
+    lines.push('---');
+  });
+  copyText(lines.join('\n\n'), 'All AI answers');
+}
+
+function exportSession(fmt) {
+  fetch(`/api/session/{{ session.id }}/export/?fmt=${fmt}`)
+    .then(r => r.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `{{ session.title|slugify }}_session.${fmt === 'md' ? 'md' : 'txt'}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Export downloaded', 'success');
+    }).catch(e => toast('Export failed: ' + e.message, 'error'));
+}
+
+function saveEdit() {
+  const title = document.getElementById('editTitle').value.trim();
+  const company = document.getElementById('editCompany').value.trim();
+  if (!title) { toast('Title is required', 'warn'); return; }
+  fetch('/api/session/{{ session.id }}/edit/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ title, company })
+  }).then(r => r.json()).then(d => {
+    if (d.ok) {
+      document.querySelector('.detail-header h1').textContent = title;
+      closeModal('editModal');
+      toast('Saved', 'success');
+    } else {
+      toast('Save failed: ' + (d.error || 'unknown'), 'error');
+    }
+  });
+}
+
+function deleteSessionAndRedirect(id, title) {
+  if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  fetch(`/api/session/${id}/delete/`, {
+    method: 'DELETE',
+    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+  }).then(r => r.json()).then(d => {
+    if (d.ok) window.location.href = '/';
+    else toast('Delete failed: ' + (d.error || 'unknown'), 'error');
+  });
+}
+</script>
+{% endblock %}

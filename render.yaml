@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: parakeetai
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn local_parakeet.wsgi:application"
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: EXT_TOKEN
+        value: "pkai-local-dev"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: "openai/gpt-oss-120b"
+      - key: GROQ_WHISPER_MODEL
+        value: "whisper-large-v3-turbo"
+      - key: PYTHON_VERSION
+        value: "3.11.0"

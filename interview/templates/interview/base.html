@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ParakeetAI Local{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --bg2: #1a1d27;
+      --bg3: #252836;
+      --bg4: #2e3147;
+      --border: #2e3147;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --blue: #60a5fa;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .navbar-brand {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .navbar-brand span { font-size: 22px; }
+    .navbar-actions { display: flex; gap: 10px; align-items: center; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #5a52e0; text-decoration: none; }
+    .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); text-decoration: none; }
+    .btn-danger { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+    .btn-danger:hover { background: var(--red); color: #fff; text-decoration: none; }
+    .btn-success { background: var(--green); color: #0f172a; }
+    .btn-success:hover { background: #10b981; }
+    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid transparent; }
+    .btn-ghost:hover { background: var(--bg3); border-color: var(--border); text-decoration: none; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+    .btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 6px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-active { background: rgba(52,211,153,0.15); color: var(--green); }
+    .badge-pending { background: rgba(251,191,36,0.15); color: var(--yellow); }
+    .badge-ended { background: rgba(100,116,139,0.15); color: var(--text3); }
+
+    /* Toast */
+    #toast-container {
+      position: fixed; bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 9999; pointer-events: none;
+    }
+    .toast {
+      padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+      animation: toastIn 0.25s ease;
+      pointer-events: auto; max-width: 320px;
+      border: 1px solid var(--border);
+    }
+    .toast-success { background: #0f2a1e; border-color: #34d39940; color: var(--green); }
+    .toast-error   { background: #2a0f0f; border-color: #f8717140; color: var(--red); }
+    .toast-info    { background: #12162a; border-color: #6c63ff40; color: var(--accent2); }
+    .toast-warn    { background: #2a1f0a; border-color: #fbbf2440; color: var(--yellow); }
+    @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes toastOut { from{opacity:1} to{opacity:0;transform:translateY(8px)} }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+      padding: 28px; max-width: 520px; width: 90%;
+      transform: scale(0.95); transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+    /* Form utils */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .form-control {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 13px; color: var(--text); font-size: 14px;
+      outline: none; transition: border-color 0.15s; font-family: inherit;
+    }
+    .form-control:focus { border-color: var(--accent); }
+    textarea.form-control { resize: vertical; min-height: 90px; }
+    select.form-control option { background: var(--bg3); }
+    .form-hint { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+    {% block extra_style %}{% endblock %}
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand" style="text-decoration:none">
+      <span>🦜</span> ParakeetAI Local
+    </a>
+    <div class="navbar-actions">
+      {% block navbar_actions %}
+      {% if user.is_authenticated %}
+      <span style="font-size:12px;color:var(--text3);padding:0 4px;">{{ user.username }}</span>
+      <a href="/profile/" class="btn btn-ghost btn-sm">👤 Profile</a>
+      <a href="/settings/" class="btn btn-ghost btn-sm">⚙️ Settings</a>
+      <a href="/session/new/" class="btn btn-primary btn-sm">+ New Session</a>
+      <form method="post" action="/logout/" style="display:inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--red)">Sign Out</button>
+      </form>
+      {% else %}
+      <a href="/login/" class="btn btn-primary btn-sm">Sign In</a>
+      {% endif %}
+      {% endblock %}
+    </div>
+  </nav>
+
+  {% block content %}{% endblock %}
+
+  <div id="toast-container"></div>
+
+  <script>
+  function toast(msg, type='info', duration=3000) {
+    const icons = {success:'✓', error:'✗', info:'ℹ', warn:'⚠'};
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.innerHTML = `<span>${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => {
+      el.style.animation = 'toastOut 0.25s ease forwards';
+      setTimeout(() => el.remove(), 250);
+    }, duration);
+  }
+
+  function copyText(text, label) {
+    navigator.clipboard.writeText(text).then(() => toast((label||'Copied') + ' to clipboard', 'success'));
+  }
+
+  function getCookie(name) {
+    const v = `; ${document.cookie}`;
+    const p = v.split(`; ${name}=`);
+    if (p.length === 2) return p.pop().split(';').shift();
+    return '';
+  }
+
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.getElementById(id).querySelector('input,textarea')?.focus();
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  });
+  </script>
+</body>
+</html>

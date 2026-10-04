@@ -1,0 +1,465 @@
+{% extends "interview/base.html" %}
+{% block title %}New Session — ParakeetAI Local{% endblock %}
+
+{% block extra_style %}
+.page-wrap { max-width: 860px; margin: 36px auto; }
+.page-wrap h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.page-wrap .subtitle { color: var(--text2); margin-bottom: 28px; }
+.form-actions { display: flex; gap: 12px; margin-top: 28px; }
+.form-half { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Quick templates */
+.template-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px; margin-bottom: 24px;
+}
+.template-btn {
+  padding: 12px 10px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--bg3); cursor: pointer; text-align: center; transition: all 0.15s;
+  color: var(--text);
+}
+.template-btn:hover { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+.template-btn.active { border-color: var(--accent); background: rgba(108,99,255,0.12); }
+.template-btn .t-icon { font-size: 22px; margin-bottom: 4px; }
+.template-btn .t-label { font-size: 12px; font-weight: 600; }
+
+/* Session type selector */
+.session-type-toggle {
+  display: flex; gap: 12px; margin-bottom: 28px;
+}
+.stype-card {
+  flex: 1; border: 2px solid var(--border); border-radius: 12px;
+  padding: 16px 18px; cursor: pointer; transition: all 0.15s;
+  background: var(--bg3); display: flex; align-items: center; gap: 12px;
+}
+.stype-card:hover { border-color: var(--accent); }
+.stype-card.active { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+.stype-card input[type=radio] { display: none; }
+.stype-icon { font-size: 26px; flex-shrink: 0; }
+.stype-info .stype-title { font-weight: 700; font-size: 14px; }
+.stype-info .stype-desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+.char-count { float: right; font-size: 11px; color: var(--text3); }
+.section-divider {
+  display: flex; align-items: center; gap: 10px; margin: 32px 0 20px;
+  color: var(--text3); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+}
+.section-divider::before, .section-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── Conversation Builder ── */
+.conv-builder { margin-top: 0; }
+.conv-builder-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+}
+.conv-builder-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.conv-builder-title .badge {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.4px; padding: 2px 8px;
+  background: rgba(108,99,255,0.15); color: var(--accent2); border-radius: 20px; text-transform: uppercase;
+}
+.conv-builder-desc { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.6; }
+
+#buildBtn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 20px;
+  background: linear-gradient(135deg, var(--accent) 0%, #a78bfa 100%);
+  color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+}
+#buildBtn:hover { opacity: 0.88; }
+#buildBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+#buildBtn .spinner {
+  width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Blueprint cards */
+.blueprint-wrap {
+  display: none;
+}
+.blueprint-meta {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+  font-size: 12px; color: var(--text3);
+}
+.blueprint-meta strong { color: var(--accent2); }
+
+.conv-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+}
+@media (max-width: 700px) { .conv-grid { grid-template-columns: 1fr; } }
+@media (min-width: 701px) and (max-width: 900px) { .conv-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.conv-card {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 12px;
+  padding: 18px 16px; position: relative; overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.conv-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.35); }
+.conv-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--c); border-radius: 12px 12px 0 0;
+}
+.conv-card-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+.conv-card-icon {
+  font-size: 26px; width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+}
+.conv-card-meta { flex: 1; }
+.conv-card-num { font-size: 10px; color: var(--text3); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 2px; }
+.conv-card-phase { font-size: 14px; font-weight: 700; color: var(--text); }
+.conv-card-subtitle { font-size: 11px; color: var(--c); font-weight: 600; margin-top: 2px; }
+.conv-card-points { list-style: none; padding: 0; margin: 0; }
+.conv-card-points li {
+  font-size: 12px; color: var(--text2); line-height: 1.65; padding: 4px 0 4px 18px;
+  position: relative; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.conv-card-points li:last-child { border-bottom: none; }
+.conv-card-points li::before {
+  content: '→'; position: absolute; left: 0; color: var(--c); font-weight: 700; font-size: 11px;
+}
+
+/* Palette per card */
+.conv-card:nth-child(1) { --c: #6c63ff; }
+.conv-card:nth-child(2) { --c: #3b82f6; }
+.conv-card:nth-child(3) { --c: #10b981; }
+.conv-card:nth-child(4) { --c: #f59e0b; }
+.conv-card:nth-child(5) { --c: #ec4899; }
+.conv-card:nth-child(6) { --c: #06b6d4; }
+
+.conv-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.conv-error {
+  padding: 14px 18px; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+  border-radius: 8px; font-size: 13px; color: var(--red); display: none;
+}
+{% endblock %}
+
+{% block navbar_actions %}
+<a href="/" class="btn btn-secondary btn-sm">← Sessions</a>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-wrap">
+    <h1>New Session</h1>
+    <p class="subtitle">Configure your session — then build a tailored conversation blueprint.</p>
+
+    <p style="font-size:12px;color:var(--text3);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px">Quick-fill template</p>
+    <div class="template-grid">
+      <div class="template-btn" onclick="fillTemplate('tibco')" id="tpl-tibco">
+        <div class="t-icon">🏗️</div><div class="t-label">TIBCO Architect</div>
+      </div>
+      <div class="template-btn" onclick="fillTemplate('swe')" id="tpl-swe">
+        <div class="t-icon">💻</div><div class="t-label">Software Engineer</div>
+      </div>
+      <div class="template-btn" onclick="fillTemplate('pm')" id="tpl-pm">
+        <div class="t-icon">📊</div><div class="t-label">Product Manager</div>
+      </div>
+      <div class="template-btn" onclick="fillTemplate('data')" id="tpl-data">
+        <div class="t-icon">📈</div><div class="t-label">Data Scientist</div>
+      </div>
+      <div class="template-btn" onclick="fillTemplate('ml')" id="tpl-ml">
+        <div class="t-icon">🤖</div><div class="t-label">ML Engineer</div>
+      </div>
+      <div class="template-btn" onclick="fillTemplate('behavioral')" id="tpl-behavioral">
+        <div class="t-icon">🗣️</div><div class="t-label">Behavioral</div>
+      </div>
+    </div>
+
+    <form method="post" action="/session/new/" id="sessionForm">
+      {% csrf_token %}
+
+      <!-- Session type toggle -->
+      <div class="session-type-toggle" id="sessionTypeToggle">
+        <label class="stype-card active" id="stypeInterview">
+          <input type="radio" name="session_type" value="interview" checked onchange="setSessionType('interview')">
+          <span class="stype-icon">🎯</span>
+          <div class="stype-info">
+            <div class="stype-title">Interview</div>
+            <div class="stype-desc">Job interview coaching &amp; real-time AI answers</div>
+          </div>
+        </label>
+        <label class="stype-card" id="stypeMeeting">
+          <input type="radio" name="session_type" value="meeting" onchange="setSessionType('meeting')">
+          <span class="stype-icon">📹</span>
+          <div class="stype-info">
+            <div class="stype-title">Teams Recorder</div>
+            <div class="stype-desc">Live meeting capture, speaker tracking &amp; AI suggestions</div>
+          </div>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="title" id="titleLabel">Role / Meeting Title <span style="color:var(--red)">*</span></label>
+        <input type="text" id="title" name="title" class="form-control"
+               placeholder="e.g. TIBCO Architect — System Design Review" required>
+      </div>
+
+      <div class="form-half">
+        <div class="form-group">
+          <label for="company">Company / Team</label>
+          <input type="text" id="company" name="company" class="form-control"
+                 placeholder="e.g. TIBCO Software, Broadcom">
+        </div>
+        <div class="form-group">
+          <label for="language">Language</label>
+          <select id="language" name="language" class="form-control">
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="en-IN">English (India)</option>
+            <option value="es-ES">Spanish</option>
+            <option value="fr-FR">French</option>
+            <option value="de-DE">German</option>
+            <option value="ja-JP">Japanese</option>
+            <option value="zh-CN">Chinese (Simplified)</option>
+            <option value="ko-KR">Korean</option>
+            <option value="pt-BR">Portuguese (Brazil)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Interview-only field -->
+      <div class="form-group" id="jdField">
+        <label for="job_description">
+          Job Description / Interview Context
+          <span class="char-count" id="jdCount">0 chars</span>
+        </label>
+        <textarea id="job_description" name="job_description" class="form-control"
+                  style="min-height:110px"
+                  placeholder="Paste the job description or describe the interview context. The AI will tailor answers to this."
+                  oninput="document.getElementById('jdCount').textContent=this.value.length+' chars'"></textarea>
+      </div>
+
+      <!-- Meeting-only field -->
+      <div class="form-group" id="agendaField" style="display:none">
+        <label for="meeting_agenda">
+          Meeting Agenda
+          <span class="char-count" id="agendaCount">0 chars</span>
+        </label>
+        <textarea id="meeting_agenda" name="meeting_agenda" class="form-control"
+                  style="min-height:110px"
+                  placeholder="Agenda items, goals, topics to cover, open questions…"
+                  oninput="document.getElementById('agendaCount').textContent=this.value.length+' chars'"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="extra_context">
+          Your Background / Resume
+          <span class="char-count" id="bgCount">0 chars</span>
+        </label>
+        <textarea id="extra_context" name="extra_context" class="form-control"
+                  style="min-height:140px"
+                  placeholder="Your skills, experience, past projects, achievements…&#10;The AI uses this to personalize talking points and answers."
+                  oninput="document.getElementById('bgCount').textContent=this.value.length+' chars'"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="startBtn">▶ Start Session</button>
+        <a href="/" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+
+    <!-- ── Conversation Builder ── -->
+    <div class="section-divider">Conversation Blueprint</div>
+
+    <div class="conv-builder">
+      <div class="conv-builder-header">
+        <div>
+          <div class="conv-builder-title">
+            AI-Powered Meeting Prep
+            <span class="badge">Beta</span>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px">
+            Fill in the fields above, then generate a structured conversation plan
+          </div>
+        </div>
+        <button id="buildBtn" type="button" onclick="buildConversation()">
+          <div class="spinner" id="buildSpinner"></div>
+          <span id="buildBtnText">✨ Build Conversation Plan</span>
+        </button>
+      </div>
+
+      <div class="conv-error" id="convError"></div>
+
+      <div class="blueprint-wrap" id="blueprintWrap">
+        <div class="blueprint-meta" id="blueprintMeta"></div>
+        <div class="conv-grid" id="convGrid"></div>
+        <div class="conv-actions">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="buildConversation()">↺ Regenerate</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="copyPlan()">⎘ Copy as Text</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function setSessionType(type) {
+  const isInterview = type === 'interview';
+  document.getElementById('stypeInterview').classList.toggle('active', isInterview);
+  document.getElementById('stypeMeeting').classList.toggle('active', !isInterview);
+  document.getElementById('jdField').style.display = isInterview ? '' : 'none';
+  document.getElementById('agendaField').style.display = isInterview ? 'none' : '';
+  document.getElementById('titleLabel').childNodes[0].textContent = isInterview ? 'Role / Session Title ' : 'Meeting Title ';
+  document.getElementById('title').placeholder = isInterview
+    ? 'e.g. TIBCO Architect — System Design Review'
+    : 'e.g. Q4 Planning — Engineering All-Hands';
+  document.getElementById('startBtn').textContent = isInterview ? '▶ Start Session' : '📹 Start Meeting';
+}
+
+function getCookie(name) {
+  const v = `; ${document.cookie}`;
+  const p = v.split(`; ${name}=`);
+  if (p.length === 2) return p.pop().split(';').shift();
+  return '';
+}
+
+const TEMPLATES = {
+  tibco: {
+    title: 'TIBCO Integration Architect',
+    company: 'TIBCO Software',
+    jd: `Architecture review and technical discussion for TIBCO platform integration.\n\nAgenda:\n- Review current integration architecture using TIBCO BusinessWorks and EMS\n- Discuss event-driven architecture patterns with TIBCO Messaging\n- Evaluate API management strategy via TIBCO Cloud API Management (Mashery)\n- Review streaming data pipelines with TIBCO Spotfire and StreamBase CEP\n- Assess migration path from on-prem TIBCO stack to TIBCO Cloud / Hybrid\n- Discuss performance bottlenecks in existing message broker topology\n- Evaluate TIBCO Flogo for lightweight microservice integration vs. BW6`,
+    bg: `Senior TIBCO Integration Architect with 10+ years designing enterprise integration solutions.\nExpertise: TIBCO BusinessWorks 5.x/6.x, TIBCO EMS, ActiveMatrix BPM, TIBCO Cloud Integration, Flogo, Scribe.\nStrong background in SOA, ESB patterns, event-driven architecture, and API-first design.\nLed migrations from monolithic TIBCO stacks to cloud-native and hybrid architectures.`
+  },
+  swe: {
+    title: 'Software Engineer',
+    company: '',
+    jd: `We are looking for a Software Engineer to join our team. You will design, develop, and maintain scalable software systems. Strong knowledge of data structures, algorithms, and system design required. Experience with distributed systems is a plus.`,
+    bg: ``
+  },
+  pm: {
+    title: 'Product Manager',
+    company: '',
+    jd: `We are looking for a Product Manager who can define product vision, work cross-functionally with engineering and design, and drive product metrics. Experience with roadmapping, user research, and agile methodologies required.`,
+    bg: ``
+  },
+  data: {
+    title: 'Data Scientist',
+    company: '',
+    jd: `Seeking a Data Scientist to analyze large datasets, build predictive models, and drive business insights. Proficiency in Python, SQL, and ML frameworks (scikit-learn, TensorFlow/PyTorch) required.`,
+    bg: ``
+  },
+  ml: {
+    title: 'Machine Learning Engineer',
+    company: '',
+    jd: `ML Engineer role: training and deploying production ML models, building data pipelines, and improving model performance. Experience with MLOps, model serving, and large-scale data processing preferred.`,
+    bg: ``
+  },
+  behavioral: {
+    title: 'General Interview',
+    company: '',
+    jd: `This is a behavioral interview session. Focus on answering competency-based questions using the STAR method (Situation, Task, Action, Result).`,
+    bg: ``
+  }
+};
+
+function fillTemplate(key) {
+  const t = TEMPLATES[key];
+  if (!t) return;
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tpl-' + key)?.classList.add('active');
+  document.getElementById('title').value = t.title;
+  if (t.company) document.getElementById('company').value = t.company;
+  const jd = document.getElementById('job_description');
+  jd.value = t.jd;
+  document.getElementById('jdCount').textContent = t.jd.length + ' chars';
+  const bg = document.getElementById('extra_context');
+  if (t.bg) {
+    bg.value = t.bg;
+    document.getElementById('bgCount').textContent = t.bg.length + ' chars';
+  }
+  toast('Template loaded — click ✨ Build Conversation Plan', 'info');
+}
+
+let lastPlan = null;
+
+async function buildConversation() {
+  const title = document.getElementById('title').value.trim();
+  if (!title) {
+    toast('Enter a Role / Meeting Title first', 'error');
+    document.getElementById('title').focus();
+    return;
+  }
+
+  const btn = document.getElementById('buildBtn');
+  const spinner = document.getElementById('buildSpinner');
+  const btnText = document.getElementById('buildBtnText');
+  const errorEl = document.getElementById('convError');
+  const wrap = document.getElementById('blueprintWrap');
+
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.textContent = 'Building plan…';
+  errorEl.style.display = 'none';
+
+  const payload = {
+    title,
+    company: document.getElementById('company').value.trim(),
+    jd: document.getElementById('job_description').value.trim(),
+    background: document.getElementById('extra_context').value.trim(),
+  };
+
+  try {
+    const res = await fetch('/api/build-conversation/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Failed');
+
+    renderBlueprint(data, payload);
+    lastPlan = data;
+  } catch (err) {
+    errorEl.textContent = '⚠ ' + err.message;
+    errorEl.style.display = 'block';
+    wrap.style.display = 'none';
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = '✨ Rebuild Plan';
+  }
+}
+
+function renderBlueprint(data, meta) {
+  const grid = document.getElementById('convGrid');
+  const wrap = document.getElementById('blueprintWrap');
+  const metaEl = document.getElementById('blueprintMeta');
+
+  metaEl.innerHTML = `Plan for <strong>${meta.title}</strong>${meta.company ? ` · <strong>${meta.company}</strong>` : ''} &nbsp;·&nbsp; ${data.phases.length} phases`;
+
+  grid.innerHTML = '';
+  data.phases.forEach((ph, i) => {
+    const li = ph.points.map(p => `<li>${p}</li>`).join('');
+    grid.insertAdjacentHTML('beforeend', `
+      <div class="conv-card">
+        <div class="conv-card-top">
+          <div class="conv-card-icon">${ph.icon}</div>
+          <div class="conv-card-meta">
+            <div class="conv-card-num">Phase ${i + 1}</div>
+            <div class="conv-card-phase">${ph.phase}</div>
+            <div class="conv-card-subtitle">${ph.subtitle || ''}</div>
+          </div>
+        </div>
+        <ul class="conv-card-points">${li}</ul>
+      </div>
+    `);
+  });
+
+  wrap.style.display = 'block';
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyPlan() {
+  if (!lastPlan) return;
+  const lines = lastPlan.phases.map((ph, i) =>
+    `Phase ${i+1}: ${ph.icon} ${ph.phase} (${ph.subtitle})\n` +
+    ph.points.map(p => `  → ${p}`).join('\n')
+  );
+  navigator.clipboard.writeText(lines.join('\n\n'));
+  toast('Conversation plan copied to clipboard', 'success');
+}
+</script>
+{% endblock %}
