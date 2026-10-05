@@ -1133,7 +1133,7 @@ function makeMicRecognition() {
         // Auto: type text and immediately submit to AI
         setMicInputText(text);
         saveMicToServer(text);
-        triggerAI(text);
+        triggerAI(text, true); // true = already saved, skip duplicate
       } else {
         // Manual: accumulate in the input box, user presses Enter / ⏩
         const current = getMicInputText().trim();
@@ -1188,7 +1188,7 @@ async function startMic() {
     const text = getMicInputText().trim();
     if (text) {
       saveMicToServer(text);
-      triggerAI(text);
+      triggerAI(text, true); // already saved above
     }
   };
   updateSendBtn();
@@ -1361,7 +1361,7 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
 
     if (autoAI && data.text.includes('?')) {
       clearTimeout(autoTriggerTimer);
-      autoTriggerTimer = setTimeout(() => triggerAI(data.text.trim()), 1200);
+      autoTriggerTimer = setTimeout(() => triggerAI(data.text.trim(), true), 1200); // already saved by transcribe endpoint
     }
   } catch(err) {
     if (isSys) setSysTranscribing(false);
@@ -1438,6 +1438,8 @@ function addNote() {
 function clearInput() {
   const qi = document.getElementById('questionInput');
   const fi = _doc().getElementById('fQuestionInput');
+  const text = (qi ? qi.value : '').trim() || (fi ? fi.value : '').trim();
+  if (text) saveMicToServer(text); // always persist before discarding
   if (qi) qi.value = '';
   if (fi) fi.value = '';
 }
@@ -1453,17 +1455,22 @@ function saveAndClearInput() {
 }
 
 // ── AI HELP ───────────────────────────────────────────────────────────────────
-function triggerAI(question) {
+// fromVoice=true means caller already saved via saveMicToServer — skip duplicate save
+function triggerAI(question, fromVoice) {
   if (isStreaming) return;
   showAiPanel(); // ensure panel is visible when AI is triggered
 
   const fInput = _doc().getElementById('fQuestionInput');
+  const wasTyped = !question; // came from input field, not passed by voice/mic
   question = question || questionInput.value.trim() || (fInput && fInput.value.trim());
   if (!question) {
     const entries = transcriptPanel.querySelectorAll('.transcript-entry .text');
     question = Array.from(entries).slice(-5).map(e => e.textContent).join(' ').trim();
   }
   if (!question) { setStatus('Nothing to send'); return; }
+
+  // Always persist typed text to DB before clearing — voice paths already called saveMicToServer
+  if (wasTyped && !fromVoice) saveMicToServer(question);
 
   lastQuestion = question;
   questionInput.value = '';

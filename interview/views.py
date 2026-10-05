@@ -4,6 +4,7 @@ import uuid
 from datetime import timezone
 
 import groq as groq_lib
+import openai as openai_lib
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -16,6 +17,23 @@ from django.views.decorators.http import require_POST
 
 from .forms import NewSessionForm, UserProfileForm
 from .models import AIMessage, InterviewSession, MeetingParticipant, TranscriptEntry, UserProfile
+
+
+def _get_chat_client():
+    """Return (client, model, provider) — prefers OpenRouter if key is set, else Groq."""
+    if settings.OPENROUTER_API_KEY:
+        client = openai_lib.OpenAI(
+            api_key=settings.OPENROUTER_API_KEY,
+            base_url="https://openrouter.ai/api/v1",
+        )
+        return client, settings.OPENROUTER_MODEL, "openrouter"
+    if settings.GROQ_API_KEY:
+        client = openai_lib.OpenAI(
+            api_key=settings.GROQ_API_KEY,
+            base_url="https://api.groq.com/openai/v1",
+        )
+        return client, settings.GROQ_MODEL, "groq"
+    return None, None, None
 
 
 def login_view(request):
@@ -232,10 +250,10 @@ def api_chat(request, session_id):
     if not question:
         return JsonResponse({"error": "question required"}, status=400)
 
-    api_key = settings.GROQ_API_KEY
-    if not api_key:
+    client, model, provider = _get_chat_client()
+    if not client:
         return JsonResponse(
-            {"error": "GROQ_API_KEY not set. Add it to local_parakeet/.env"},
+            {"error": "No AI key set. Add OPENROUTER_API_KEY or GROQ_API_KEY to your environment."},
             status=500,
         )
 
@@ -252,9 +270,8 @@ def api_chat(request, session_id):
         full_content = []
         yield f"data: {json.dumps({'type': 'start'})}\n\n"
         try:
-            client = groq_lib.Groq(api_key=api_key)
             stream = client.chat.completions.create(
-                model=settings.GROQ_MODEL,
+                model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message},
@@ -561,9 +578,9 @@ def api_meeting_summary(request, session_id):
     """Generate AI meeting summary with action items, decisions, and open questions."""
     if (r := _auth_required(request)): return r
     session = get_object_or_404(InterviewSession, id=session_id)
-    api_key = settings.GROQ_API_KEY
-    if not api_key:
-        return JsonResponse({"error": "GROQ_API_KEY not set"}, status=500)
+    client, model, provider = _get_chat_client()
+    if not client:
+        return JsonResponse({"error": "No AI key set. Add OPENROUTER_API_KEY or GROQ_API_KEY."}, status=500)
 
     transcripts = session.transcripts.order_by("created_at")
     if not transcripts.exists():
@@ -595,9 +612,8 @@ def api_meeting_summary(request, session_id):
     )
 
     try:
-        client = groq_lib.Groq(api_key=api_key)
         response = client.chat.completions.create(
-            model=settings.GROQ_MODEL,
+            model=model,
             messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": user_msg}],
             max_tokens=1200,
         )
@@ -607,7 +623,6 @@ def api_meeting_summary(request, session_id):
             if raw.endswith("```"):
                 raw = raw[:-3]
         result = json.loads(raw)
-        # Save summary as an AIMessage
         AIMessage.objects.create(
             session=session,
             trigger_text="[Meeting Summary]",
@@ -638,9 +653,9 @@ def api_build_conversation(request):
     if not title:
         return JsonResponse({"error": "title required"}, status=400)
 
-    api_key = settings.GROQ_API_KEY
-    if not api_key:
-        return JsonResponse({"error": "GROQ_API_KEY not set"}, status=500)
+    client, model, provider = _get_chat_client()
+    if not client:
+        return JsonResponse({"error": "No AI key set. Add OPENROUTER_API_KEY or GROQ_API_KEY."}, status=500)
 
     context_block = f"Role: {title}"
     if company:
@@ -677,9 +692,8 @@ Use these 6 phases in order:
 Make every bullet point HIGHLY specific to the role, company, and context provided. Reference actual technologies, responsibilities, and topics mentioned. Be sharp, concise, and actionable. 3-4 points per phase."""
 
     try:
-        client = groq_lib.Groq(api_key=api_key)
         response = client.chat.completions.create(
-            model=settings.GROQ_MODEL,
+            model=model,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1400,
         )
@@ -739,6 +753,8 @@ def settings_page(request):
         api_key = request.POST.get("api_key", "").strip()
         model = request.POST.get("model", "").strip()
         whisper_model = request.POST.get("whisper_model", "").strip()
+        openrouter_key = request.POST.get("openrouter_key", "").strip()
+        openrouter_model = request.POST.get("openrouter_model", "").strip()
         env_path = os.path.join(settings.BASE_DIR, ".env")
         try:
             if os.path.exists(env_path):
@@ -758,6 +774,10 @@ def settings_page(request):
                 env_dict["GROQ_MODEL"] = model
             if whisper_model:
                 env_dict["GROQ_WHISPER_MODEL"] = whisper_model
+            if openrouter_key:
+                env_dict["OPENROUTER_API_KEY"] = openrouter_key
+            if openrouter_model:
+                env_dict["OPENROUTER_MODEL"] = openrouter_model
             with open(env_path, "w") as f:
                 for k, v in env_dict.items():
                     f.write(f"{k}={v}\n")
@@ -769,6 +789,8 @@ def settings_page(request):
         "api_key": settings.GROQ_API_KEY or "",
         "model": settings.GROQ_MODEL or "",
         "whisper_model": settings.GROQ_WHISPER_MODEL or "",
+        "openrouter_key": settings.OPENROUTER_API_KEY or "",
+        "openrouter_model": settings.OPENROUTER_MODEL or "",
     }
     return render(request, "interview/settings.html", {"current": current, "msg": msg})
 
