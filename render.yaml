@@ -1,10 +1,14 @@
 services:
   - type: web
     name: parakeetai
-    runtime: python
+    runtime: docker
     buildCommand: "./build.sh"
     startCommand: "gunicorn local_parakeet.wsgi:application"
     envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: parkeet
+          property: connectionString
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DEBUG
@@ -19,3 +23,9 @@ services:
         value: "whisper-large-v3-turbo"
       - key: PYTHON_VERSION
         value: "3.11.0"
+
+databases:
+  - name: parkeet
+    databaseName: parkeet
+    user: parkeet
+    plan: free
