@@ -8,7 +8,7 @@ import openai as openai_lib
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone as dj_timezone
@@ -49,9 +49,25 @@ def login_view(request):
     return render(request, "interview/login.html", {"form": form, "error": error})
 
 
+def signup_view(request):
+    if request.user.is_authenticated:
+        return redirect("/")
+    error = None
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("/")
+        error = form.errors.as_text()
+    else:
+        form = UserCreationForm()
+    return render(request, "interview/signup.html", {"form": form, "error": error})
+
+
 @login_required
 def home(request):
-    sessions = InterviewSession.objects.all()
+    sessions = InterviewSession.objects.filter(owner=request.user)
     active_count = sessions.filter(status=InterviewSession.STATUS_ACTIVE).count()
     ended_count = sessions.filter(status=InterviewSession.STATUS_ENDED).count()
     return render(request, "interview/home.html", {
@@ -75,7 +91,9 @@ def new_session(request):
     if request.method == "POST":
         form = NewSessionForm(request.POST)
         if form.is_valid():
-            session = form.save()
+            session = form.save(commit=False)
+            session.owner = request.user
+            session.save()
             return redirect("live_session", session_id=session.id)
     else:
         form = NewSessionForm(initial=initial)
@@ -84,7 +102,7 @@ def new_session(request):
 
 @login_required
 def live_session(request, session_id):
-    session = get_object_or_404(InterviewSession, id=session_id)
+    session = get_object_or_404(InterviewSession, id=session_id, owner=request.user)
     transcripts = session.transcripts.all()
     ai_messages = session.ai_messages.all()
     return render(

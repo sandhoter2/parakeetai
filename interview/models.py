@@ -32,6 +32,9 @@ class UserProfile(models.Model):
 
 
 class InterviewSession(models.Model):
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="sessions", null=True, blank=True
+    )
     STATUS_PENDING = "pending"
     STATUS_ACTIVE = "active"
     STATUS_ENDED = "ended"
