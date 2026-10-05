@@ -29,4 +29,17 @@ urlpatterns = [
     path("api/build-conversation/", views.api_build_conversation, name="api_build_conversation"),
     path("api/config/", views.api_config, name="api_config"),
     path("api/regenerate-token/", views.api_regenerate_token, name="api_regenerate_token"),
+    # Stats
+    path("api/stats/", views.api_stats, name="api_stats"),
+    # Session scoring
+    path("api/session/<uuid:session_id>/score/", views.api_session_score, name="api_session_score"),
+    # Billing
+    path("billing/checkout/<str:plan>/", views.billing_checkout, name="billing_checkout"),
+    path("billing/success/", views.billing_success, name="billing_success"),
+    path("billing/portal/", views.billing_portal, name="billing_portal"),
+    path("billing/webhook/", views.stripe_webhook, name="stripe_webhook"),
+    # Onboarding
+    path("onboarding/", views.onboarding_view, name="onboarding"),
+    # Desktop overlay auth
+    path("api/login/", views.api_login, name="api_login"),
 ]

@@ -19,6 +19,19 @@ from .forms import NewSessionForm, UserProfileForm
 from .models import AIMessage, InterviewSession, MeetingParticipant, TranscriptEntry, UserProfile
 
 
+def _check_session_limit(user):
+    """Return (ok, sessions_used, limit). ok=False means limit reached."""
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        return True, 0, None
+    limit = profile.session_limit
+    if limit is None:
+        return True, 0, None
+    used = InterviewSession.objects.filter(owner=user).count()
+    return used < limit, used, limit
+
+
 def _get_chat_client():
     """Return (client, model, provider) — prefers OpenRouter if key is set, else Groq."""
     if settings.OPENROUTER_API_KEY:
@@ -93,6 +106,15 @@ def new_session(request):
         except UserProfile.DoesNotExist:
             pass
 
+    ok, sessions_used, limit = _check_session_limit(request.user)
+    if not ok:
+        return render(request, "interview/new_session.html", {
+            "form": NewSessionForm(initial=initial),
+            "session_limit_reached": True,
+            "sessions_used": sessions_used,
+            "session_limit": limit,
+        })
+
     if request.method == "POST":
         form = NewSessionForm(request.POST)
         if form.is_valid():
@@ -102,7 +124,7 @@ def new_session(request):
             return redirect("live_session", session_id=session.id)
     else:
         form = NewSessionForm(initial=initial)
-    return render(request, "interview/new_session.html", {"form": form})
+    return render(request, "interview/new_session.html", {"form": form, "sessions_used": sessions_used, "session_limit": limit})
 
 
 @login_required
@@ -875,3 +897,272 @@ def _build_system_prompt(session: InterviewSession) -> str:
         if session.extra_context:
             parts.append(f"\nCandidate background / resume:\n{session.extra_context[:2000]}")
     return "\n".join(parts)
+
+
+# ── STRIPE BILLING ─────────────────────────────────────────────────────────────
+
+@login_required
+def billing_checkout(request, plan):
+    """Create a Stripe Checkout session and redirect to it."""
+    if plan not in ("pro", "team"):
+        return redirect("pricing")
+    if not settings.STRIPE_SECRET_KEY:
+        return render(request, "interview/billing_unavailable.html")
+
+    import stripe
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    price_id = settings.STRIPE_PRICE_PRO if plan == "pro" else settings.STRIPE_PRICE_TEAM
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+
+    customer_id = profile.stripe_customer_id or None
+    if not customer_id:
+        customer = stripe.Customer.create(
+            email=request.user.email,
+            metadata={"user_id": request.user.id},
+        )
+        profile.stripe_customer_id = customer.id
+        profile.save(update_fields=["stripe_customer_id"])
+        customer_id = customer.id
+
+    session = stripe.checkout.Session.create(
+        customer=customer_id,
+        payment_method_types=["card"],
+        line_items=[{"price": price_id, "quantity": 1}],
+        mode="subscription",
+        success_url=request.build_absolute_uri("/billing/success/"),
+        cancel_url=request.build_absolute_uri("/pricing/"),
+    )
+    return redirect(session.url, permanent=False)
+
+
+@login_required
+def billing_success(request):
+    return render(request, "interview/billing_success.html")
+
+
+@login_required
+def billing_portal(request):
+    """Redirect to Stripe customer portal to manage subscription."""
+    if not settings.STRIPE_SECRET_KEY:
+        return render(request, "interview/billing_unavailable.html")
+    import stripe
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    if not profile.stripe_customer_id:
+        return redirect("pricing")
+    portal = stripe.billing_portal.Session.create(
+        customer=profile.stripe_customer_id,
+        return_url=request.build_absolute_uri("/"),
+    )
+    return redirect(portal.url, permanent=False)
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    """Handle Stripe webhook events — checkout.session.completed and subscription.deleted."""
+    if not settings.STRIPE_WEBHOOK_SECRET:
+        return HttpResponse(status=400)
+
+    import stripe
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    payload = request.body
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
+    except (ValueError, stripe.error.SignatureVerificationError):
+        return HttpResponse(status=400)
+
+    if event["type"] == "checkout.session.completed":
+        session_obj = event["data"]["object"]
+        customer_id = session_obj.get("customer")
+        sub_id = session_obj.get("subscription", "")
+        plan = "pro"
+        # Determine plan from price (look up subscription line items)
+        try:
+            sub = stripe.Subscription.retrieve(sub_id)
+            price_id = sub["items"]["data"][0]["price"]["id"]
+            if price_id == settings.STRIPE_PRICE_TEAM:
+                plan = "team"
+        except Exception:
+            pass
+        try:
+            profile = UserProfile.objects.get(stripe_customer_id=customer_id)
+            profile.plan = plan
+            profile.stripe_subscription_id = sub_id
+            profile.save(update_fields=["plan", "stripe_subscription_id"])
+        except UserProfile.DoesNotExist:
+            pass
+
+    elif event["type"] in ("customer.subscription.deleted", "customer.subscription.updated"):
+        sub = event["data"]["object"]
+        customer_id = sub.get("customer")
+        status = sub.get("status", "")
+        try:
+            profile = UserProfile.objects.get(stripe_customer_id=customer_id)
+            if status in ("canceled", "unpaid", "incomplete_expired"):
+                profile.plan = UserProfile.PLAN_FREE
+                profile.stripe_subscription_id = ""
+                profile.save(update_fields=["plan", "stripe_subscription_id"])
+        except UserProfile.DoesNotExist:
+            pass
+
+    return HttpResponse(status=200)
+
+
+# ── PER-USER ANALYTICS ─────────────────────────────────────────────────────────
+
+@csrf_exempt
+def api_stats(request):
+    """Return per-user session and activity stats. Supports X-Ext-Token (overlay) and session auth."""
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    if profile:
+        user = profile.user
+    elif request.user.is_authenticated:
+        user = request.user
+    else:
+        return JsonResponse({"error": "authentication required"}, status=401)
+    sessions = InterviewSession.objects.filter(owner=user)
+    total = sessions.count()
+    active = sessions.filter(status=InterviewSession.STATUS_ACTIVE).count()
+    ended = sessions.filter(status=InterviewSession.STATUS_ENDED).count()
+    transcript_count = TranscriptEntry.objects.filter(session__owner=user).count()
+    ai_count = AIMessage.objects.filter(session__owner=user).count()
+
+    try:
+        profile = user.profile
+        plan = profile.plan
+        limit = profile.session_limit
+    except UserProfile.DoesNotExist:
+        plan = "free"
+        limit = UserProfile.FREE_SESSION_LIMIT
+
+    recent = sessions.order_by("-created_at")[:5]
+
+    return JsonResponse({
+        "plan": plan,
+        "session_limit": limit,
+        "sessions_total": total,
+        "sessions_active": active,
+        "sessions_ended": ended,
+        "transcripts_total": transcript_count,
+        "ai_responses_total": ai_count,
+        "recent_sessions": [
+            {"id": str(s.id), "title": s.title, "status": s.status,
+             "created_at": s.created_at.isoformat() if s.created_at else None}
+            for s in recent
+        ],
+    })
+
+
+# ── POST-SESSION SCORING ───────────────────────────────────────────────────────
+
+@csrf_exempt
+@require_POST
+def api_session_score(request, session_id):
+    """Generate AI-powered performance score and feedback for a completed session."""
+    if (r := _auth_required(request)): return r
+    session = get_object_or_404(InterviewSession, id=session_id)
+
+    client, model, provider = _get_chat_client()
+    if not client:
+        return JsonResponse({"error": "No AI key set."}, status=500)
+
+    transcripts = session.transcripts.order_by("created_at")
+    ai_messages = session.ai_messages.order_by("created_at")
+
+    if not transcripts.exists():
+        return JsonResponse({"error": "No transcript to score"}, status=400)
+
+    def _fmt(e):
+        label = e.speaker_name if e.speaker_name else e.speaker_type
+        return f"[{label}]: {e.content}"
+
+    transcript_text = "\n".join(_fmt(e) for e in transcripts)
+    ai_text = "\n".join(f"Q: {m.trigger_text}\nA: {m.content}" for m in ai_messages)
+
+    system_msg = (
+        "You are an expert interview/meeting performance coach. "
+        "Score the session and give actionable feedback. "
+        "Return ONLY valid JSON in this exact format:\n"
+        '{"overall_score": <1-10>, '
+        '"communication_score": <1-10>, '
+        '"clarity_score": <1-10>, '
+        '"engagement_score": <1-10>, '
+        '"summary": "2-3 sentence performance summary", '
+        '"strengths": ["strength 1", "strength 2"], '
+        '"improvements": ["improvement 1", "improvement 2"], '
+        '"next_steps": ["actionable step 1", "actionable step 2"]}'
+    )
+
+    session_type = "interview" if session.session_type == InterviewSession.SESSION_TYPE_INTERVIEW else "meeting"
+    user_msg = (
+        f"Session type: {session_type}\n"
+        f"Role/Title: {session.title}\n"
+        f"Company: {session.company or 'N/A'}\n\n"
+        f"Transcript:\n{transcript_text[:3000]}\n\n"
+        f"AI responses used:\n{ai_text[:1000]}"
+    )
+
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": user_msg}],
+            max_tokens=800,
+        )
+        raw = response.choices[0].message.content.strip()
+        if raw.startswith("```"):
+            raw = "\n".join(raw.split("\n")[1:])
+            if raw.endswith("```"):
+                raw = raw[:-3]
+        result = json.loads(raw)
+        AIMessage.objects.create(
+            session=session,
+            trigger_text="[Session Score]",
+            content=json.dumps(result),
+        )
+        return JsonResponse(result)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "AI returned invalid JSON"}, status=500)
+    except Exception as exc:
+        return JsonResponse({"error": str(exc)}, status=500)
+
+
+@login_required
+def onboarding_view(request):
+    return render(request, "interview/onboarding.html")
+
+
+@csrf_exempt
+@require_POST
+def api_login(request):
+    """Desktop overlay login: POST {username, password} → {token, plan, session_limit, sessions_used}."""
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
+    if not username or not password:
+        return JsonResponse({"error": "username and password required"}, status=400)
+
+    user = authenticate(request, username=username, password=password)
+    if user is None:
+        return JsonResponse({"error": "Invalid credentials"}, status=401)
+
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+
+    used = InterviewSession.objects.filter(owner=user).count()
+    return JsonResponse({
+        "token": profile.ext_token,
+        "plan": profile.plan,
+        "session_limit": profile.session_limit,
+        "sessions_used": used,
+        "username": user.username,
+    })

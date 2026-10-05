@@ -1,6 +1,8 @@
 import uuid
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class UserProfile(models.Model):
@@ -14,6 +16,16 @@ class UserProfile(models.Model):
         ("other", "Other"),
     ]
 
+    PLAN_FREE = "free"
+    PLAN_PRO = "pro"
+    PLAN_TEAM = "team"
+    PLAN_CHOICES = [
+        (PLAN_FREE, "Free"),
+        (PLAN_PRO, "Pro"),
+        (PLAN_TEAM, "Team"),
+    ]
+    FREE_SESSION_LIMIT = 5
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     display_name = models.CharField(max_length=100, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="engineer", blank=True)
@@ -21,7 +33,25 @@ class UserProfile(models.Model):
     background = models.TextField(blank=True, help_text="Resume / skills summary used as default context.")
     ext_token = models.CharField(max_length=64, unique=True, blank=True, default="",
                                  help_text="Static token used by the Electron overlay to authenticate API calls.")
+    plan = models.CharField(max_length=10, choices=PLAN_CHOICES, default=PLAN_FREE)
+    stripe_customer_id = models.CharField(max_length=64, blank=True, default="")
+    stripe_subscription_id = models.CharField(max_length=64, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def is_free(self):
+        return self.plan == self.PLAN_FREE
+
+    @property
+    def session_limit(self):
+        if self.plan == self.PLAN_FREE:
+            return self.FREE_SESSION_LIMIT
+        return None  # unlimited for paid plans
+
+    def save(self, *args, **kwargs):
+        if not self.ext_token:
+            self.ext_token = uuid.uuid4().hex + uuid.uuid4().hex
+        super().save(*args, **kwargs)
 
     def regenerate_token(self):
         self.ext_token = uuid.uuid4().hex + uuid.uuid4().hex  # 64-char hex
@@ -29,6 +59,12 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} — {self.get_role_display()}"
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.get_or_create(user=instance)
 
 
 class InterviewSession(models.Model):
