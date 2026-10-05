@@ -3,7 +3,10 @@ import os
 import dj_database_url
 from dotenv import load_dotenv
 
-load_dotenv()
+try:
+    load_dotenv()
+except Exception:
+    pass  # .env is git-crypt encrypted on Render; use injected env vars instead
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
