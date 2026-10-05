@@ -65,8 +65,9 @@ def signup_view(request):
     return render(request, "interview/signup.html", {"form": form, "error": error})
 
 
-@login_required
 def home(request):
+    if not request.user.is_authenticated:
+        return render(request, "interview/landing.html")
     sessions = InterviewSession.objects.filter(owner=request.user)
     active_count = sessions.filter(status=InterviewSession.STATUS_ACTIVE).count()
     ended_count = sessions.filter(status=InterviewSession.STATUS_ENDED).count()
@@ -75,6 +76,10 @@ def home(request):
         "active_count": active_count,
         "ended_count": ended_count,
     })
+
+
+def pricing_view(request):
+    return render(request, "interview/pricing.html")
 
 
 @login_required

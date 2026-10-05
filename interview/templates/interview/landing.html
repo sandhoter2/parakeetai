@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HappyHelper — AI Assistant for Interviews & Meetings</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117;
+      --bg2: #1a1d27;
+      --bg3: #252836;
+      --border: #2e3147;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --radius: 12px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(15,17,23,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; }
+    .nav-logo .logo-icon { font-size: 24px; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .nav-link { color: var(--text2); text-decoration: none; padding: 7px 14px; border-radius: 8px; font-size: 14px; transition: all 0.15s; }
+    .nav-link:hover { color: var(--text); background: var(--bg3); }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.15s; border: none; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #5a52e0); color: #fff; }
+    .btn-primary:hover { background: linear-gradient(135deg, #7b72ff, var(--accent)); box-shadow: 0 4px 20px rgba(108,99,255,0.35); transform: translateY(-1px); }
+    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent2); color: var(--text); }
+
+    /* ── SECTIONS ── */
+    section { padding: 100px 24px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    /* ── HERO ── */
+    .hero { padding-top: 140px; padding-bottom: 100px; text-align: center; position: relative; overflow: hidden; }
+    .hero::before {
+      content: '';
+      position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.3);
+      border-radius: 100px; padding: 6px 16px; font-size: 13px; color: var(--accent2);
+      margin-bottom: 28px;
+    }
+    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 68px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 24px;
+    }
+    .hero h1 .grad {
+      background: linear-gradient(135deg, #fff 30%, var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero h1 .grad2 {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-sub { font-size: 19px; color: var(--text2); max-width: 560px; margin: 0 auto 40px; line-height: 1.7; }
+    .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
+    .btn-lg { padding: 14px 32px; font-size: 16px; border-radius: 10px; }
+    .hero-social { display: flex; align-items: center; justify-content: center; gap: 20px; color: var(--text3); font-size: 13px; }
+    .hero-social span { display: flex; align-items: center; gap: 6px; }
+    .avatar-stack { display: flex; }
+    .avatar-stack img, .avatar-stack .av { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bg); }
+    .avatar-stack .av { background: linear-gradient(135deg, var(--accent), var(--accent2)); font-size: 12px; font-weight: 700; color: #fff; display: flex; align-items: center; justify-content: center; }
+    .avatar-stack .av:not(:first-child) { margin-left: -8px; }
+
+    /* Product screenshot */
+    .hero-preview {
+      position: relative; max-width: 900px; margin: 0 auto;
+    }
+    .preview-frame {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(108,99,255,0.1);
+    }
+    .preview-bar {
+      background: var(--bg3); border-bottom: 1px solid var(--border);
+      padding: 12px 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .preview-url {
+      flex: 1; text-align: center; font-size: 12px; color: var(--text3);
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+      padding: 3px 12px; max-width: 220px; margin: 0 auto;
+    }
+    .preview-body { padding: 28px 32px; min-height: 280px; position: relative; }
+    .preview-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2);
+      border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--green);
+      margin-bottom: 16px;
+    }
+    .preview-transcript { display: flex; flex-direction: column; gap: 10px; }
+    .t-line { display: flex; gap: 10px; }
+    .t-speaker { font-size: 11px; color: var(--accent2); font-weight: 600; min-width: 60px; padding-top: 3px; }
+    .t-text { font-size: 13px; color: var(--text2); background: var(--bg3); border-radius: 8px; padding: 8px 12px; flex: 1; }
+    .t-text.ai { background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.2); color: var(--text); }
+    .t-label { font-size: 10px; color: var(--accent2); margin-bottom: 3px; font-weight: 700; letter-spacing: 0.5px; }
+
+    /* ── LOGOS STRIP ── */
+    .logos { padding: 40px 24px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .logos-inner { max-width: 900px; margin: 0 auto; text-align: center; }
+    .logos p { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+    .logos-row { display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; }
+    .logo-item { font-size: 14px; font-weight: 700; color: var(--text3); letter-spacing: 0.5px; opacity: 0.6; }
+
+    /* ── HOW IT WORKS ── */
+    .section-tag { font-size: 12px; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .section-title { font-size: clamp(28px, 4vw, 42px); font-weight: 800; line-height: 1.2; margin-bottom: 16px; }
+    .section-sub { font-size: 17px; color: var(--text2); max-width: 500px; margin-bottom: 60px; line-height: 1.7; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    .step {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 32px; position: relative; transition: border-color 0.2s, transform 0.2s;
+    }
+    .step:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #5a52e0);
+      color: #fff; font-weight: 800; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 18px;
+    }
+    .step h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .step p { color: var(--text2); font-size: 14px; line-height: 1.7; }
+    .step-connector {
+      position: absolute; top: 50px; right: -28px;
+      color: var(--border); font-size: 24px; z-index: 1;
+    }
+
+    /* ── FEATURES ── */
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .feat {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 28px; transition: all 0.2s;
+    }
+    .feat:hover { border-color: rgba(108,99,255,0.4); box-shadow: 0 4px 24px rgba(108,99,255,0.08); }
+    .feat-icon { font-size: 32px; margin-bottom: 16px; }
+    .feat h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .feat p { color: var(--text2); font-size: 14px; line-height: 1.7; }
+    .feat-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-top: 12px; }
+    .badge-new { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+    .badge-pro { background: rgba(167,139,250,0.1); color: var(--accent2); border: 1px solid rgba(167,139,250,0.2); }
+
+    /* ── TESTIMONIALS ── */
+    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .testi {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px;
+    }
+    .testi-stars { color: var(--yellow); font-size: 14px; margin-bottom: 14px; letter-spacing: 2px; }
+    .testi-text { color: var(--text2); font-size: 14px; line-height: 1.8; margin-bottom: 20px; font-style: italic; }
+    .testi-author { display: flex; align-items: center; gap: 12px; }
+    .testi-av { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 16px; }
+    .testi-name { font-weight: 700; font-size: 14px; }
+    .testi-role { font-size: 12px; color: var(--text3); }
+
+    /* ── PRICING (inline) ── */
+    .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; }
+    .plan {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 32px; position: relative;
+    }
+    .plan.popular {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 8px 40px rgba(108,99,255,0.2);
+    }
+    .plan-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--accent), #5a52e0);
+      color: #fff; font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 100px;
+      white-space: nowrap;
+    }
+    .plan-name { font-size: 14px; font-weight: 700; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .plan-price { display: flex; align-items: flex-end; gap: 4px; margin-bottom: 8px; }
+    .plan-amount { font-size: 48px; font-weight: 900; color: var(--text); line-height: 1; }
+    .plan-period { font-size: 14px; color: var(--text3); padding-bottom: 8px; }
+    .plan-desc { font-size: 13px; color: var(--text3); margin-bottom: 24px; }
+    .plan-features { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
+    .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text2); }
+    .plan-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .plan-features li.off { color: var(--text3); }
+    .plan-features li.off::before { content: '×'; color: var(--text3); }
+    .plan-cta { display: block; width: 100%; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 15px; text-decoration: none; transition: all 0.15s; }
+    .plan-cta-primary { background: linear-gradient(135deg, var(--accent), #5a52e0); color: #fff; border: none; cursor: pointer; }
+    .plan-cta-primary:hover { box-shadow: 0 4px 20px rgba(108,99,255,0.4); transform: translateY(-1px); }
+    .plan-cta-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); cursor: pointer; }
+    .plan-cta-ghost:hover { border-color: var(--accent2); color: var(--text); }
+
+    /* ── CTA BAND ── */
+    .cta-band {
+      background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(167,139,250,0.1));
+      border: 1px solid rgba(108,99,255,0.2);
+      border-radius: 20px; padding: 64px; text-align: center; margin: 0 24px;
+      position: relative; overflow: hidden;
+    }
+    .cta-band::before {
+      content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(circle, rgba(108,99,255,0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-band h2 { font-size: clamp(26px, 4vw, 42px); font-weight: 800; margin-bottom: 16px; }
+    .cta-band p { font-size: 17px; color: var(--text2); margin-bottom: 36px; }
+    .cta-band .btn-pair { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 48px 24px; margin-top: 80px;
+    }
+    .footer-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; }
+    .footer-brand { }
+    .footer-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; margin-bottom: 12px; }
+    .footer-desc { font-size: 13px; color: var(--text3); line-height: 1.7; max-width: 240px; }
+    .footer-col h4 { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .footer-col a { display: block; font-size: 13px; color: var(--text3); text-decoration: none; margin-bottom: 8px; transition: color 0.15s; }
+    .footer-col a:hover { color: var(--text); }
+    .footer-bottom { max-width: 1100px; margin: 32px auto 0; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text3); }
+
+    @media (max-width: 768px) {
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+      .nav-links .nav-link { display: none; }
+      .hero h1 { letter-spacing: -0.5px; }
+      .cta-band { padding: 40px 24px; margin: 0; border-radius: 0; border-left: none; border-right: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <span class="logo-icon">😊</span>
+    <span>HappyHelper</span>
+  </div>
+  <div class="nav-links">
+    <a href="#how-it-works" class="nav-link">How it works</a>
+    <a href="#features" class="nav-link">Features</a>
+    <a href="/pricing/" class="nav-link">Pricing</a>
+    <a href="/login/" class="btn btn-ghost" style="margin-left:8px">Sign in</a>
+    <a href="/signup/" class="btn btn-primary">Get started free</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Now with real-time AI coaching
+    </div>
+    <h1>
+      <span class="grad">Ace every interview</span><br>
+      <span class="grad2">&amp; meeting with AI</span>
+    </h1>
+    <p class="hero-sub">
+      HappyHelper listens, transcribes, and whispers smart answers in real time — so you always sound sharp, prepared, and confident.
+    </p>
+    <div class="hero-ctas">
+      <a href="/signup/" class="btn btn-primary btn-lg">Start for free — no card needed</a>
+      <a href="#how-it-works" class="btn btn-ghost btn-lg">See how it works</a>
+    </div>
+    <div class="hero-social">
+      <div class="avatar-stack">
+        <div class="av">S</div>
+        <div class="av" style="background:linear-gradient(135deg,#34d399,#059669)">J</div>
+        <div class="av" style="background:linear-gradient(135deg,#f87171,#dc2626)">M</div>
+        <div class="av" style="background:linear-gradient(135deg,#fbbf24,#d97706)">K</div>
+      </div>
+      <span>★ 4.9 / 5 · Trusted by 2,000+ professionals</span>
+    </div>
+
+    <!-- Mock app preview -->
+    <div class="hero-preview" style="margin-top:56px">
+      <div class="preview-frame">
+        <div class="preview-bar">
+          <div class="preview-dot" style="background:#ff5f57"></div>
+          <div class="preview-dot" style="background:#febc2e"></div>
+          <div class="preview-dot" style="background:#28c840"></div>
+          <div class="preview-url">app.happyhelper.ai</div>
+        </div>
+        <div class="preview-body">
+          <div class="preview-chip">
+            <span>●</span> Live session — 12:34
+          </div>
+          <div class="preview-transcript">
+            <div class="t-line">
+              <div class="t-speaker">Interviewer</div>
+              <div class="t-text">Tell me about a time you led a cross-functional team under tight deadlines.</div>
+            </div>
+            <div class="t-line">
+              <div class="t-speaker" style="color:var(--text2)">You</div>
+              <div class="t-text">Sure, at my last role we had a product launch…</div>
+            </div>
+            <div class="t-line">
+              <div class="t-speaker" style="color:var(--green)">AI ✦</div>
+              <div class="t-text ai">
+                <div class="t-label">SUGGESTED ANSWER</div>
+                Use the STAR framework — highlight the cross-team dependency and your specific decision that unblocked the timeline. Mention measurable outcome (shipped 3 days early, 98% uptime).
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGOS -->
+<div class="logos">
+  <div class="logos-inner">
+    <p>Used by professionals at</p>
+    <div class="logos-row">
+      <span class="logo-item">Google</span>
+      <span class="logo-item">Amazon</span>
+      <span class="logo-item">Stripe</span>
+      <span class="logo-item">Shopify</span>
+      <span class="logo-item">Notion</span>
+      <span class="logo-item">Figma</span>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="container">
+    <div class="section-tag">How it works</div>
+    <h2 class="section-title">Live AI coaching in 3 steps</h2>
+    <p class="section-sub">No complex setup. Open HappyHelper, start a session, and get real-time suggestions as the conversation flows.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Set your session context</h3>
+        <p>Tell HappyHelper the role, company, and your background. It primes the AI with your goals so suggestions are specific and relevant — not generic.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Speak naturally</h3>
+        <p>The built-in Whisper transcription picks up everything in real time. You see a live transcript with speaker labels — no manual note-taking.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Get instant AI answers</h3>
+        <p>The moment a question is detected, HappyHelper generates a tailored answer using your background context. One click sends it to the browser extension overlay only you can see.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="padding-top:60px">
+  <div class="container">
+    <div class="section-tag">Features</div>
+    <h2 class="section-title">Everything you need to perform at your best</h2>
+    <p class="section-sub">Built for interviews, consulting calls, discovery calls, and any high-stakes conversation.</p>
+    <div class="features-grid">
+      <div class="feat">
+        <div class="feat-icon">🎙️</div>
+        <h3>Real-time transcription</h3>
+        <p>Powered by Groq Whisper — the fastest speech-to-text available. Sub-second latency so suggestions arrive before you need to respond.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🤖</div>
+        <h3>Contextual AI answers</h3>
+        <p>HappyHelper knows your resume, the job description, and the company. Answers are grounded in your actual experience — not hallucinated fluff.</p>
+        <span class="feat-badge badge-new">Most popular</span>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🗺️</div>
+        <h3>Conversation blueprint</h3>
+        <p>Before the session, generate a structured plan: anticipated questions, talking points, objection responses, and a closing strategy.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">👥</div>
+        <h3>Meeting mode</h3>
+        <p>Multi-speaker diarization tracks who said what. Perfect for client calls, 1:1s, and team standups. Export full meeting summaries in one click.</p>
+        <span class="feat-badge badge-pro">Pro</span>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🔒</div>
+        <h3>Private by design</h3>
+        <p>Your audio never leaves your device unencrypted. Sessions and transcripts are stored only in your own database — we see nothing.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🧩</div>
+        <h3>Browser overlay</h3>
+        <p>The Chrome extension shows AI suggestions in a discreet overlay visible only on your screen — invisible to your interviewer or video call participants.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section style="padding-top:80px">
+  <div class="container">
+    <div class="section-tag">Testimonials</div>
+    <h2 class="section-title">What our users say</h2>
+    <div class="testimonials-grid" style="margin-top:40px">
+      <div class="testi">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"I landed a senior engineer role at a FAANG after two rounds with HappyHelper. The STAR framework suggestions came exactly when I blanked. Game changer."</p>
+        <div class="testi-author">
+          <div class="testi-av" style="background:linear-gradient(135deg,var(--accent),#5a52e0)">S</div>
+          <div>
+            <div class="testi-name">Sarah K.</div>
+            <div class="testi-role">Senior Software Engineer</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"I use it for every discovery call now. Having the conversation blueprint ready + live AI suggestions means I never miss a follow-up question."</p>
+        <div class="testi-author">
+          <div class="testi-av" style="background:linear-gradient(135deg,#34d399,#059669)">J</div>
+          <div>
+            <div class="testi-name">James R.</div>
+            <div class="testi-role">Account Executive, SaaS</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"The meeting summary export alone saves me 45 minutes per client call. My notes used to be a mess — now they're structured and searchable."</p>
+        <div class="testi-author">
+          <div class="testi-av" style="background:linear-gradient(135deg,#fbbf24,#d97706)">M</div>
+          <div>
+            <div class="testi-name">Maya T.</div>
+            <div class="testi-role">Product Manager</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING TEASER -->
+<section id="pricing" style="padding-top:80px">
+  <div class="container" style="text-align:center">
+    <div class="section-tag">Pricing</div>
+    <h2 class="section-title">Start free, upgrade when you're ready</h2>
+    <p class="section-sub" style="margin:0 auto 48px">No credit card required. Free plan never expires.</p>
+    <div class="plans">
+      <div class="plan">
+        <div class="plan-name">Free</div>
+        <div class="plan-price"><span class="plan-amount">$0</span><span class="plan-period">/mo</span></div>
+        <div class="plan-desc">Perfect for occasional interview prep</div>
+        <ul class="plan-features">
+          <li>5 sessions / month</li>
+          <li>Live transcription</li>
+          <li>AI answers (GPT-3.5)</li>
+          <li>Session history (7 days)</li>
+          <li class="off">Meeting mode</li>
+          <li class="off">Conversation blueprint</li>
+          <li class="off">Export & summaries</li>
+        </ul>
+        <a href="/signup/" class="plan-cta plan-cta-ghost">Get started free</a>
+      </div>
+      <div class="plan popular">
+        <div class="plan-badge">Most popular</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price"><span class="plan-amount">$19</span><span class="plan-period">/mo</span></div>
+        <div class="plan-desc">For active job seekers & sales professionals</div>
+        <ul class="plan-features">
+          <li>Unlimited sessions</li>
+          <li>Live transcription</li>
+          <li>AI answers (GPT-4o)</li>
+          <li>Unlimited history</li>
+          <li>Meeting mode + diarization</li>
+          <li>Conversation blueprint</li>
+          <li>Export & summaries</li>
+        </ul>
+        <a href="/signup/" class="plan-cta plan-cta-primary">Start Pro free for 14 days</a>
+      </div>
+      <div class="plan">
+        <div class="plan-name">Team</div>
+        <div class="plan-price"><span class="plan-amount">$49</span><span class="plan-period">/mo</span></div>
+        <div class="plan-desc">For recruiting teams & consulting firms</div>
+        <ul class="plan-features">
+          <li>Everything in Pro</li>
+          <li>Up to 10 seats</li>
+          <li>Shared session library</li>
+          <li>Team analytics dashboard</li>
+          <li>Priority support</li>
+          <li>Custom AI prompts</li>
+          <li>SSO / SAML (coming soon)</li>
+        </ul>
+        <a href="/signup/" class="plan-cta plan-cta-ghost">Contact sales</a>
+      </div>
+    </div>
+    <p style="margin-top:24px;font-size:13px;color:var(--text3)">
+      All plans include a <strong style="color:var(--text2)">14-day free trial</strong> of Pro features. Cancel anytime.
+      <a href="/pricing/" style="color:var(--accent2);text-decoration:none;margin-left:8px">See full comparison →</a>
+    </p>
+  </div>
+</section>
+
+<!-- CTA BAND -->
+<section style="padding:60px 0">
+  <div class="cta-band">
+    <h2>Ready to walk in prepared?</h2>
+    <p>Join thousands of professionals who use HappyHelper to nail interviews and meetings.</p>
+    <div class="btn-pair">
+      <a href="/signup/" class="btn btn-primary btn-lg">Create your free account</a>
+      <a href="/login/" class="btn btn-ghost btn-lg">Sign in</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo"><span>😊</span> HappyHelper</div>
+      <p class="footer-desc">AI-powered coaching for interviews, sales calls, and meetings. Always prepared, never caught off guard.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="#features">Features</a>
+      <a href="/pricing/">Pricing</a>
+      <a href="#how-it-works">How it works</a>
+    </div>
+    <div class="footer-col">
+      <h4>Account</h4>
+      <a href="/login/">Sign in</a>
+      <a href="/signup/">Sign up</a>
+      <a href="/profile/">Profile</a>
+      <a href="/settings/">Settings</a>
+    </div>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <a href="#">Documentation</a>
+      <a href="#">Privacy policy</a>
+      <a href="#">Terms of service</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 HappyHelper. All rights reserved.</span>
+    <span>Made with ☕ and AI</span>
+  </div>
+</footer>
+
+</body>
+</html>
