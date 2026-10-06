@@ -114,9 +114,9 @@
 .menu-btn:hover { background: var(--bg3); color: var(--text); }
 
 .ctx-menu {
-  position: absolute; right: 0; top: 100%; margin-top: 4px;
+  position: fixed;
   background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
-  padding: 4px; z-index: 100; min-width: 130px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  padding: 4px; z-index: 9999; min-width: 140px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   display: none;
 }
 .ctx-menu.open { display: block; }
@@ -243,15 +243,13 @@
                 {% else %}
                 <a href="/session/{{ s.id }}/detail/" class="action-btn view" onclick="event.stopPropagation()">View Transcript</a>
                 {% endif %}
-                <div style="position:relative">
-                  <button class="menu-btn" onclick="toggleMenu('menu-{{ s.id }}')">⋮</button>
-                  <div class="ctx-menu" id="menu-{{ s.id }}">
-                    {% if s.status != "ended" %}
-                    <div class="ctx-item" onclick="window.location='/session/{{ s.id }}/'">▶ Open Session</div>
-                    {% endif %}
-                    <div class="ctx-item" onclick="window.location='/session/{{ s.id }}/detail/'">📋 Review</div>
-                    <div class="ctx-item danger" onclick="deleteSession('{{ s.id }}','{{ s.title|escapejs }}')">🗑 Delete</div>
-                  </div>
+                <button class="menu-btn" onclick="toggleMenu('menu-{{ s.id }}',this)">⋮</button>
+                <div class="ctx-menu" id="menu-{{ s.id }}">
+                  {% if s.status != "ended" %}
+                  <div class="ctx-item" onclick="window.location='/session/{{ s.id }}/'">▶ Open Session</div>
+                  {% endif %}
+                  <div class="ctx-item" onclick="window.location='/session/{{ s.id }}/detail/'">📋 Review</div>
+                  <div class="ctx-item danger" onclick="deleteSession('{{ s.id }}','{{ s.title|escapejs }}')">🗑 Delete</div>
                 </div>
               </div>
             </td>
@@ -359,11 +357,21 @@ function rowClick(e, id, status) {
   else window.location = `/session/${id}/`;
 }
 
-function toggleMenu(id) {
-  document.querySelectorAll('.ctx-menu').forEach(m => {
-    if (m.id !== id) m.classList.remove('open');
+function toggleMenu(id, btn) {
+  const menu = document.getElementById(id);
+  const wasOpen = menu.classList.contains('open');
+  document.querySelectorAll('.ctx-menu').forEach(m => m.classList.remove('open'));
+  if (wasOpen) return;
+
+  const rect = btn.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = Math.max(4, rect.right - menu.offsetWidth || rect.right - 140) + 'px';
+  menu.classList.add('open');
+
+  // Adjust left after it's visible so offsetWidth is accurate
+  requestAnimationFrame(() => {
+    menu.style.left = Math.max(4, rect.right - menu.offsetWidth) + 'px';
   });
-  document.getElementById(id).classList.toggle('open');
 }
 
 document.addEventListener('click', e => {
