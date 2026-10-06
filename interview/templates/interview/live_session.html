@@ -232,8 +232,12 @@ body { overflow: hidden; }
   border-top: 1px solid rgba(108,99,255,0.2);
   flex-shrink: 0;
 }
-/* float panel mic/sys buttons are redundant with the bottom bar — hide everywhere */
-#fMicBtn, #fSysBtn { display: none !important; }
+/* float panel mic/sys/settings/forward buttons hidden when embedded (bottom bar has them) */
+#fMicBtn, #fSysBtn, #fTcConfigBtn, #fTcSendBtn { display: none !important; }
+/* When PiP is active: hide the main-window bottom bar (controls moved to PiP window) */
+body.pip-active .bottom-bar { display: none !important; }
+/* When PiP is active: keep note strip visible so user can still annotate */
+body.pip-active .note-input-wrap { display: flex !important; }
 
 .ai-float-input-row .fmic-btn {
   width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--border);
@@ -613,16 +617,18 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       </div>
     </div>
   </div>
-  <!-- Input row: mic + question + AI help -->
+  <!-- Input row: mic + question + AI help (buttons shown only in PiP via CSS override) -->
   <div class="ai-float-input-row" id="aiFloatInputRow">
     <button class="fmic-btn" id="fMicBtn" onclick="toggleMic()" title="Mic (your voice)">🎤</button>
     <button class="fmic-btn" id="fSysBtn" onclick="toggleSystemAudio()" title="System audio (interviewer)">🖥️</button>
+    <button class="fmic-btn" id="fTcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
+    <button class="fmic-btn" id="fTcSendBtn" onclick="transcribeNow()" title="Send audio now">⏩</button>
     <input type="text" class="fq-input" id="fQuestionInput"
            placeholder="Type question or speak…"
            onkeydown="if(event.key==='Enter')triggerAI()">
-    <button class="fai-btn" id="fAiHelpBtn" onclick="triggerAI()">✨ AI</button>
-    <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:10px;padding:2px 6px" onclick="clearInput()" title="Clear input">✕</button>
-    <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:10px;padding:2px 6px" onclick="saveAndClearInput()" title="Save to transcript">💾</button>
+    <button class="fai-btn" id="fAiHelpBtn" onclick="triggerAI()">✨ AI Help</button>
+    <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:10px;padding:2px 6px" onclick="clearInput()" title="Clear input">✕ Clear</button>
+    <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:10px;padding:2px 6px" onclick="saveAndClearInput()" title="Save to transcript">💾 Save</button>
   </div>
   <!-- Bottom drag bar -->
   <div class="ai-float-foot" id="aiDragBarBottom">
@@ -1183,6 +1189,8 @@ async function startMic() {
   micManualAccum = '';
   micBtn.classList.add('active');
   micBtn.textContent = '🔴';
+  const _fm = _doc().getElementById('fMicBtn');
+  if (_fm) { _fm.classList.add('active'); _fm.textContent = '🔴'; }
   recDot.classList.add('active');
   setStatus('Listening… speak your question');
   startWaveform(micStream);
@@ -1228,6 +1236,8 @@ function stopMic() {
   interimEntry.style.display = 'none';
   micBtn.classList.remove('active');
   micBtn.textContent = '🎤';
+  const _fmOff = _doc().getElementById('fMicBtn');
+  if (_fmOff) { _fmOff.classList.remove('active'); _fmOff.textContent = '🎤'; }
   recDot.classList.remove('active');
   setStatus('Mic off');
   updateSendBtn();
@@ -1272,6 +1282,8 @@ async function startSystemAudio() {
   sysActive = true;
   sysBtn.classList.add('active');
   sysBtn.textContent = '🟡';
+  const _fsOn = _doc().getElementById('fSysBtn');
+  if (_fsOn) { _fsOn.classList.add('sys-active'); _fsOn.textContent = '🟡'; }
   setStatus('Capturing system audio…');
   startWaveform(sysAudioStream);
 
@@ -1326,6 +1338,8 @@ function stopSystemAudio() {
   if (sysStream) { sysStream.getTracks().forEach(t => t.stop()); sysStream = null; }
   sysBtn.classList.remove('active');
   sysBtn.textContent = '🖥️';
+  const _fsOff = _doc().getElementById('fSysBtn');
+  if (_fsOff) { _fsOff.classList.remove('sys-active'); _fsOff.textContent = '🖥️'; }
   // If mic is still active, keep waveform showing mic
   if (micActive && micStream) startWaveform(micStream);
   else stopWaveform();
@@ -1985,7 +1999,8 @@ async function popOutAI() {
       _proxyScript.textContent = `
         const _pipFns = ['popOutAI','toggleAiPanel','toggleBionic','adjustAIFontSize',
           'regenAI','copyCurrentAI','clearAI','triggerAI','toggleMic','toggleSystemAudio',
-          'restoreTranscript','copyText','setFloatOpacity','openModal','adjustFontSize'];
+          'restoreTranscript','copyText','setFloatOpacity','openModal','adjustFontSize',
+          'toggleTCPanel','transcribeNow','clearInput','saveAndClearInput'];
         _pipFns.forEach(fn => {
           window[fn] = function() { return window.opener[fn].apply(window.opener, arguments); };
         });
@@ -2030,6 +2045,8 @@ async function popOutAI() {
         }
         #aiFloatPanel .ai-float-bar { cursor:default; border-radius:0!important; }
         #aiFloatPanel .ai-float-foot { display:none!important; }
+        /* Show all control buttons in PiP window */
+        #fMicBtn, #fSysBtn, #fTcConfigBtn, #fTcSendBtn { display: inline-flex !important; }
       `;
       pipWin.document.head.appendChild(bodyStyle);
 
@@ -2038,6 +2055,8 @@ async function popOutAI() {
       panel.style.removeProperty('background'); // clear any inline bg from old setFloatOpacity calls
       document.querySelector('.main-layout').classList.remove('with-ai');
       pipWin.document.body.appendChild(panel);
+      // Hide main-window bottom bar — controls are now in the PiP window
+      document.body.classList.add('pip-active');
 
       // popOutBtn is now inside the PiP window
       const btn = pipWin.document.getElementById('popOutBtn');
@@ -2046,6 +2065,7 @@ async function popOutAI() {
       // When PiP window closes, move panel back and re-embed
       pipWin.addEventListener('pagehide', () => {
         _pipDocWindow = null;
+        document.body.classList.remove('pip-active'); // restore bottom bar
         const mainLayout = document.querySelector('.main-layout');
         mainLayout.appendChild(panel);
         panel.classList.add('ai-panel-embedded');
