@@ -2,6 +2,41 @@
 {% block title %}Call Sessions — HappyHelper{% endblock %}
 
 {% block extra_style %}
+/* ── DOWNLOAD BANNER ───────────────────────────────────── */
+.download-banner {
+  display: flex; align-items: center; gap: 20px;
+  background: linear-gradient(135deg, rgba(108,99,255,0.12) 0%, rgba(52,211,153,0.08) 100%);
+  border: 1px solid rgba(108,99,255,0.3); border-radius: 12px;
+  padding: 16px 20px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.download-banner-icon { font-size: 32px; flex-shrink: 0; }
+.download-banner-text { flex: 1; min-width: 200px; }
+.download-banner-text h3 { font-size: 15px; font-weight: 700; margin-bottom: 3px; color: var(--text); }
+.download-banner-text p { font-size: 12px; color: var(--text2); }
+.download-banner-btns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.dl-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 18px; border-radius: 9px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; text-decoration: none; transition: all 0.15s;
+  white-space: nowrap;
+}
+.dl-btn-mac {
+  background: rgba(108,99,255,0.18); color: var(--accent2);
+  border: 1px solid rgba(108,99,255,0.4);
+}
+.dl-btn-mac:hover { background: rgba(108,99,255,0.3); text-decoration: none; color: var(--accent2); }
+.dl-btn-win {
+  background: rgba(52,211,153,0.12); color: var(--green);
+  border: 1px solid rgba(52,211,153,0.3);
+}
+.dl-btn-win:hover { background: rgba(52,211,153,0.22); text-decoration: none; color: var(--green); }
+.dl-btn-os-hint {
+  font-size: 10px; font-weight: 400; opacity: 0.7; display: block; margin-top: 1px;
+}
+/* highlight the user's detected OS */
+body.os-mac .dl-btn-mac,
+body.os-win .dl-btn-win { box-shadow: 0 0 0 2px currentColor; }
+
 .page-header {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 24px;
@@ -156,6 +191,33 @@
 
 {% block content %}
 <div class="container">
+
+  <!-- ── OVERLAY DOWNLOAD BANNER ─────────────────────────────── -->
+  <div class="download-banner" id="downloadBanner">
+    <div class="download-banner-icon">🪟</div>
+    <div class="download-banner-text">
+      <h3>ParakeetAI Overlay — Desktop App</h3>
+      <p>A transparent, always-on-top overlay that shows AI answers during your calls — invisible to screen-share.</p>
+    </div>
+    <div class="download-banner-btns">
+      <a id="dlMacBtn" href="https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-1.1.0.dmg"
+         class="dl-btn dl-btn-mac" title="Download for macOS (Intel + Apple Silicon)">
+        <span>🍎</span>
+        <span>
+          Download for Mac
+          <span class="dl-btn-os-hint">.dmg · macOS 11+</span>
+        </span>
+      </a>
+      <a id="dlWinBtn" href="https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-Setup-1.1.0.exe"
+         class="dl-btn dl-btn-win" title="Download for Windows (64-bit installer)">
+        <span>🪟</span>
+        <span>
+          Download for Windows
+          <span class="dl-btn-os-hint">.exe · Windows 10/11</span>
+        </span>
+      </a>
+    </div>
+  </div>
 
   <div class="page-header">
     <div>
@@ -379,6 +441,26 @@ document.addEventListener('click', e => {
     document.querySelectorAll('.ctx-menu').forEach(m => m.classList.remove('open'));
   }
 });
+
+// Detect OS and highlight the matching download button
+(function() {
+  const ua = navigator.userAgent;
+  if (/Mac|iPhone|iPad/.test(ua) && !/Windows/.test(ua)) {
+    document.body.classList.add('os-mac');
+  } else if (/Win/.test(ua)) {
+    document.body.classList.add('os-win');
+    // Try to fetch latest release version from GitHub API and update URLs
+    fetch('https://api.github.com/repos/sandhoter2/parakeetai/releases/latest', {cache:'no-store'})
+      .then(r => r.ok ? r.json() : null).then(data => {
+        if (!data) return;
+        const ver = (data.tag_name || '').replace(/^v/, '');
+        const mac = document.getElementById('dlMacBtn');
+        const win = document.getElementById('dlWinBtn');
+        if (mac && ver) mac.href = `https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-${ver}.dmg`;
+        if (win && ver) win.href = `https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-Setup-${ver}.exe`;
+      }).catch(() => {});
+  }
+})();
 
 function deleteSession(id, title, btn) {
   if (!confirm(`Delete "${title}"?\n\nThis removes all transcripts and AI answers. This cannot be undone.`)) return;

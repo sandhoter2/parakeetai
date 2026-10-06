@@ -8,3 +8,8 @@ dist/
 build/
 .venv/
 venv/
+# autoresearch experiment artifacts
+autoresearch*.md
+autoresearch*.sh
+autoresearch*.jsonl
+experiments/
