@@ -1129,13 +1129,20 @@ function makeMicRecognition() {
       else interimStr += t;
     }
 
-    // Show live interim speech directly in the chat input box
+    // Show live interim speech in both the chat input AND the transcript panel (real-time)
     if (interimStr) {
       setMicInputText(interimStr);
+      // Show interim in transcript panel as live preview
+      interimText.textContent = interimStr;
+      interimEntry.style.display = 'flex';
+      transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
     }
 
     if (finalStr.trim()) {
       const text = finalStr.trim();
+      // Hide interim indicator now that we have a final result
+      interimEntry.style.display = 'none';
+      interimText.textContent = 'Transcribing…';
       if (text === micLastCommitted) return;
       micLastCommitted = text;
 
@@ -1149,6 +1156,10 @@ function makeMicRecognition() {
         // Manual: accumulate finals in micManualAccum (not from DOM, to avoid interim→duplicate)
         micManualAccum = micManualAccum ? micManualAccum + ' ' + text : text;
         setMicInputText(micManualAccum);
+        // Also show accumulated text as live interim in transcript panel
+        interimText.textContent = micManualAccum;
+        interimEntry.style.display = 'flex';
+        transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
       }
     }
   };
@@ -1234,6 +1245,7 @@ function stopMic() {
   stopChunkEarlyFn = null;
   if (micRecognition) { micRecognition.onend = null; micRecognition.stop(); micRecognition = null; }
   interimEntry.style.display = 'none';
+  interimText.textContent = 'Transcribing…';
   micBtn.classList.remove('active');
   micBtn.textContent = '🎤';
   const _fmOff = _doc().getElementById('fMicBtn');
