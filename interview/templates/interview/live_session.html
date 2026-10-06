@@ -232,6 +232,9 @@ body { overflow: hidden; }
   border-top: 1px solid rgba(108,99,255,0.2);
   flex-shrink: 0;
 }
+/* float panel mic/sys buttons are redundant with the bottom bar — hide everywhere */
+#fMicBtn, #fSysBtn { display: none !important; }
+
 .ai-float-input-row .fmic-btn {
   width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--border);
   cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
@@ -1089,6 +1092,7 @@ function setTranscribeInterval(sec) {
 
 let micRecognition = null;
 let micLastCommitted = '';
+let micManualAccum = '';   // tracks committed finals in manual mode (not interim)
 
 function setMicInputText(text) {
   const qi = document.getElementById('questionInput');
@@ -1130,14 +1134,15 @@ function makeMicRecognition() {
       micLastCommitted = text;
 
       if (transcribeMode === 'auto') {
-        // Auto: type text and immediately submit to AI
+        // Auto: type text, add to transcript panel, and immediately submit to AI
         setMicInputText(text);
         saveMicToServer(text);
+        addTranscriptEntryUI(text, 'microphone');
         triggerAI(text, true); // true = already saved, skip duplicate
       } else {
-        // Manual: accumulate in the input box, user presses Enter / ⏩
-        const current = getMicInputText().trim();
-        setMicInputText(current ? current + ' ' + text : text);
+        // Manual: accumulate finals in micManualAccum (not from DOM, to avoid interim→duplicate)
+        micManualAccum = micManualAccum ? micManualAccum + ' ' + text : text;
+        setMicInputText(micManualAccum);
       }
     }
   };
@@ -1175,6 +1180,7 @@ async function startMic() {
 
   micActive = true;
   micLastCommitted = '';
+  micManualAccum = '';
   micBtn.classList.add('active');
   micBtn.textContent = '🔴';
   recDot.classList.add('active');
@@ -1188,6 +1194,7 @@ async function startMic() {
     const text = getMicInputText().trim();
     if (text) {
       saveMicToServer(text);
+      micManualAccum = '';
       triggerAI(text, true); // already saved above
     }
   };
@@ -1442,6 +1449,7 @@ function clearInput() {
   if (text) saveMicToServer(text); // always persist before discarding
   if (qi) qi.value = '';
   if (fi) fi.value = '';
+  micManualAccum = '';
 }
 
 function saveAndClearInput() {
