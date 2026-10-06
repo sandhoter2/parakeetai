@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ParakeetAI</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: transparent !important;
+  background-color: rgba(0,0,0,0) !important;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  color: #e8eaf0;
+}
+
+/* ── Glass panel ── */
+.glass-panel {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  background: rgba(18, 20, 32, var(--panel-bg-alpha, 0.55));
+  backdrop-filter: blur(30px) saturate(140%) brightness(0.95);
+  -webkit-backdrop-filter: blur(30px) saturate(140%) brightness(0.95);
+  border: 1px solid rgba(108,99,255, calc(var(--panel-bg-alpha, 0.55) * 0.7));
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  overflow: hidden;
+  transition: background 0.15s ease;
+}
+
+/* ── Drag bar (same as ai-float-bar) ── */
+.drag-bar {
+  -webkit-app-region: drag;
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 10px; height: 40px; min-height: 40px;
+  background: rgba(108,99,255,0.18);
+  border-bottom: 1px solid rgba(108,99,255,0.28);
+  user-select: none;
+}
+.drag-logo {
+  font-size: 11px; font-weight: 700; color: #a89fff;
+  letter-spacing: 0.4px; flex: 1;
+}
+.drag-controls {
+  -webkit-app-region: no-drag;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* ── Toolbar buttons (match float-ctrl-btn) ── */
+.ctrl-btn {
+  -webkit-app-region: no-drag;
+  width: 26px; height: 22px; border: none; border-radius: 5px;
+  background: rgba(255,255,255,0.08); color: #c8c8e0;
+  cursor: pointer; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s; white-space: nowrap;
+}
+.ctrl-btn:hover { background: rgba(108,99,255,0.45); color: #fff; }
+.ctrl-btn.active { background: rgba(108,99,255,0.7); color: #fff; }
+.ctrl-btn.minimize-btn:hover { background: rgba(255,190,0,0.55); color: #fff; }
+.ctrl-btn.close-btn:hover    { background: rgba(255,70,70,0.55);  color: #fff; }
+
+/* Opacity slider */
+.opacity-wrap { -webkit-app-region: no-drag; display:flex; align-items:center; }
+.opacity-wrap input[type=range] {
+  width: 64px; height: 3px; cursor: pointer; accent-color: #6c63ff;
+}
+
+/* Bionic status tag */
+.bionic-status {
+  font-size: 9px; color: rgba(168,159,255,0.6);
+  padding: 0 4px; white-space: nowrap; pointer-events: none;
+}
+
+/* ── Settings pane ── */
+.settings-pane {
+  display: none; flex-direction: column; gap: 6px;
+  padding: 10px 12px;
+  background: rgba(8,8,24,0.7);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.settings-pane.open { display: flex; }
+.settings-pane label { font-size: 10px; color: #777; margin-bottom: 1px; }
+.settings-pane input {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px; padding: 5px 8px; color: #e0e0f0; font-size: 12px; outline: none; width: 100%;
+}
+.settings-pane input:focus { border-color: rgba(108,99,255,0.7); }
+.save-cfg-btn {
+  align-self: flex-end; padding: 4px 14px; border: none; border-radius: 6px;
+  background: rgba(108,99,255,0.8); color: #fff; cursor: pointer; font-size: 12px;
+}
+.save-cfg-btn:hover { background: rgba(108,99,255,1); }
+.sync-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #ff4444; display: inline-block; margin-left: 4px;
+}
+.sync-dot.ok { background: #44cc88; }
+
+/* ── Answer area ── */
+.answer-area {
+  flex: 1; overflow-y: auto; padding: 10px 12px;
+  scrollbar-width: thin; scrollbar-color: rgba(108,99,255,0.35) transparent;
+}
+.answer-area::-webkit-scrollbar { width: 4px; }
+.answer-area::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.35); border-radius: 2px; }
+
+.empty-hint {
+  color: rgba(255,255,255,0.18); font-size: 12px; text-align: center; margin-top: 24px;
+  line-height: 1.7;
+}
+
+.qa-block { margin-bottom: 14px; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+.qa-question {
+  font-size: 11px; color: rgba(168,159,255,0.75); margin-bottom: 5px; padding-left: 2px;
+}
+.qa-answer {
+  background: rgba(255,255,255,0.05);
+  border-left: 2px solid rgba(108,99,255,0.55);
+  border-radius: 0 8px 8px 0;
+  padding: 8px 10px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+  font-size: var(--ai-font-size, 13px);
+}
+.qa-answer.loading { color: rgba(255,255,255,0.3); font-style: italic; }
+
+.qa-actions {
+  display: flex; gap: 8px; margin-top: 5px;
+}
+.qa-action-btn {
+  background: none; border: none; color: rgba(255,255,255,0.3);
+  cursor: pointer; font-size: 11px; padding: 0;
+}
+.qa-action-btn:hover { color: rgba(168,159,255,0.9); }
+
+/* ── Bionic reading ── */
+.bionic b { font-weight: 900; color: #c8c2ff; }
+
+/* ── Input row ── */
+.input-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 9px;
+  background: rgba(0,0,0,0.3);
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.mic-btn {
+  -webkit-app-region: no-drag;
+  width: 30px; height: 30px; border: none; border-radius: 7px;
+  background: rgba(255,255,255,0.08); color: #c0c0d8; cursor: pointer;
+  font-size: 14px; display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s; flex-shrink: 0;
+}
+.mic-btn:hover { background: rgba(108,99,255,0.4); }
+.mic-btn.active { background: rgba(200,40,40,0.8); box-shadow: 0 0 0 2px rgba(220,60,60,0.4); }
+
+.q-input {
+  flex: 1; background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.11); border-radius: 8px;
+  padding: 6px 9px; color: #e8eaf0; font-size: 13px; outline: none;
+  transition: border-color 0.12s;
+  -webkit-app-region: no-drag;
+}
+.q-input:focus { border-color: rgba(108,99,255,0.65); background: rgba(255,255,255,0.09); }
+.q-input::placeholder { color: rgba(255,255,255,0.22); }
+
+.ask-btn {
+  -webkit-app-region: no-drag;
+  padding: 6px 13px; border: none; border-radius: 8px;
+  background: rgba(108,99,255,0.8); color: #fff; cursor: pointer;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  transition: background 0.12s; flex-shrink: 0;
+}
+.ask-btn:hover { background: rgba(108,99,255,1); }
+.ask-btn:disabled { background: rgba(108,99,255,0.3); cursor: default; }
+
+/* ── Login screen ── */
+#loginScreen {
+  position: absolute; inset: 0; z-index: 100;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(10,10,24,0.92);
+  backdrop-filter: blur(20px);
+  border-radius: 14px;
+  padding: 28px 24px;
+  gap: 10px;
+}
+#loginScreen.hidden { display: none; }
+.login-logo { font-size: 20px; font-weight: 800; color: #a89fff; letter-spacing: 0.5px; margin-bottom: 6px; }
+.login-subtitle { font-size: 11px; color: rgba(200,200,220,0.6); margin-bottom: 10px; }
+.login-field { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+.login-field label { font-size: 10px; color: #888; }
+.login-field input {
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 7px; padding: 7px 10px; color: #e8eaf0; font-size: 12px; outline: none; width: 100%;
+}
+.login-field input:focus { border-color: rgba(108,99,255,0.7); }
+.login-btn {
+  width: 100%; padding: 8px; border: none; border-radius: 8px;
+  background: rgba(108,99,255,0.85); color: #fff; cursor: pointer;
+  font-size: 13px; font-weight: 600; margin-top: 4px;
+  transition: background 0.12s;
+}
+.login-btn:hover { background: rgba(108,99,255,1); }
+.login-btn:disabled { background: rgba(108,99,255,0.35); cursor: default; }
+.login-error { font-size: 11px; color: #ff7070; min-height: 14px; text-align: center; }
+
+/* ── Plan banner ── */
+#planBanner {
+  display: none; align-items: center; justify-content: space-between;
+  padding: 4px 12px; font-size: 10px;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  color: rgba(200,200,220,0.7);
+}
+#planBanner.visible { display: flex; }
+#planBanner.warn { background: rgba(255,160,0,0.12); border-color: rgba(255,160,0,0.25); color: rgba(255,200,100,0.9); }
+.plan-upgrade-btn {
+  font-size: 10px; padding: 2px 8px; border: none; border-radius: 4px;
+  background: rgba(108,99,255,0.7); color: #fff; cursor: pointer;
+}
+.plan-upgrade-btn:hover { background: rgba(108,99,255,1); }
+
+/* ── Live Transcript Panel ── */
+#transcriptPanel {
+  display: none; flex-direction: column;
+  max-height: 220px; min-height: 52px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  background: rgba(0,0,0,0.2);
+}
+#transcriptPanel.visible { display: flex; }
+#transcriptHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 3px 10px;
+  font-size: 9px; color: rgba(255,255,255,0.35);
+  background: rgba(0,0,0,0.15); flex-shrink: 0;
+}
+#transcriptClearBtn {
+  background: none; border: none; color: rgba(255,255,255,0.25);
+  font-size: 9px; cursor: pointer; padding: 0;
+}
+#transcriptClearBtn:hover { color: rgba(255,100,100,0.7); }
+#transcriptStream {
+  overflow-y: auto; flex: 1; padding: 4px 10px 6px;
+  scrollbar-width: thin; scrollbar-color: rgba(108,99,255,0.2) transparent;
+}
+#transcriptStream::-webkit-scrollbar { width: 3px; }
+#transcriptStream::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.25); border-radius: 2px; }
+.tx-entry {
+  display: flex; align-items: baseline; gap: 5px;
+  margin-bottom: 2px; font-size: 11px; line-height: 1.4;
+}
+.tx-speaker { font-size: 10px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.tx-mic .tx-speaker  { color: rgba(168,159,255,0.85); }
+.tx-interviewer .tx-speaker { color: rgba(100,200,255,0.85); }
+.tx-text { color: rgba(220,220,240,0.78); word-break: break-word; flex: 1; }
+.tx-time { font-size: 9px; color: rgba(255,255,255,0.2); white-space: nowrap; flex-shrink: 0; }
+.tx-question .tx-speaker { color: rgba(168,159,255,0.9); }
+.tx-answer   .tx-speaker { color: rgba(100,220,120,0.9); }
+.tx-answer   .tx-text    { color: rgba(200,240,210,0.8); font-style: italic; font-size: 10.5px; }
+
+.send-btn {
+  -webkit-app-region: no-drag;
+  padding: 6px 11px; border: none; border-radius: 8px;
+  background: rgba(255,160,0,0.8); color: #fff; cursor: pointer;
+  font-size: 14px; font-weight: 600;
+  transition: background 0.12s; flex-shrink: 0;
+  display: none; align-items: center; justify-content: center;
+}
+.send-btn:hover { background: rgba(255,180,0,1); }
+</style>
+</head>
+<body>
+<div class="glass-panel" id="glassPanel">
+
+  <!-- ── Login screen ── -->
+  <div id="loginScreen">
+    <div class="login-logo">✦ ParakeetAI</div>
+    <div class="login-subtitle">Sign in to your account to continue</div>
+    <div class="login-field">
+      <label>Server URL</label>
+      <input type="text" id="loginBaseUrl" placeholder="https://parakeetai.onrender.com" value="https://parakeetai.onrender.com">
+    </div>
+    <div class="login-field">
+      <label>Username</label>
+      <input type="text" id="loginUsername" placeholder="your username" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div style="font-size:10px;color:rgba(168,159,255,0.5);margin-top:6px">⌘⇧Space to show/hide · Free plan: 5 sessions</div>
+  </div>
+
+  <!-- ── Plan banner (shown after login) ── -->
+  <div id="planBanner">
+    <span id="planInfo">Free plan</span>
+    <span id="sessionLimitInfo" class="session-limit">0 / 5 sessions used</span>
+    <button class="plan-upgrade-btn" id="upgradeBtn" onclick="openUpgrade()" style="display:none">Upgrade</button>
+  </div>
+
+  <!-- ── Drag bar ── -->
+  <div class="drag-bar">
+    <span class="drag-logo">✦ AI ANSWER</span>
+    <div class="drag-controls">
+      <span class="bionic-status" id="bionicStatus">Bionic off</span>
+      <button class="ctrl-btn" id="bionicBtn" onclick="toggleBionic()" title="Bionic reading">B</button>
+      <button class="ctrl-btn" onclick="adjustFont(-1)" title="Smaller font">A-</button>
+      <button class="ctrl-btn" onclick="adjustFont(1)" title="Larger font">A+</button>
+      <div class="opacity-wrap" title="Glass transparency">
+        <input type="range" id="opacitySlider" min="10" max="100" value="55"
+               oninput="setGlassOpacity(this.value)">
+      </div>
+      <button class="ctrl-btn" id="pinBtn" onclick="togglePin()" title="Toggle always-on-top">📌</button>
+      <button class="ctrl-btn" id="settingsBtn" onclick="toggleSettings()" title="Django settings">⚙</button>
+      <button class="ctrl-btn minimize-btn" onclick="window.parakeet.minimize()" title="Minimize">—</button>
+      <button class="ctrl-btn close-btn"    onclick="window.parakeet.close()"    title="Close">✕</button>
+    </div>
+  </div>
+
+  <!-- ── Settings pane ── -->
+  <div class="settings-pane" id="settingsPane">
+    <label>Django Base URL</label>
+    <input type="text" id="cfgBaseUrl" placeholder="http://localhost:8000">
+    <label>Extension Token <span style="color:#a89fff;font-size:9px">(from Django Profile page)</span></label>
+    <input type="password" id="cfgToken" placeholder="paste token from Django profile">
+    <button class="save-cfg-btn" style="align-self:flex-start;padding:4px 12px;font-size:11px;background:rgba(108,99,255,0.45)" onclick="loadFromDjango()" id="loadBtn">
+      ↓ Load config from Django
+    </button>
+    <label>Session ID <span style="color:#a89fff;font-size:9px">(auto-filled by Load, or paste manually)</span></label>
+    <input type="text" id="cfgSessionId" placeholder="uuid — auto-filled when you click Load">
+    <label>Transcription chunk (seconds)</label>
+    <select id="cfgChunk" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:5px 8px;color:#e0e0f0;font-size:12px;outline:none;width:100%">
+      <option value="2">2 s — fastest</option>
+      <option value="3" selected>3 s — default</option>
+      <option value="5">5 s — balanced</option>
+      <option value="10">10 s — slowest / quieter</option>
+    </select>
+    <button class="save-cfg-btn" onclick="saveSettings()">
+      Save <span class="sync-dot" id="syncDot"></span>
+    </button>
+  </div>
+
+  <!-- ── Answer area ── -->
+  <div class="answer-area" id="answerArea">
+    <div class="empty-hint" id="emptyHint">
+      ✦ ParakeetAI<br>
+      Type a question or speak<br>
+      <small style="font-size:10px;opacity:0.6">⌘⇧Space to show/hide · ⚙ to connect Django</small>
+    </div>
+  </div>
+
+  <!-- ── Live Transcript Panel ── -->
+  <div id="transcriptPanel">
+    <div id="transcriptHeader">
+      <span id="transcriptStatus">🎤 Recording…</span>
+      <button id="transcriptClearBtn" onclick="clearTranscript()" title="Clear transcript">✕ clear</button>
+    </div>
+    <div id="transcriptStream"></div>
+  </div>
+
+  <!-- ── Input row ── -->
+  <div class="input-row">
+    <button class="mic-btn" id="micBtn"    onclick="toggleMic()"    title="Your mic">🎤</button>
+    <button class="mic-btn" id="screenBtn" onclick="toggleScreen()" title="Screen / interviewer audio">🖥</button>
+    <input class="q-input" id="qInput" type="text"
+           placeholder="Type question or speak…"
+           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askAI();}">
+    <button class="send-btn" id="sendBtn" onclick="sendAndAsk()" title="Stop recording and send to AI">⏩</button>
+    <button class="ask-btn" id="askBtn" onclick="askAI()">✦ AI</button>
+  </div>
+
+</div>
+<script>
+// ── Auth & Plan ───────────────────────────────────────────────────────────────
+async function initAuth() {
+  if (!window.parakeet?.storeGet) return; // dev mode without IPC
+  const token = await window.parakeet.storeGet('token');
+  if (token) {
+    // Already logged in — hide login screen, show main UI
+    document.getElementById('loginScreen').classList.add('hidden');
+    const storedBase    = await window.parakeet.storeGet('baseUrl');
+    const storedUser    = await window.parakeet.storeGet('username');
+    const plan          = await window.parakeet.storeGet('plan');
+    const sessionLimit  = await window.parakeet.storeGet('sessionLimit');
+    const sessionsUsed  = await window.parakeet.storeGet('sessionsUsed');
+    cfg.baseUrl  = storedBase  || cfg.baseUrl;
+    cfg.token    = token;
+    document.getElementById('cfgBaseUrl').value = cfg.baseUrl;
+    document.getElementById('cfgToken').value   = cfg.token;
+    showPlanBanner(storedUser || '', plan || 'free', sessionsUsed || 0, sessionLimit || 5);
+  }
+}
+
+async function doLogin() {
+  const baseUrl  = document.getElementById('loginBaseUrl').value.trim() || 'https://parakeetai.onrender.com';
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl    = document.getElementById('loginError');
+  const btn      = document.getElementById('loginBtn');
+
+  errEl.textContent = '';
+  if (!username || !password) { errEl.textContent = 'Username and password are required.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const result = await window.parakeet.djangoLogin({ baseUrl, username, password });
+    if (result.statusCode === 200) {
+      cfg.baseUrl = baseUrl;
+      cfg.token   = result.token;
+      document.getElementById('cfgBaseUrl').value = cfg.baseUrl;
+      document.getElementById('cfgToken').value   = cfg.token;
+      document.getElementById('loginScreen').classList.add('hidden');
+      showPlanBanner(result.username || username, result.plan || 'free',
+                     result.sessions_used || 0, result.session_limit || 5);
+    } else {
+      errEl.textContent = result.error || 'Login failed. Check credentials.';
+    }
+  } catch(e) {
+    errEl.textContent = 'Could not reach server: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+
+function showPlanBanner(username, plan, sessionsUsed, sessionLimit) {
+  const banner      = document.getElementById('planBanner');
+  const planInfo    = document.getElementById('planInfo');
+  const sessionInfo = document.getElementById('sessionLimitInfo');
+  const upgradeBtn  = document.getElementById('upgradeBtn');
+
+  planInfo.textContent = (plan === 'free')
+    ? `Free — ${username}`
+    : `${plan.charAt(0).toUpperCase() + plan.slice(1)} — ${username}`;
+
+  if (plan === 'free') {
+    const remaining = Math.max(0, sessionLimit - sessionsUsed);
+    sessionInfo.textContent = `${sessionsUsed}/${sessionLimit} sessions used · ${remaining} remaining`;
+    upgradeBtn.style.display = 'inline-block';
+    if (sessionsUsed >= sessionLimit) {
+      banner.classList.add('warn');
+      sessionInfo.textContent = 'Session limit reached — upgrade for unlimited';
+    }
+  } else {
+    sessionInfo.textContent = 'Unlimited sessions';
+    upgradeBtn.style.display = 'none';
+  }
+  banner.classList.add('visible');
+}
+
+function openUpgrade() {
+  const baseUrl = cfg.baseUrl || 'https://parakeetai.onrender.com';
+  window.open(baseUrl + '/billing/checkout/pro/', '_blank');
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let bionicOn = false;
+let fontSize = 13;
+let transcriptLog = []; // {speaker, text, time}
+let cfg = {
+  baseUrl:   localStorage.getItem('pkai_baseUrl')   || 'http://localhost:8000',
+  sessionId: localStorage.getItem('pkai_sessionId') || '',
+  token:     localStorage.getItem('pkai_token')     || 'pkai-local-dev',
+  chunk:     parseInt(localStorage.getItem('pkai_chunk') || '3', 10)
+};
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('cfgBaseUrl').value   = cfg.baseUrl;
+document.getElementById('cfgSessionId').value = cfg.sessionId;
+document.getElementById('cfgToken').value     = cfg.token;
+document.getElementById('cfgChunk').value     = cfg.chunk;
+updateSyncDot();
+initAuth();
+
+function updateSyncDot() {
+  document.getElementById('syncDot').className =
+    'sync-dot' + (cfg.sessionId ? ' ok' : '');
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function toggleSettings() {
+  document.getElementById('settingsPane').classList.toggle('open');
+}
+
+async function loadFromDjango() {
+  const baseUrl = document.getElementById('cfgBaseUrl').value.trim() || cfg.baseUrl;
+  const token   = document.getElementById('cfgToken').value.trim();
+  if (!token) { alert('Paste your Extension Token first (get it from Django Profile page).'); return; }
+  const btn = document.getElementById('loadBtn');
+  btn.textContent = '⏳ Loading…'; btn.disabled = true;
+  try {
+    // Use IPC bridge to avoid CORS — main process has no origin restrictions
+    const data = await window.parakeet.djangoConfig({ baseUrl, token });
+    const sid = (data.active_sessions && data.active_sessions.length > 0)
+      ? data.active_sessions[0].id
+      : data.latest_session_id || '';
+    document.getElementById('cfgBaseUrl').value   = baseUrl;
+    document.getElementById('cfgToken').value     = token;
+    document.getElementById('cfgSessionId').value = sid;
+    cfg.baseUrl   = baseUrl;
+    cfg.token     = token;
+    cfg.sessionId = sid;
+    localStorage.setItem('pkai_baseUrl',   cfg.baseUrl);
+    localStorage.setItem('pkai_token',     cfg.token);
+    localStorage.setItem('pkai_sessionId', cfg.sessionId);
+    updateSyncDot();
+    const label = data.display_name || data.username || '';
+    btn.textContent = label ? `✓ Loaded (${label})` : '✓ Loaded';
+    setTimeout(() => { btn.textContent = '↓ Load config from Django'; btn.disabled = false; }, 3000);
+  } catch(e) {
+    alert('Could not load from Django:\n' + e.message + '\n\nMake sure Django is running and the token is correct.');
+    btn.textContent = '↓ Load config from Django'; btn.disabled = false;
+  }
+}
+
+function saveSettings() {
+  cfg.baseUrl   = document.getElementById('cfgBaseUrl').value.trim();
+  cfg.sessionId = document.getElementById('cfgSessionId').value.trim();
+  cfg.token     = document.getElementById('cfgToken').value.trim();
+  cfg.chunk     = parseInt(document.getElementById('cfgChunk').value, 10) || 3;
+  localStorage.setItem('pkai_baseUrl',   cfg.baseUrl);
+  localStorage.setItem('pkai_sessionId', cfg.sessionId);
+  localStorage.setItem('pkai_token',     cfg.token);
+  localStorage.setItem('pkai_chunk',     cfg.chunk);
+  updateSyncDot();
+  document.getElementById('settingsPane').classList.remove('open');
+}
+
+// ── Pin / unpin (always-on-top) ───────────────────────────────────────────────
+let pinned = true;
+function togglePin() {
+  pinned = !pinned;
+  window.parakeet.setAlwaysOnTop(pinned);
+  const btn = document.getElementById('pinBtn');
+  btn.classList.toggle('active', pinned);
+  btn.title = pinned ? 'Unpin (let other windows go on top)' : 'Pin on top';
+}
+
+// ── Glass opacity ──────────────────────────────────────────────────────────────
+function setGlassOpacity(val) {
+  const bgAlpha = Math.max(0.06, (val / 100) * 0.90).toFixed(2);
+  document.getElementById('glassPanel').style.setProperty('--panel-bg-alpha', bgAlpha);
+  window.parakeet.setOpacity(Math.max(0.12, val / 100));
+}
+
+// ── Bionic reading ────────────────────────────────────────────────────────────
+function toggleBionic() {
+  bionicOn = !bionicOn;
+  const btn = document.getElementById('bionicBtn');
+  const st  = document.getElementById('bionicStatus');
+  btn.classList.toggle('active', bionicOn);
+  st.textContent = bionicOn ? 'Bionic on' : 'Bionic off';
+  document.querySelectorAll('.qa-answer').forEach(el => {
+    el.classList.toggle('bionic', bionicOn);
+    const raw = el.dataset.raw || el.textContent;
+    renderAnswer(el, raw);
+  });
+}
+
+function applyBionic(text) {
+  return text.replace(/(\w+)/g, w => {
+    const half = Math.ceil(w.length / 2);
+    return `<b>${w.slice(0, half)}</b>${w.slice(half)}`;
+  });
+}
+
+function markdownToHtml(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // code blocks
+    .replace(/```[\w]*\n?([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.3);padding:6px 8px;border-radius:6px;overflow-x:auto;font-size:11px">$1</pre>')
+    // inline code
+    .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px;font-size:11px">$1</code>')
+    // bold
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    // italic
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    // newlines
+    .replace(/\n/g, '<br>');
+}
+
+function renderAnswer(el, text) {
+  if (bionicOn) {
+    el.innerHTML = applyBionic(markdownToHtml(text));
+  } else {
+    el.innerHTML = markdownToHtml(text);
+  }
+}
+
+// ── Font size ─────────────────────────────────────────────────────────────────
+function adjustFont(delta) {
+  fontSize = Math.min(20, Math.max(10, fontSize + delta));
+  document.querySelectorAll('.qa-answer').forEach(el => {
+    el.style.fontSize = fontSize + 'px';
+  });
+  document.getElementById('glassPanel').style.setProperty('--ai-font-size', fontSize + 'px');
+}
+
+// ── AI ask ────────────────────────────────────────────────────────────────────
+async function askAI() {
+  const q = document.getElementById('qInput').value.trim();
+
+  // No text typed: start mic if idle so user can speak, then click ⏩ to send
+  if (!q) {
+    if (!micWanted) await toggleMic();
+    return;
+  }
+
+  if (!cfg.sessionId) {
+    document.getElementById('settingsPane').classList.add('open');
+    document.getElementById('cfgSessionId').focus();
+    return;
+  }
+  document.getElementById('qInput').value = '';
+  document.getElementById('emptyHint')?.remove();
+
+  const askBtn = document.getElementById('askBtn');
+  askBtn.disabled = true;
+  askBtn.textContent = '…';
+
+  const { answerEl } = addBlock(q, '…');
+
+  try {
+    const res = await window.parakeet.djangoChat({
+      baseUrl: cfg.baseUrl, sessionId: cfg.sessionId,
+      token: cfg.token, question: q
+    });
+    const text = res.text || 'No response';
+    answerEl.dataset.raw = text;
+    answerEl.classList.remove('loading');
+    renderAnswer(answerEl, text);
+    answerEl.style.fontSize = fontSize + 'px';
+    appendTranscript(text, 'answer');
+  } catch(e) {
+    answerEl.classList.remove('loading');
+    answerEl.textContent = '⚠ ' + e.message;
+    answerEl.dataset.raw = answerEl.textContent;
+  } finally {
+    askBtn.disabled = false;
+    askBtn.textContent = '✦ AI';
+  }
+}
+
+// Stop recording and send accumulated transcript to AI
+async function sendAndAsk() {
+  blockQInput = true; // freeze qInput — stop-triggered final chunk must not duplicate
+  if (micWanted) {
+    micWanted = false;
+    micRecorder?.stop();
+    micStream?.getTracks().forEach(t => t.stop());
+    micStream = null;
+    btnUI('micBtn', false);
+  }
+  if (screenWanted) {
+    screenWanted = false;
+    screenRecorder?.stop();
+    screenStream?.getTracks().forEach(t => t.stop());
+    screenStream = null;
+    btnUI('screenBtn', false);
+  }
+  updateTranscriptStatus();
+  // Allow the final audio chunk to finish transcribing before reading qInput
+  await new Promise(r => setTimeout(r, 300));
+  blockQInput = false;
+  await askAI();
+}
+
+function addBlock(question, answerPlaceholder) {
+  const area = document.getElementById('answerArea');
+  const div  = document.createElement('div');
+  div.className = 'qa-block';
+
+  const qEl = document.createElement('div');
+  qEl.className = 'qa-question';
+  qEl.textContent = '💬 ' + question;
+
+  const aEl = document.createElement('div');
+  aEl.className = 'qa-answer' + (answerPlaceholder === '…' ? ' loading' : '');
+  aEl.textContent = answerPlaceholder;
+
+  const actionsEl = document.createElement('div');
+  actionsEl.className = 'qa-actions';
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'qa-action-btn';
+  copyBtn.textContent = '⎘ Copy';
+  copyBtn.onclick = () => navigator.clipboard.writeText(aEl.dataset.raw || aEl.textContent);
+  actionsEl.appendChild(copyBtn);
+
+  div.appendChild(qEl); div.appendChild(aEl); div.appendChild(actionsEl);
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return { block: div, answerEl: aEl };
+}
+
+// ── Mic & Screen Audio (MediaRecorder → Groq Whisper via Django) ──────────────
+let micStream   = null, micRecorder   = null, micWanted    = false;
+let screenStream= null, screenRecorder= null, screenWanted = false;
+let blockQInput = false; // prevents final stop-chunk from duplicating qInput
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function btnUI(id, on) {
+  const btn = document.getElementById(id);
+  btn.classList.toggle('active', on);
+}
+
+function bestMime() {
+  for (const t of ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4']) {
+    if (MediaRecorder.isTypeSupported(t)) return t;
+  }
+  return '';
+}
+
+async function blobToBase64(blob) {
+  const buf = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+async function sendAudioChunk(blob, speakerType) {
+  if (!cfg.sessionId || blob.size < 500) return; // skip silence / not configured
+  try {
+    const audioBase64 = await blobToBase64(blob);
+    // Save raw audio to ~/Documents/ParakeetAI/recordings/ (fire-and-forget)
+    if (window.parakeet?.saveAudioChunk) {
+      window.parakeet.saveAudioChunk({ data: audioBase64, speakerType, timestamp: Date.now() })
+        .catch(() => {});
+    }
+    const res = await window.parakeet.djangoTranscribeAudio({
+      baseUrl: cfg.baseUrl, sessionId: cfg.sessionId,
+      token: cfg.token, audioBase64, speakerType
+    });
+    const text = (res.text || '').trim();
+    if (!text) return;
+
+    appendTranscript(text, speakerType);
+    if (speakerType === 'microphone' && !blockQInput) {
+      const inp = document.getElementById('qInput');
+      inp.value = (inp.value ? inp.value.trimEnd() + ' ' : '') + text;
+    }
+  } catch(e) {
+    console.warn('Transcribe error:', e);
+  }
+}
+
+function appendTranscript(text, speaker) {
+  const panel  = document.getElementById('transcriptPanel');
+  const stream = document.getElementById('transcriptStream');
+  panel.classList.add('visible');
+
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  transcriptLog.push({ speaker, text, time });
+
+  const entry = document.createElement('div');
+  const speakerEl = document.createElement('span');
+  speakerEl.className = 'tx-speaker';
+  const textEl = document.createElement('span');
+  textEl.className = 'tx-text';
+  const timeEl = document.createElement('span');
+  timeEl.className = 'tx-time';
+  timeEl.textContent = time;
+
+  if (speaker === 'question') {
+    entry.className = 'tx-entry tx-question';
+    speakerEl.textContent = '💬 Q';
+    textEl.textContent = text;
+  } else if (speaker === 'answer') {
+    entry.className = 'tx-entry tx-answer';
+    speakerEl.textContent = '✦ AI';
+    textEl.textContent = text;
+  } else {
+    const isMic = speaker === 'microphone';
+    entry.className = 'tx-entry ' + (isMic ? 'tx-mic' : 'tx-interviewer');
+    speakerEl.textContent = isMic ? '🎤 You' : '🎙 Them';
+    textEl.textContent = text;
+  }
+
+  entry.appendChild(speakerEl);
+  entry.appendChild(textEl);
+  entry.appendChild(timeEl);
+  stream.appendChild(entry);
+  stream.scrollTop = stream.scrollHeight;
+}
+
+function clearTranscript() {
+  document.getElementById('transcriptStream').innerHTML = '';
+  transcriptLog = [];
+}
+
+function updateTranscriptStatus() {
+  const panel   = document.getElementById('transcriptPanel');
+  const status  = document.getElementById('transcriptStatus');
+  const sendBtn = document.getElementById('sendBtn');
+  const active  = micWanted || screenWanted;
+
+  sendBtn.style.display = active ? 'flex' : 'none';
+
+  if (!active) {
+    if (transcriptLog.length === 0) panel.classList.remove('visible');
+    status.textContent = '';
+    return;
+  }
+  panel.classList.add('visible');
+  const parts = [];
+  if (micWanted)    parts.push('🎤 mic');
+  if (screenWanted) parts.push('🖥 screen');
+  status.textContent = parts.join(' + ') + ` · every ${cfg.chunk}s`;
+}
+
+// ── Mic ───────────────────────────────────────────────────────────────────────
+async function toggleMic() {
+  if (micWanted) {
+    micWanted = false;
+    micRecorder?.stop();
+    micStream?.getTracks().forEach(t => t.stop());
+    micStream = null;
+    btnUI('micBtn', false);
+    updateTranscriptStatus();
+    return;
+  }
+  try {
+    micStream  = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    micWanted  = true;
+    btnUI('micBtn', true);
+    updateTranscriptStatus();
+    startMicRecorder();
+  } catch(e) {
+    alert('Mic access denied.\n\nGo to System Settings → Privacy → Microphone and allow ParakeetAI.');
+  }
+}
+
+function startMicRecorder() {
+  if (!micStream || !micWanted) return;
+  micRecorder = new MediaRecorder(micStream, { mimeType: bestMime() });
+  micRecorder.ondataavailable = e => sendAudioChunk(e.data, 'microphone');
+  micRecorder.onstop = () => { if (micWanted) setTimeout(startMicRecorder, 100); };
+  micRecorder.start(cfg.chunk * 1000);
+}
+
+// ── Screen / Interviewer Audio ────────────────────────────────────────────────
+async function toggleScreen() {
+  if (screenWanted) {
+    screenWanted = false;
+    screenRecorder?.stop();
+    screenStream?.getTracks().forEach(t => t.stop());
+    screenStream = null;
+    btnUI('screenBtn', false);
+    updateTranscriptStatus();
+    return;
+  }
+  try {
+    // Chrome requires video even when only audio is wanted
+    const display = await navigator.mediaDevices.getDisplayMedia({
+      audio: true,
+      video: { width: 1, height: 1 }
+    });
+    // Drop the video track immediately — only need audio
+    display.getVideoTracks().forEach(t => t.stop());
+
+    const audioTracks = display.getAudioTracks();
+    if (audioTracks.length === 0) {
+      alert(
+        'No audio track captured.\n\n' +
+        'In the picker that appeared:\n' +
+        '• Choose a Chrome tab (not "Entire Screen" or "Window")\n' +
+        '• Make sure "Share audio" / "Share tab audio" is ticked\n\n' +
+        'Note: macOS system-wide audio capture is not supported in Chrome/Electron.\n' +
+        'Use a Chrome tab (e.g. Google Meet, Zoom web) and tick "Share audio".'
+      );
+      display.getTracks().forEach(t => t.stop());
+      return;
+    }
+
+    screenStream  = display;
+    screenWanted  = true;
+    btnUI('screenBtn', true);
+    updateTranscriptStatus();
+    audioTracks[0].addEventListener('ended', () => {
+      screenWanted = false;
+      btnUI('screenBtn', false);
+      updateTranscriptStatus();
+    });
+    startScreenRecorder();
+  } catch(e) {
+    if (e.name !== 'NotAllowedError') {
+      alert(
+        'Screen audio error: ' + e.message + '\n\n' +
+        'In the Electron overlay, screen capture shows a picker — ' +
+        'select a screen/window source.\n\n' +
+        'Note: macOS does not support system-wide audio capture without ' +
+        'a virtual audio driver (e.g. BlackHole or Loopback).\n' +
+        'Use the 🎤 mic button to capture your voice instead.'
+      );
+    }
+  }
+}
+
+function startScreenRecorder() {
+  if (!screenStream || !screenWanted) return;
+  const audioOnly = new MediaStream(screenStream.getAudioTracks());
+  screenRecorder = new MediaRecorder(audioOnly, { mimeType: bestMime() });
+  screenRecorder.ondataavailable = e => sendAudioChunk(e.data, 'interviewer');
+  screenRecorder.onstop = () => { if (screenWanted) setTimeout(startScreenRecorder, 100); };
+  screenRecorder.start(cfg.chunk * 1000);
+}
+
+// Keyboard: Escape hides overlay
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') window.parakeet.hide();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+{
+  "name": "parakeetai-overlay",
+  "version": "1.1.0",
+  "description": "ParakeetAI transparent glass overlay for interviews",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --inspect",
+    "build:win": "electron-builder --win --x64",
+    "build:mac": "electron-builder --mac --x64 --arm64",
+    "build:all": "electron-builder --mac --win --x64"
+  },
+  "dependencies": {
+    "electron": "^31.0.0",
+    "electron-store": "^8.1.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.parakeetai.overlay",
+    "productName": "ParakeetAI",
+    "copyright": "Copyright © 2025 ParakeetAI",
+    "files": [
+      "main.js",
+      "preload.js",
+      "overlay.html",
+      "node_modules/electron-store/**/*",
+      "node_modules/conf/**/*",
+      "node_modules/atomically/**/*",
+      "node_modules/dot-prop/**/*",
+      "node_modules/env-paths/**/*",
+      "node_modules/json-schema-typed/**/*",
+      "node_modules/ajv/**/*",
+      "node_modules/ajv-formats/**/*",
+      "node_modules/fast-deep-equal/**/*",
+      "node_modules/fast-uri/**/*",
+      "node_modules/require-from-string/**/*",
+      "node_modules/mimic-fn/**/*",
+      "node_modules/debounce-fn/**/*",
+      "node_modules/onetime/**/*",
+      "node_modules/xdg-basedir/**/*",
+      "node_modules/graceful-fs/**/*",
+      "node_modules/is-plain-obj/**/*",
+      "node_modules/semver/**/*",
+      "node_modules/type-fest/**/*",
+      "node_modules/serialize-error/**/*"
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] }
+      ],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.productivity",
+      "darkModeSupport": true
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "ParakeetAI-Setup-${version}.exe"
+    },
+    "portable": {
+      "artifactName": "ParakeetAI-${version}-portable.exe"
+    },
+    "dmg": {
+      "title": "ParakeetAI ${version}",
+      "artifactName": "ParakeetAI-${version}.dmg"
+    }
+  }
+}
