@@ -1619,6 +1619,11 @@ function triggerAI(question, fromVoice) {
   if (fInput) fInput.value = '';
   micManualAccum = '';
   micLastCommitted = '';
+  // Clear the interim transcript entry so the panel looks clean after submit
+  interimEntry.style.display = 'none';
+  interimText.textContent = 'Transcribing…';
+  interimEntry.classList.remove('sys');
+  if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
   isStreaming = true;
   aiHelpBtn.disabled = true;
   aiHelpBtn.textContent = '⏳ Thinking…';
