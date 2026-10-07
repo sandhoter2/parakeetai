@@ -1232,6 +1232,9 @@ async function startMic() {
   updateSendBtn();
 
   micRecognition.start();
+
+  // Auto-start system audio alongside mic so one button captures both
+  if (!sysActive) startSystemAudio().catch(() => {});
 }
 
 function saveMicToServer(text) {
@@ -1266,8 +1269,8 @@ function stopMic() {
   recDot.classList.remove('active');
   setStatus('Mic off');
   updateSendBtn();
-  // If system audio is still active, keep waveform showing it
-  if (sysActive && sysAudioStream) startWaveform(sysAudioStream);
+  // Also stop system audio — it was started automatically with the mic
+  if (sysActive) stopSystemAudio();
   else stopWaveform();
 }
 
@@ -1440,7 +1443,7 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
       micManualAccum = trimmed;
     }
 
-    if (autoAI && data.text.includes('?')) {
+    if (autoAI && transcribeMode !== 'manual' && data.text.includes('?')) {
       clearTimeout(autoTriggerTimer);
       autoTriggerTimer = setTimeout(() => triggerAI(data.text.trim(), true), 1200); // already saved by transcribe endpoint
     }
