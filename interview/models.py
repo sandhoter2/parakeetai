@@ -114,9 +114,11 @@ class InterviewSession(models.Model):
 class TranscriptEntry(models.Model):
     TYPE_MIC = "microphone"
     TYPE_SYSTEM = "system"
+    TYPE_NOTE = "note"
     TYPE_CHOICES = [
         (TYPE_MIC, "Microphone"),
         (TYPE_SYSTEM, "System Audio"),
+        (TYPE_NOTE, "Note"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

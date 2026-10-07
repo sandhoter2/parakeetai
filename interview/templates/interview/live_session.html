@@ -1427,6 +1427,18 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
     addTranscriptEntryUI(data.text.trim(), data.speaker || speaker);
     setStatus('Transcribed ✓');
 
+    // Sync system audio text into both chat input boxes (same real-time display as mic)
+    if (isSys) {
+      const trimmed = data.text.trim();
+      const qi = document.getElementById('questionInput');
+      const fi = (typeof _doc === 'function') ? _doc().getElementById('fQuestionInput') : null;
+      const curr = qi ? qi.value.trim() : '';
+      const combined = curr ? curr + ' ' + trimmed : trimmed;
+      if (qi) qi.value = combined;
+      if (fi) fi.value = combined;
+      micManualAccum = combined;
+    }
+
     if (autoAI && data.text.includes('?')) {
       clearTimeout(autoTriggerTimer);
       autoTriggerTimer = setTimeout(() => triggerAI(data.text.trim(), true), 1200); // already saved by transcribe endpoint
