@@ -855,13 +855,14 @@ const KEYWORDS = new Set([
 ]);
 
 function toBionicHTML(text) {
-  // Preserve newlines, process word-by-word
+  // Preserve newlines, process word-by-word; escape non-alpha segments to prevent XSS
   return text.split('\n').map(line =>
-    line.replace(/([a-zA-Z]{2,})/g, (word) => {
-      const lower = word.toLowerCase();
-      if (KEYWORDS.has(lower)) {
-        return `<mark>${word}</mark>`;
+    line.replace(/([a-zA-Z]{2,})|([^a-zA-Z]+|[a-zA-Z])/g, (match, word, other) => {
+      if (other !== undefined) {
+        return other.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       }
+      const lower = word.toLowerCase();
+      if (KEYWORDS.has(lower)) return `<mark>${word}</mark>`;
       const bold = Math.ceil(word.length / 2);
       return `<b>${word.slice(0, bold)}</b>${word.slice(bold)}`;
     })
@@ -1154,13 +1155,14 @@ function makeMicRecognition() {
       if (transcriptPlaceholder && transcriptCount === 0) transcriptPlaceholder.style.display = 'flex';
       if (text === micLastCommitted) return;
       micLastCommitted = text;
+      console.log('[onresult final] transcribeMode=' + transcribeMode + ' text=' + text.slice(0, 40));
 
       if (transcribeMode === 'auto') {
         // Auto: type text, add to transcript panel, and immediately submit to AI
         setMicInputText(text);
         saveMicToServer(text);
         addTranscriptEntryUI(text, 'microphone');
-        triggerAI(text, true); // true = already saved, skip duplicate
+        if (autoAI) triggerAI(text, true); // true = already saved, skip duplicate
       } else {
         // Manual: each final chunk saved individually — transcript keeps all history,
         // chat box shows only this chunk so AI Help always sends the latest thing said
@@ -1234,7 +1236,7 @@ async function startMic() {
   micRecognition.start();
 
   // Auto-start system audio alongside mic so one button captures both
-  if (!sysActive) startSystemAudio().catch(() => {});
+  if (!sysActive) startSystemAudio().catch(err => console.warn('[startMic] system audio failed:', err));
 }
 
 function saveMicToServer(text) {
@@ -1243,15 +1245,6 @@ function saveMicToServer(text) {
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
     body: JSON.stringify({ transcripts: [{ content: text, type: 'microphone' }] })
   }).catch(() => {});
-}
-
-function commitMicText(text) {
-  saveMicToServer(text);
-  setStatus('Transcribed ✓');
-  if (autoAI && text.includes('?')) {
-    clearTimeout(autoTriggerTimer);
-    autoTriggerTimer = setTimeout(() => triggerAI(text), 800);
-  }
 }
 
 function stopMic() {
@@ -1525,7 +1518,7 @@ function addNote() {
     body: JSON.stringify({ content }),
   }).then(r => r.json()).then(d => {
     if (d.ok) {
-      addTranscriptEntryUI(content, 'system');
+      addTranscriptEntryUI(content, 'note');
       noteInput.value = '';
       toast('Note saved', 'success');
     } else {
@@ -1558,6 +1551,8 @@ function saveAndClearInput() {
 // fromVoice=true means caller already saved via saveMicToServer — skip duplicate save
 function triggerAI(question, fromVoice) {
   if (isStreaming) return;
+  // Debug: log call origin so we can identify auto-submit in manual mode
+  console.log('[triggerAI] transcribeMode=' + transcribeMode + ' autoAI=' + autoAI, new Error().stack.split('\n').slice(1,4).join(' | '));
   showAiPanel(); // ensure panel is visible when AI is triggered
 
   const fInput = _doc().getElementById('fQuestionInput');
