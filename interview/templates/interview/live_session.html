@@ -233,7 +233,7 @@ body { overflow: hidden; }
   flex-shrink: 0;
 }
 /* float panel mic/sys/settings/forward buttons hidden when embedded (bottom bar has them) */
-#fMicBtn, #fSysBtn, #fTcConfigBtn, #fTcSendBtn { display: none !important; }
+#fMicBtn, #fSysBtn, #fTcConfigBtn, #fTcSendBtn, #fAiHelpBtn, .fai-btn { display: none !important; }
 /* When PiP is active: hide the main-window bottom bar (controls moved to PiP window) */
 body.pip-active .bottom-bar { display: none !important; }
 /* When PiP is active: keep note strip visible so user can still annotate */
@@ -901,6 +901,7 @@ const aiPlaceholder = document.getElementById('aiPlaceholder');
 const transcriptPanel = document.getElementById('transcriptPanel');
 const interimEntry = document.getElementById('interimEntry');
 const interimText = document.getElementById('interimText');
+const transcriptPlaceholder = document.getElementById('transcriptPlaceholder');
 const statusChip = document.getElementById('statusChip');
 const questionInput = document.getElementById('questionInput');
 const statusBadge = document.getElementById('statusBadge');
@@ -1135,6 +1136,7 @@ function makeMicRecognition() {
       // Show interim in transcript panel as live preview
       interimText.textContent = interimStr;
       interimEntry.style.display = 'flex';
+      if (transcriptPlaceholder) transcriptPlaceholder.style.display = 'none';
       transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
     }
 
@@ -1143,6 +1145,7 @@ function makeMicRecognition() {
       // Hide interim indicator now that we have a final result
       interimEntry.style.display = 'none';
       interimText.textContent = 'Transcribing…';
+      if (transcriptPlaceholder && transcriptCount === 0) transcriptPlaceholder.style.display = 'flex';
       if (text === micLastCommitted) return;
       micLastCommitted = text;
 
@@ -1159,6 +1162,7 @@ function makeMicRecognition() {
         // Also show accumulated text as live interim in transcript panel
         interimText.textContent = micManualAccum;
         interimEntry.style.display = 'flex';
+        if (transcriptPlaceholder) transcriptPlaceholder.style.display = 'none';
         transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
       }
     }
@@ -1246,6 +1250,7 @@ function stopMic() {
   if (micRecognition) { micRecognition.onend = null; micRecognition.stop(); micRecognition = null; }
   interimEntry.style.display = 'none';
   interimText.textContent = 'Transcribing…';
+  if (transcriptPlaceholder && transcriptCount === 0) transcriptPlaceholder.style.display = 'flex';
   micBtn.classList.remove('active');
   micBtn.textContent = '🎤';
   const _fmOff = _doc().getElementById('fMicBtn');
@@ -2058,7 +2063,7 @@ async function popOutAI() {
         #aiFloatPanel .ai-float-bar { cursor:default; border-radius:0!important; }
         #aiFloatPanel .ai-float-foot { display:none!important; }
         /* Show all control buttons in PiP window */
-        #fMicBtn, #fSysBtn, #fTcConfigBtn, #fTcSendBtn { display: inline-flex !important; }
+        #fMicBtn, #fSysBtn, #fTcConfigBtn, #fTcSendBtn, #fAiHelpBtn, .fai-btn { display: inline-flex !important; }
       `;
       pipWin.document.head.appendChild(bodyStyle);
 
