@@ -728,23 +728,26 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     <div class="transcribe-config-panel" id="tcPanel">
       <div class="tc-row">
         <span style="font-weight:600">Transcribe</span>
-        <div class="tc-mode-btns">
-          <button class="tc-btn" id="tcAutoBtn" onclick="setTranscribeMode('auto')">Auto</button>
-          <button class="tc-btn" id="tcManualBtn" onclick="setTranscribeMode('manual')">Manual</button>
-        </div>
+        <span style="font-size:10px;color:var(--text3)">🎤 🖥️ shared</span>
       </div>
-      <div class="tc-row" id="tcAutoRow">
+      <div class="tc-row">
         <span>Interval</span>
-        <select class="tc-select" id="tcIntervalSel" onchange="setTranscribeInterval(+this.value)">
-          <option value="2" selected>2 sec</option>
-          <option value="4">4 sec</option>
-          <option value="6">6 sec</option>
-          <option value="8">8 sec</option>
-          <option value="30">30 sec</option>
+        <select class="tc-select" id="tcIntervalSel" onchange="setTranscribeMode(this.value)">
+          <option value="manual">Manual</option>
+          <option value="2">2 sec</option>
+          <option value="5">5 sec</option>
+          <option value="10">10 sec</option>
+          <option value="30" selected>30 sec</option>
+          <option value="60">1 min</option>
+          <option value="120">2 min</option>
+          <option value="dynamic">Dynamic ✦</option>
         </select>
       </div>
       <div class="tc-row" id="tcManualInfo" style="display:none">
         <span style="font-size:11px;color:var(--text3)">Click ⏩ to send audio when ready</span>
+      </div>
+      <div class="tc-row" id="tcDynamicInfo" style="display:none">
+        <span style="font-size:11px;color:var(--text3)">Auto-sends when a question ends ✦</span>
       </div>
     </div>
   </div>
@@ -1057,21 +1060,37 @@ function toggleTCPanel() {
   btn.classList.toggle('open', !isOpen);
 }
 
+// Returns true for numeric interval modes (e.g. '2', '5', '30', '120')
+function isIntervalMode(mode) { return !isNaN(parseInt(mode)); }
+
+// Heuristic: text looks like a complete question
+function isQuestionEnding(text) {
+  const t = text.trim();
+  if (t.endsWith('?')) return true;
+  return /(?:right|correct|okay|yeah)\s*[.!]?\s*$/i.test(t) && t.split(/\s+/).length > 4;
+}
+
 function setTranscribeMode(mode) {
   transcribeMode = mode;
   localStorage.setItem('transcribeMode', mode);
 
-  // Cancel any pending auto-submit that was queued before the switch
+  // For interval modes, sync transcribeIntervalSec immediately
+  const sec = parseInt(mode);
+  if (!isNaN(sec)) {
+    transcribeIntervalSec = sec;
+    localStorage.setItem('transcribeInterval', String(sec));
+  }
+
+  // Cancel any pending auto-submit queued before the switch
   clearTimeout(autoTriggerTimer);
   autoTriggerTimer = null;
 
   if (mode === 'manual') {
-    // Clear the auto-interval timer so the recorder doesn't stop on its own schedule
+    // Clear interval timer so recorder doesn't stop on its own
     clearTimeout(sysTimer);
     sysTimer = null;
-  } else if (mode === 'auto' && sysActive) {
-    // Restart the interval loop: stop the current open-ended recorder so its onstop
-    // sees mode='auto' and kicks off startSysChunk() with a proper timer
+  } else if (sysActive) {
+    // Restart the chunk loop with the new mode/interval
     if (sysRecorder && sysRecorder.state === 'recording') {
       sysRecorder.stop();
     } else if (restartSysChunkFn) {
@@ -1079,12 +1098,15 @@ function setTranscribeMode(mode) {
     }
   }
 
-  document.getElementById('tcAutoBtn').classList.toggle('active', mode === 'auto');
-  document.getElementById('tcManualBtn').classList.toggle('active', mode === 'manual');
-  const autoRow    = document.getElementById('tcAutoRow');
-  const manualInfo = document.getElementById('tcManualInfo');
-  if (autoRow)    autoRow.style.display    = mode === 'auto'   ? 'flex' : 'none';
-  if (manualInfo) manualInfo.style.display = mode === 'manual' ? 'flex' : 'none';
+  // Sync the dropdown
+  const sel = document.getElementById('tcIntervalSel');
+  if (sel && sel.value !== mode) sel.value = mode;
+
+  const manualInfo  = document.getElementById('tcManualInfo');
+  const dynamicInfo = document.getElementById('tcDynamicInfo');
+  if (manualInfo)  manualInfo.style.display  = mode === 'manual'  ? 'flex' : 'none';
+  if (dynamicInfo) dynamicInfo.style.display = mode === 'dynamic' ? 'flex' : 'none';
+
   // Show ⏩ send button only in manual mode while recording
   updateSendBtn();
 }
@@ -1103,25 +1125,21 @@ function transcribeNow() {
   if (sysActive && stopSysChunkEarlyFn) stopSysChunkEarlyFn();
 }
 
-function setTranscribeInterval(sec) {
-  transcribeIntervalSec = sec;
-  localStorage.setItem('transcribeInterval', String(sec));
-}
-
 // Initialize TC panel UI from stored prefs
 (function initTCPanel() {
-  const mode = localStorage.getItem('transcribeMode') || 'auto';
-  setTranscribeMode(mode);
-  const saved = parseInt(localStorage.getItem('transcribeInterval') || '2');
-  transcribeIntervalSec = saved;
-  const sel = document.getElementById('tcIntervalSel');
-  if (sel) {
-    // Snap to nearest valid option (2,4,6,8,30) if saved value is from old dropdown
-    const valid = [2, 4, 6, 8, 30];
-    const snapped = valid.reduce((a, b) => Math.abs(b - saved) < Math.abs(a - saved) ? b : a, 2);
-    sel.value = String(snapped);
-    transcribeIntervalSec = snapped;
+  const VALID_MODES = ['manual', '2', '5', '10', '30', '60', '120', 'dynamic'];
+  let mode = localStorage.getItem('transcribeMode') || '30';
+  // Migrate old 'auto' → '30' (closest timed equivalent)
+  if (mode === 'auto') mode = '30';
+  // Snap interval-only values to nearest valid option
+  if (isIntervalMode(mode)) {
+    const validSec = [2, 5, 10, 30, 60, 120];
+    const sec = parseInt(mode);
+    const snapped = validSec.reduce((a, b) => Math.abs(b - sec) < Math.abs(a - sec) ? b : a, 30);
+    mode = String(snapped);
   }
+  if (!VALID_MODES.includes(mode)) mode = '30';
+  setTranscribeMode(mode);
 })();
 
 let micRecognition = null;
@@ -1177,12 +1195,12 @@ function makeMicRecognition() {
       micLastCommitted = text;
       console.log('[onresult final] transcribeMode=' + transcribeMode + ' text=' + text.slice(0, 40));
 
-      if (transcribeMode === 'auto') {
-        // Auto: type text, add to transcript panel, and immediately submit to AI
+      if (transcribeMode !== 'manual') {
+        // Timed / dynamic: save text and optionally submit to AI
         setMicInputText(text);
         saveMicToServer(text);
         addTranscriptEntryUI(text, 'microphone');
-        if (autoAI) triggerAI(text, true); // true = already saved, skip duplicate
+        if (autoAI && (transcribeMode !== 'dynamic' || isQuestionEnding(text))) triggerAI(text, true);
       } else {
         // Manual: each final chunk saved individually — transcript keeps all history,
         // chat box shows only this chunk so AI Help always sends the latest thing said
@@ -1348,7 +1366,7 @@ async function startSystemAudio() {
     rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
     rec.onstop = () => {
       // Ping-pong: start next recorder immediately — don't wait for API
-      if (sysActive && transcribeMode === 'auto') startSysChunk();
+      if (sysActive && transcribeMode !== 'manual') startSysChunk();
       if (!chunks.length) return;
       const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
       sendAudioChunk(blob, rec.mimeType || 'audio/webm', 'system'); // fire-and-forget
@@ -1361,12 +1379,13 @@ async function startSystemAudio() {
     sysRecorder = makeSysRecorder();
     sysRecorder.start(250);
 
-    if (transcribeMode === 'auto') {
+    if (isIntervalMode(transcribeMode)) {
       sysTimer = setTimeout(() => {
         if (sysRecorder && sysRecorder.state === 'recording') sysRecorder.stop();
       }, transcribeIntervalSec * 1000);
     }
-    // manual: no timer — user clicks ⏩ to send
+    // manual: no timer — user clicks ⏩
+    // dynamic: no timer — stops when question-end detected in sendAudioChunk
   }
   startSysChunk();
 }
@@ -1457,9 +1476,16 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
       micManualAccum = trimmed;
     }
 
+    // Dynamic mode: stop current sys chunk early when a question ending is detected
+    if (transcribeMode === 'dynamic' && isSys && isQuestionEnding(data.text)) {
+      clearTimeout(sysTimer);
+      sysTimer = null;
+      if (stopSysChunkEarlyFn) stopSysChunkEarlyFn();
+    }
+
     if (autoAI && transcribeMode !== 'manual' && data.text.includes('?')) {
       clearTimeout(autoTriggerTimer);
-      autoTriggerTimer = setTimeout(() => triggerAI(data.text.trim(), true), 1200); // already saved by transcribe endpoint
+      autoTriggerTimer = setTimeout(() => triggerAI(data.text.trim(), true), 1200);
     }
   } catch(err) {
     if (isSys) {
