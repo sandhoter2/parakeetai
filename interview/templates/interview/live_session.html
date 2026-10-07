@@ -1060,6 +1060,25 @@ function toggleTCPanel() {
 function setTranscribeMode(mode) {
   transcribeMode = mode;
   localStorage.setItem('transcribeMode', mode);
+
+  // Cancel any pending auto-submit that was queued before the switch
+  clearTimeout(autoTriggerTimer);
+  autoTriggerTimer = null;
+
+  if (mode === 'manual') {
+    // Clear the auto-interval timer so the recorder doesn't stop on its own schedule
+    clearTimeout(sysTimer);
+    sysTimer = null;
+  } else if (mode === 'auto' && sysActive) {
+    // Restart the interval loop: stop the current open-ended recorder so its onstop
+    // sees mode='auto' and kicks off startSysChunk() with a proper timer
+    if (sysRecorder && sysRecorder.state === 'recording') {
+      sysRecorder.stop();
+    } else if (restartSysChunkFn) {
+      restartSysChunkFn();
+    }
+  }
+
   document.getElementById('tcAutoBtn').classList.toggle('active', mode === 'auto');
   document.getElementById('tcManualBtn').classList.toggle('active', mode === 'manual');
   const autoRow    = document.getElementById('tcAutoRow');
@@ -1077,6 +1096,7 @@ function updateSendBtn() {
 
 let stopChunkEarlyFn    = null;
 let stopSysChunkEarlyFn = null;
+let restartSysChunkFn   = null; // set inside startSystemAudio to expose startSysChunk
 
 function transcribeNow() {
   if (micActive && stopChunkEarlyFn) stopChunkEarlyFn();
@@ -1316,6 +1336,7 @@ async function startSystemAudio() {
     if (sysRecorder && sysRecorder.state === 'recording') sysRecorder.stop();
   }
   stopSysChunkEarlyFn = stopSysChunkEarly;
+  restartSysChunkFn   = () => startSysChunk();
   updateSendBtn();
 
   function makeSysRecorder() {
