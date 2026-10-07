@@ -2,6 +2,7 @@
   "name": "parakeetai-overlay",
   "version": "1.1.0",
   "description": "ParakeetAI transparent glass overlay for interviews",
+  "author": "ParakeetAI",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -11,11 +12,11 @@
     "build:all": "electron-builder --mac --win --x64"
   },
   "dependencies": {
-    "electron": "^31.0.0",
     "electron-store": "^8.1.0"
   },
   "devDependencies": {
-    "electron-builder": "^24.0.0"
+    "electron": "^31.0.0",
+    "electron-builder": "^26.15.3"
   },
   "build": {
     "appId": "com.parakeetai.overlay",
@@ -48,14 +49,30 @@
     ],
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "assets/icon.ico"
     },
     "mac": {
       "target": [
-        { "target": "dmg", "arch": ["x64", "arm64"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
       "icon": "assets/icon.icns",
       "category": "public.app-category.productivity",
