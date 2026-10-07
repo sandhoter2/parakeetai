@@ -304,7 +304,8 @@ def api_chat(request, session_id):
 
     recent_transcripts = session.transcripts.order_by("-created_at")[:30]
     def _fmt_entry(e):
-        label = e.speaker_name if e.speaker_name else e.speaker_type
+        _type_label = {'microphone': 'You', 'system': 'Interviewer'}.get(e.speaker_type, e.speaker_type)
+        label = e.speaker_name if e.speaker_name else _type_label
         return f"[{label}]: {e.content}"
     transcript_text = "\n".join(_fmt_entry(e) for e in reversed(list(recent_transcripts)))
 
@@ -632,7 +633,8 @@ def api_meeting_summary(request, session_id):
         return JsonResponse({"error": "No transcript to summarize"}, status=400)
 
     def _fmt(e):
-        label = e.speaker_name if e.speaker_name else e.speaker_type
+        _type_label = {'microphone': 'You', 'system': 'Interviewer'}.get(e.speaker_type, e.speaker_type)
+        label = e.speaker_name if e.speaker_name else _type_label
         return f"[{label}]: {e.content}"
 
     transcript_text = "\n".join(_fmt(e) for e in transcripts)
@@ -1077,7 +1079,8 @@ def api_session_score(request, session_id):
         return JsonResponse({"error": "No transcript to score"}, status=400)
 
     def _fmt(e):
-        label = e.speaker_name if e.speaker_name else e.speaker_type
+        _type_label = {'microphone': 'You', 'system': 'Interviewer'}.get(e.speaker_type, e.speaker_type)
+        label = e.speaker_name if e.speaker_name else _type_label
         return f"[{label}]: {e.content}"
 
     transcript_text = "\n".join(_fmt(e) for e in transcripts)

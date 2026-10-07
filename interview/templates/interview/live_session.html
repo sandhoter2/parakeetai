@@ -556,7 +556,10 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       {% endfor %}
       <div id="interimEntry" class="interim-entry" style="display:none">
         <div class="spinner"></div>
-        <span id="interimText">Transcribing…</span>
+        <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+          <span id="interimLabel" style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--accent2);font-style:normal">YOU</span>
+          <span id="interimText">Transcribing…</span>
+        </div>
       </div>
     </div>
   </div>
@@ -903,6 +906,7 @@ const aiPlaceholder = document.getElementById('aiPlaceholder');
 const transcriptPanel = document.getElementById('transcriptPanel');
 const interimEntry = document.getElementById('interimEntry');
 const interimText = document.getElementById('interimText');
+const interimLabel = document.getElementById('interimLabel');
 const transcriptPlaceholder = document.getElementById('transcriptPlaceholder');
 const statusChip = document.getElementById('statusChip');
 const questionInput = document.getElementById('questionInput');
@@ -1356,7 +1360,9 @@ function stopSystemAudio() {
   if (sysRecorder && sysRecorder.state === 'recording') sysRecorder.stop();
   if (!micActive) {
     interimEntry.style.display = 'none';
+    interimEntry.classList.remove('sys');
     interimText.textContent = 'Transcribing…';
+    if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
     if (transcriptPlaceholder && transcriptCount === 0) transcriptPlaceholder.style.display = 'flex';
   }
   if (sysStream) { sysStream.getTracks().forEach(t => t.stop()); sysStream = null; }
@@ -1385,7 +1391,8 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
   if (isSys) {
     setSysTranscribing(true);
     interimEntry.classList.add('sys');
-    interimText.textContent = '🖥️ Transcribing interviewer…';
+    interimText.textContent = '🖥️ Transcribing…';
+    if (interimLabel) { interimLabel.textContent = 'INTERVIEWER'; interimLabel.style.color = 'var(--yellow)'; }
     interimEntry.style.display = 'flex';
     if (transcriptPlaceholder) transcriptPlaceholder.style.display = 'none';
     transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
@@ -1409,6 +1416,7 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
         interimEntry.style.display = 'none';
         interimEntry.classList.remove('sys');
         interimText.textContent = 'Transcribing…';
+        if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
         if (transcriptPlaceholder && transcriptCount === 0) transcriptPlaceholder.style.display = 'flex';
       }
     }
@@ -1430,6 +1438,7 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
         interimEntry.style.display = 'none';
         interimEntry.classList.remove('sys');
         interimText.textContent = 'Transcribing…';
+        if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
       }
     }
     setStatus('Error: ' + err.message);
