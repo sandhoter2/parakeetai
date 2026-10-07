@@ -1162,11 +1162,13 @@ function makeMicRecognition() {
         addTranscriptEntryUI(text, 'microphone');
         triggerAI(text, true); // true = already saved, skip duplicate
       } else {
-        // Manual: accumulate finals in micManualAccum (not from DOM, to avoid interim→duplicate)
-        micManualAccum = micManualAccum ? micManualAccum + ' ' + text : text;
-        setMicInputText(micManualAccum);
-        // Also show accumulated text as live interim in transcript panel
-        interimText.textContent = micManualAccum;
+        // Manual: each final chunk saved individually — transcript keeps all history,
+        // chat box shows only this chunk so AI Help always sends the latest thing said
+        saveMicToServer(text);
+        addTranscriptEntryUI(text, 'microphone');
+        micManualAccum = text;
+        setMicInputText(text);
+        interimText.textContent = text;
         interimEntry.style.display = 'flex';
         if (transcriptPlaceholder) transcriptPlaceholder.style.display = 'none';
         transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
@@ -1427,16 +1429,15 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
     addTranscriptEntryUI(data.text.trim(), data.speaker || speaker);
     setStatus('Transcribed ✓');
 
-    // Sync system audio text into both chat input boxes (same real-time display as mic)
+    // Sync system audio into both chat input boxes — replace with just this chunk
+    // (transcript keeps all history; chat box shows only the latest thing said)
     if (isSys) {
       const trimmed = data.text.trim();
       const qi = document.getElementById('questionInput');
       const fi = (typeof _doc === 'function') ? _doc().getElementById('fQuestionInput') : null;
-      const curr = qi ? qi.value.trim() : '';
-      const combined = curr ? curr + ' ' + trimmed : trimmed;
-      if (qi) qi.value = combined;
-      if (fi) fi.value = combined;
-      micManualAccum = combined;
+      if (qi) qi.value = trimmed;
+      if (fi) fi.value = trimmed;
+      micManualAccum = trimmed;
     }
 
     if (autoAI && data.text.includes('?')) {
