@@ -324,6 +324,8 @@ body.pip-active .note-input-wrap { display: flex !important; }
   color: var(--text2); font-style: italic; font-size: 13px; margin-bottom: 4px;
   display: flex; align-items: center; gap: 8px;
 }
+.interim-entry.sys { background: rgba(255,213,0,0.07); border-left-color: rgba(255,213,0,0.5); }
+.interim-entry.sys .spinner { border-top-color: var(--yellow); }
 .spinner {
   width: 14px; height: 14px; border: 2px solid var(--border);
   border-top-color: var(--accent); border-radius: 50%;
@@ -548,7 +550,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       {% endif %}
       {% for entry in transcripts %}
       <div class="transcript-entry {{ entry.speaker_type }}" data-entry-id="{{ entry.id }}">
-        <div class="speaker">{% if entry.speaker_name %}{{ entry.speaker_name }}{% else %}{{ entry.speaker_type }}{% endif %}</div>
+        <div class="speaker">{% if entry.speaker_name %}{{ entry.speaker_name }}{% elif entry.speaker_type == 'microphone' %}You{% elif entry.speaker_type == 'system' %}Interviewer{% else %}{{ entry.speaker_type }}{% endif %}</div>
         <div class="text">{{ entry.content }}</div>
       </div>
       {% endfor %}
@@ -1352,6 +1354,11 @@ function stopSystemAudio() {
   stopSysChunkEarlyFn = null;
   clearTimeout(sysTimer);
   if (sysRecorder && sysRecorder.state === 'recording') sysRecorder.stop();
+  if (!micActive) {
+    interimEntry.style.display = 'none';
+    interimText.textContent = 'Transcribing…';
+    if (transcriptPlaceholder && transcriptCount === 0) transcriptPlaceholder.style.display = 'flex';
+  }
   if (sysStream) { sysStream.getTracks().forEach(t => t.stop()); sysStream = null; }
   sysBtn.classList.remove('active');
   sysBtn.textContent = '🖥️';
@@ -1375,7 +1382,14 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
   if (blob.size < 500) return;
 
   const isSys = speaker === 'system';
-  if (isSys) setSysTranscribing(true);
+  if (isSys) {
+    setSysTranscribing(true);
+    interimEntry.classList.add('sys');
+    interimText.textContent = '🖥️ Transcribing interviewer…';
+    interimEntry.style.display = 'flex';
+    if (transcriptPlaceholder) transcriptPlaceholder.style.display = 'none';
+    transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
+  }
 
   const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
   const formData = new FormData();
@@ -1389,7 +1403,15 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
       body: formData,
     });
     const data = await resp.json();
-    if (isSys) setSysTranscribing(false);
+    if (isSys) {
+      setSysTranscribing(false);
+      if (sysTranscribingCount === 0) {
+        interimEntry.style.display = 'none';
+        interimEntry.classList.remove('sys');
+        interimText.textContent = 'Transcribing…';
+        if (transcriptPlaceholder && transcriptCount === 0) transcriptPlaceholder.style.display = 'flex';
+      }
+    }
 
     if (data.error) { setStatus('Transcribe error: ' + data.error); return; }
     if (!data.text || !data.text.trim()) return;
@@ -1402,7 +1424,14 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
       autoTriggerTimer = setTimeout(() => triggerAI(data.text.trim(), true), 1200); // already saved by transcribe endpoint
     }
   } catch(err) {
-    if (isSys) setSysTranscribing(false);
+    if (isSys) {
+      setSysTranscribing(false);
+      if (sysTranscribingCount === 0) {
+        interimEntry.style.display = 'none';
+        interimEntry.classList.remove('sys');
+        interimText.textContent = 'Transcribing…';
+      }
+    }
     setStatus('Error: ' + err.message);
   }
 }
@@ -1414,12 +1443,19 @@ function populateInputFromTranscript(text) {
   if (fi) fi.value = text;
 }
 
+function speakerLabel(type, speakerName) {
+  if (speakerName) return speakerName;
+  if (type === 'microphone') return 'You';
+  if (type === 'system') return 'Interviewer';
+  return type;
+}
+
 function addTranscriptEntryUI(text, type, speakerName) {
   const ph = document.getElementById('transcriptPlaceholder');
   if (ph) ph.remove();
   const div = document.createElement('div');
   div.className = `transcript-entry ${type}`;
-  const label = speakerName || type;
+  const label = speakerLabel(type, speakerName);
   div.innerHTML = `<div class="speaker">${escHtml(label)}</div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div>`;
   div.addEventListener('click', () => populateInputFromTranscript(div.querySelector('.text').textContent));
   transcriptPanel.insertBefore(div, interimEntry);
@@ -1514,6 +1550,8 @@ function triggerAI(question, fromVoice) {
   lastQuestion = question;
   questionInput.value = '';
   if (fInput) fInput.value = '';
+  micManualAccum = '';
+  micLastCommitted = '';
   isStreaming = true;
   aiHelpBtn.disabled = true;
   aiHelpBtn.textContent = '⏳ Thinking…';
