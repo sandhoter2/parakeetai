@@ -200,7 +200,7 @@ body.os-win .dl-btn-win { box-shadow: 0 0 0 2px currentColor; }
       <p>A transparent, always-on-top overlay that shows AI answers during your calls — invisible to screen-share.</p>
     </div>
     <div class="download-banner-btns">
-      <a id="dlMacBtn" href="https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-1.1.1.dmg"
+      <a id="dlMacBtn" href="https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-1.1.0.dmg"
          class="dl-btn dl-btn-mac" title="Download for macOS (Intel + Apple Silicon)">
         <span>🍎</span>
         <span>
@@ -453,11 +453,13 @@ document.addEventListener('click', e => {
     fetch('https://api.github.com/repos/sandhoter2/parakeetai/releases/latest', {cache:'no-store'})
       .then(r => r.ok ? r.json() : null).then(data => {
         if (!data) return;
-        const ver = (data.tag_name || '').replace(/^v/, '');
         const mac = document.getElementById('dlMacBtn');
         const win = document.getElementById('dlWinBtn');
-        if (mac && ver) mac.href = `https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-${ver}.dmg`;
-        if (win && ver) win.href = `https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-Setup-${ver}.exe`;
+        const assets = data.assets || [];
+        const dmg = assets.find(a => a.name.endsWith('.dmg'));
+        const exe = assets.find(a => a.name.match(/Setup.*\.exe$/));
+        if (mac && dmg) mac.href = dmg.browser_download_url;
+        if (win && exe) win.href = exe.browser_download_url;
       }).catch(() => {});
   }
 })();
