@@ -2,6 +2,7 @@
 {% block title %}{{ session.title }} — Live{% endblock %}
 
 {% block extra_style %}
+html { overflow-x: hidden; }
 body { overflow: hidden; }
 
 .session-bar {
@@ -694,29 +695,29 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   </div>
 
   <!-- Body -->
-  <div id="recorderPanelBody" style="padding:12px 16px;display:flex;gap:16px;flex-wrap:wrap">
+  <div id="recorderPanelBody" style="padding:12px 16px;display:flex;gap:16px;flex-wrap:wrap;min-width:0;max-width:100%;overflow:hidden">
 
     <!-- Left: Participants -->
-    <div style="flex:0 0 220px">
+    <div style="flex:1 1 200px;min-width:0;overflow:hidden">
       <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Participants</div>
       <div id="participantsList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-      <div style="display:flex;gap:6px">
-        <input id="newParticipantName" type="text" class="form-control" placeholder="Name…" style="font-size:12px;padding:4px 8px"
+      <div style="display:flex;gap:6px;min-width:0">
+        <input id="newParticipantName" type="text" class="form-control" placeholder="Name…" style="font-size:12px;padding:4px 8px;flex:1;min-width:0"
                onkeydown="if(event.key==='Enter')addParticipant()">
-        <input id="newParticipantRole" type="text" class="form-control" placeholder="Role (opt)" style="font-size:12px;padding:4px 8px;width:90px">
-        <button class="btn btn-primary btn-xs" onclick="addParticipant()" style="white-space:nowrap">+ Add</button>
+        <input id="newParticipantRole" type="text" class="form-control" placeholder="Role (opt)" style="font-size:12px;padding:4px 8px;width:80px;flex-shrink:0">
+        <button class="btn btn-primary btn-xs" onclick="addParticipant()" style="white-space:nowrap;flex-shrink:0">+ Add</button>
       </div>
     </div>
 
     <!-- Center: Active speaker -->
-    <div style="flex:0 0 200px">
+    <div style="flex:1 1 160px;min-width:0;overflow:hidden">
       <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Active Speaker</div>
       <div id="activeSpeakerDisplay" style="font-size:13px;color:var(--text2);margin-bottom:8px">None selected</div>
       <div id="speakerBtnList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
 
     <!-- Right: Smart prompt buttons -->
-    <div style="flex:1;min-width:200px">
+    <div style="flex:2 1 200px;min-width:0">
       <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Meeting AI</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('List action items from this meeting so far with owners and deadlines.')" style="border-color:var(--accent)">📌 Action Items</button>
