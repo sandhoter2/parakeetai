@@ -473,6 +473,43 @@ body.pip-active .note-input-wrap { display: flex !important; }
 }
 .tc-config-btn:hover, .tc-config-btn.open { border-color: var(--accent); color: var(--accent2); }
 
+/* Meeting Helper */
+.meeting-helper-btn {
+  width: 32px; height: 32px; border-radius: 7px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--text2); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0; position: relative;
+}
+.meeting-helper-btn:hover, .meeting-helper-btn.active { border-color: var(--yellow); color: var(--yellow); }
+.mh-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: var(--yellow); color: #000; border-radius: 8px;
+  font-size: 9px; font-weight: 700; padding: 1px 4px; display: none;
+}
+.meeting-helper-panel {
+  position: absolute; bottom: calc(100% + 6px); left: 0;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; min-width: 280px; max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 110;
+  display: none; flex-direction: column; gap: 10px;
+}
+.meeting-helper-panel.open { display: flex; }
+.mh-role-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.mh-role-tab {
+  padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--text2); font-size: 11px; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.mh-role-tab.active { background: var(--yellow); border-color: var(--yellow); color: #000; font-weight: 600; }
+.mh-suggestions { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; }
+.mh-suggestion-item {
+  padding: 6px 9px; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; font-size: 11px; color: var(--text2); cursor: pointer;
+  transition: all 0.15s; text-align: left; line-height: 1.4; width: 100%;
+}
+.mh-suggestion-item:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.mh-suggestion-item.context-match { border-left: 3px solid var(--yellow); padding-left: 7px; }
+
 /* Note input */
 .note-input-wrap {
   display:flex; align-items:center; gap:6px; padding: 6px 16px;
@@ -628,6 +665,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     <button class="fmic-btn" id="fSysBtn" onclick="toggleSystemAudio()" title="System audio (interviewer)">🖥️</button>
     <button class="fmic-btn" id="fTcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
     <button class="fmic-btn" id="fTcSendBtn" onclick="transcribeNow()" title="Send audio now">⏩</button>
+    <button class="fmic-btn" id="fMhBtn" onclick="toggleMHPanel()" title="Meeting helper — role-based question suggestions">💡</button>
     <input type="text" class="fq-input" id="fQuestionInput"
            placeholder="Type question or speak…"
            onkeydown="if(event.key==='Enter')triggerAI()">
@@ -748,6 +786,29 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       </div>
       <div class="tc-row" id="tcDynamicInfo" style="display:none">
         <span style="font-size:11px;color:var(--text3)">Auto-sends when a question ends ✦</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Meeting helper button + panel -->
+  <div style="position:relative;display:flex;align-items:center">
+    <button class="meeting-helper-btn" id="mhBtn" onclick="toggleMHPanel()" title="Meeting helper — role-based question suggestions">
+      💡<span class="mh-badge" id="mhBadge"></span>
+    </button>
+    <div class="meeting-helper-panel" id="mhPanel">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-weight:600;font-size:12px">Meeting Helper</span>
+        <span style="font-size:10px;color:var(--text3)">click question to fill ↓</span>
+      </div>
+      <div class="mh-role-tabs" id="mhRoleTabs">
+        <button class="mh-role-tab" data-role="architect" onclick="setMeetingRole('architect')">🏗️ Architect</button>
+        <button class="mh-role-tab" data-role="developer" onclick="setMeetingRole('developer')">💻 Dev</button>
+        <button class="mh-role-tab" data-role="pm" onclick="setMeetingRole('pm')">📋 PM</button>
+        <button class="mh-role-tab" data-role="qa" onclick="setMeetingRole('qa')">🔍 QA</button>
+        <button class="mh-role-tab" data-role="devops" onclick="setMeetingRole('devops')">⚙ DevOps</button>
+      </div>
+      <div class="mh-suggestions" id="mhSuggestions">
+        <span style="font-size:11px;color:var(--text3)">Select a role above to see suggested questions</span>
       </div>
     </div>
   </div>
@@ -1142,6 +1203,155 @@ function transcribeNow() {
   setTranscribeMode(mode);
 })();
 
+// ── Meeting Helper ────────────────────────────────────────────────────────────
+const MEETING_ROLES = {
+  architect: { name: 'Architect', questions: [
+    { q: 'What are the scalability requirements for this system?', tags: ['scale','traffic','load','user','growth','concurrent'] },
+    { q: 'How does this integrate with existing services?', tags: ['integrat','service','api','connect','system','microservice'] },
+    { q: 'What are the latency and throughput expectations?', tags: ['latency','performance','speed','response','throughput','SLA'] },
+    { q: 'What database technology is used and why?', tags: ['database','db','postgres','mysql','mongo','redis','storage','SQL','NoSQL'] },
+    { q: 'How is data consistency handled across services?', tags: ['consistent','eventual','transaction','ACID','sync','replicat'] },
+    { q: 'What are the failure modes and recovery strategies?', tags: ['fail','recover','outage','disaster','resilient','fault','circuit'] },
+    { q: 'How is authentication and authorization handled?', tags: ['auth','login','permission','role','JWT','OAuth','security','token'] },
+    { q: 'What observability exists — logs, metrics, traces?', tags: ['log','monitor','metric','trace','observ','alert','dashboard','telemetry'] },
+    { q: 'How is the deployment pipeline structured?', tags: ['deploy','pipeline','CI','CD','release','build','artifact'] },
+    { q: 'What is the plan for horizontal scaling?', tags: ['horizontal','scaling','replica','shard','cluster','node','pod'] },
+    { q: 'How is configuration managed across environments?', tags: ['config','environment','staging','production','env','setting'] },
+    { q: 'What are the main security concerns to address?', tags: ['security','vulnerab','attack','encrypt','TLS','HTTPS','CVE'] },
+  ]},
+  developer: { name: 'Developer', questions: [
+    { q: 'What tech stack and languages are being used?', tags: ['stack','framework','language','library','React','Node','Python','Java','Go','Rust'] },
+    { q: 'How is the codebase structured and organized?', tags: ['folder','module','package','structure','organiz','monorepo'] },
+    { q: 'What testing strategy is in place?', tags: ['test','unit','integration','e2e','coverage','TDD','BDD','jest','pytest'] },
+    { q: 'How are code reviews and PRs handled?', tags: ['review','PR','pull request','merge','approve'] },
+    { q: 'What are the main performance bottlenecks?', tags: ['slow','bottleneck','performance','profil','optim','N+1','query'] },
+    { q: 'How is state management handled in the frontend?', tags: ['state','Redux','context','store','frontend','UI','Zustand'] },
+    { q: 'What API patterns are used — REST, GraphQL, gRPC?', tags: ['API','REST','GraphQL','gRPC','endpoint','request','schema'] },
+    { q: 'How is error handling and logging structured?', tags: ['error','exception','log','handle','catch','try','Sentry'] },
+    { q: 'What branching strategy does the team use?', tags: ['branch','git','merge','trunk','feature','gitflow','rebase'] },
+    { q: 'How is technical debt managed and prioritized?', tags: ['debt','refactor','legacy','rewrite','cleanup','TODO','FIXME'] },
+    { q: 'What is the local development setup like?', tags: ['local','setup','docker','devcontainer','develop','seed'] },
+    { q: 'How are dependencies managed and kept up to date?', tags: ['depend','version','package','update','npm','pip','upgrade'] },
+  ]},
+  pm: { name: 'Product', questions: [
+    { q: 'What is the core problem this feature solves?', tags: ['problem','pain','need','why','purpose','solve','value'] },
+    { q: 'Who are the target users for this?', tags: ['user','customer','persona','audience','who','segment','B2B','B2C'] },
+    { q: 'What does success look like — what are the KPIs?', tags: ['success','goal','KPI','metric','target','measure','OKR'] },
+    { q: 'What is the timeline and key milestones?', tags: ['timeline','milestone','deadline','when','schedule','date','sprint'] },
+    { q: 'What are the main dependencies or blockers?', tags: ['block','depend','risk','obstacle','wait','need','gating'] },
+    { q: 'How does this align with the product roadmap?', tags: ['roadmap','strategy','vision','quarter','priority','theme'] },
+    { q: 'What user research or data supports this decision?', tags: ['research','data','survey','interview','feedback','NPS','CSAT'] },
+    { q: 'What is the rollout and go-to-market strategy?', tags: ['rollout','launch','release','phased','beta','GTM','marketing'] },
+    { q: 'How will we measure user adoption?', tags: ['adoption','usage','engagement','retention','DAU','MAU','churn'] },
+    { q: 'What are the risks and mitigation plans?', tags: ['risk','mitigat','contingency','fallback','assumption'] },
+  ]},
+  qa: { name: 'QA', questions: [
+    { q: 'What test coverage currently exists for this area?', tags: ['test','coverage','unit','integration','tested','percent'] },
+    { q: 'What edge cases and boundary conditions need testing?', tags: ['edge','boundary','extreme','case','corner','null','empty'] },
+    { q: 'How are regression tests maintained?', tags: ['regression','existing','break','backward','compatible','suite'] },
+    { q: 'What automation framework is being used?', tags: ['automat','selenium','cypress','playwright','jest','pytest','robot'] },
+    { q: 'How are bugs triaged and prioritized?', tags: ['bug','defect','issue','ticket','priority','severity','P0','P1'] },
+    { q: 'What is the performance and load testing strategy?', tags: ['performance','load','stress','JMeter','k6','locust','spike'] },
+    { q: 'What is the release acceptance criteria?', tags: ['accept','criteria','release','sign-off','ready','done','ship'] },
+    { q: 'How is test data managed across environments?', tags: ['test data','fixture','seed','mock','stub','fake','factory'] },
+    { q: 'How are security and penetration tests handled?', tags: ['security','pentest','OWASP','vulnerab','injection','XSS'] },
+    { q: 'How are flaky tests identified and handled?', tags: ['flaky','intermittent','retry','stable','reliable'] },
+  ]},
+  devops: { name: 'DevOps', questions: [
+    { q: 'What infrastructure is this deployed on?', tags: ['infra','cloud','AWS','GCP','Azure','kubernetes','k8s','ECS','EC2'] },
+    { q: 'How is infrastructure provisioned — Terraform, CDK?', tags: ['terraform','IaC','provision','CDK','CloudFormation','pulumi','Ansible'] },
+    { q: 'What is the deployment rollback strategy?', tags: ['rollback','revert','blue-green','canary','deploy','undo'] },
+    { q: 'How are secrets and credentials managed?', tags: ['secret','credential','vault','env','key','token','password','SSM'] },
+    { q: 'What monitoring and alerting is in place?', tags: ['monitor','alert','Datadog','Grafana','PagerDuty','metric','CloudWatch'] },
+    { q: 'What is the incident response process?', tags: ['incident','outage','on-call','response','runbook','SRE','postmortem'] },
+    { q: 'How is auto-scaling configured?', tags: ['autoscale','HPA','scale','load','replica','resource','CPU','memory'] },
+    { q: 'What are the SLA/SLO/SLI targets?', tags: ['SLA','SLO','SLI','uptime','availability','reliability','nines'] },
+    { q: 'How is network security managed — VPC, firewalls?', tags: ['network','firewall','VPC','security group','WAF','ingress','egress'] },
+    { q: 'How are container images built and managed?', tags: ['docker','container','image','registry','ECR','GCR','helm','chart'] },
+  ]},
+};
+
+let meetingRole = null;
+
+function toggleMHPanel() {
+  const panel = document.getElementById('mhPanel');
+  const btn   = document.getElementById('mhBtn');
+  if (!panel) return;
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  if (btn) btn.classList.toggle('active', !isOpen);
+  if (!isOpen) refreshMHSuggestions();
+}
+
+function setMeetingRole(role) {
+  meetingRole = role;
+  localStorage.setItem('meetingRole', role);
+  document.querySelectorAll('.mh-role-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.role === role);
+  });
+  refreshMHSuggestions();
+}
+
+function getMHContext() {
+  const entries = transcriptPanel ? transcriptPanel.querySelectorAll('.transcript-entry .text') : [];
+  return Array.from(entries).slice(-8).map(e => e.textContent).join(' ').toLowerCase();
+}
+
+function refreshMHSuggestions() {
+  const container = document.getElementById('mhSuggestions');
+  const badge = document.getElementById('mhBadge');
+  if (!container) return;
+  if (!meetingRole || !MEETING_ROLES[meetingRole]) {
+    container.innerHTML = '<span style="font-size:11px;color:var(--text3)">Select a role above to see questions</span>';
+    if (badge) badge.style.display = 'none';
+    return;
+  }
+  const context = getMHContext();
+  const hasContext = context.length > 30;
+  const questions = MEETING_ROLES[meetingRole].questions;
+  const scored = questions.map(q => ({
+    ...q,
+    score: q.tags.reduce((s, tag) => s + (context.includes(tag.toLowerCase()) ? 1 : 0), 0)
+  }));
+  scored.sort((a, b) => b.score - a.score);
+  container.innerHTML = '';
+  scored.forEach(item => {
+    const btn = document.createElement('button');
+    const isMatch = item.score > 0 && hasContext;
+    btn.className = 'mh-suggestion-item' + (isMatch ? ' context-match' : '');
+    btn.textContent = item.q;
+    btn.title = isMatch ? 'Contextually relevant to your conversation' : 'Role template question';
+    btn.onclick = () => {
+      const qi = document.getElementById('questionInput');
+      const fqi = (typeof _doc === 'function') ? _doc().getElementById('fQuestionInput') : null;
+      if (qi) { qi.value = item.q; qi.focus(); }
+      if (fqi) fqi.value = item.q;
+      const panel = document.getElementById('mhPanel');
+      const mhBtn = document.getElementById('mhBtn');
+      if (panel) panel.classList.remove('open');
+      if (mhBtn) mhBtn.classList.remove('active');
+    };
+    container.appendChild(btn);
+  });
+  const matchCount = scored.filter(q => q.score > 0 && hasContext).length;
+  if (badge) {
+    badge.textContent = matchCount || '';
+    badge.style.display = matchCount > 0 ? 'inline' : 'none';
+  }
+}
+
+(function initMeetingRole() {
+  const saved = localStorage.getItem('meetingRole');
+  if (saved && MEETING_ROLES[saved]) {
+    meetingRole = saved;
+    setTimeout(() => {
+      document.querySelectorAll('.mh-role-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.role === saved);
+      });
+    }, 100);
+  }
+})();
+
 let micRecognition = null;
 let micLastCommitted = '';
 let micManualAccum = '';   // tracks committed finals in manual mode (not interim)
@@ -1200,6 +1410,7 @@ function makeMicRecognition() {
         setMicInputText(text);
         saveMicToServer(text);
         addTranscriptEntryUI(text, 'microphone');
+        refreshMHSuggestions();
         if (autoAI && (transcribeMode !== 'dynamic' || isQuestionEnding(text))) triggerAI(text, true);
       } else {
         // Manual: each final chunk saved individually — transcript keeps all history,
@@ -1463,6 +1674,7 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
     if (!data.text || !data.text.trim()) return;
 
     addTranscriptEntryUI(data.text.trim(), data.speaker || speaker);
+    refreshMHSuggestions();
     setStatus('Transcribed ✓');
 
     // Sync system audio into both chat input boxes — replace with just this chunk
