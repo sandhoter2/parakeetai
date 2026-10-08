@@ -36,6 +36,35 @@ body { overflow: hidden; }
   grid-template-columns: 1fr;
   height: calc(100vh - 227px);
   overflow: hidden;
+  transition: height 0.25s ease;
+}
+body.teams-zoomed .main-layout {
+  height: calc(100vh - 227px - 240px);
+}
+#teamsRecorderPanel {
+  transition: all 0.25s ease;
+}
+#teamsRecorderPanel.zoomed #recorderPanelBody {
+  max-height: 240px;
+  overflow-y: auto;
+}
+.cal-event-item {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s;
+  background: transparent;
+}
+.cal-event-item:hover {
+  border-color: var(--accent);
+  background: rgba(108,99,255,0.08);
+}
+.cal-event-item .evt-time {
+  font-size:10px;
+  color:var(--text3);
+  font-weight:600;
 }
 .main-layout.with-ai {
   grid-template-columns: var(--transcript-w, 1fr) 5px minmax(340px, 1fr);
@@ -686,12 +715,41 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 <div id="teamsRecorderPanel" style="background:var(--bg2);border-top:1px solid var(--border);padding:0">
   <!-- Header bar -->
   <div style="display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="toggleRecorderPanel()">
-    <span style="font-size:16px">📹</span>
+    <span style="font-size:15px">📹</span>
     <span style="font-size:13px;font-weight:700;color:var(--text)">Teams Recorder</span>
     <span id="recorderPanelIndicator" style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(108,99,255,0.15);color:var(--accent2);font-weight:600">LIVE</span>
     <div style="flex:1"></div>
+    <button class="btn btn-ghost btn-xs" id="calSyncStatusBtn" onclick="event.stopPropagation();toggleCalendarPanel()" title="Sync calendar" style="font-size:11px;border-color:var(--border)">📅 Calendar</button>
     <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();generateMeetingSummary()" title="Generate AI meeting summary" id="summaryBtn">📋 Summary</button>
+    <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();toggleTeamsZoom()" id="teamsZoomBtn" title="Expand / collapse panel" style="font-size:13px;padding:2px 6px">⤢</button>
     <span id="recorderPanelToggle" style="font-size:12px;color:var(--text3)">▲</span>
+  </div>
+
+  <!-- Calendar sync row (hidden by default) -->
+  <div id="calendarSyncPanel" style="display:none;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg3)">
+    <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <!-- Connect buttons -->
+      <div style="flex:0 0 auto">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Connect Calendar</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-xs" id="googleCalBtn" onclick="connectGoogleCalendar()" style="border-color:var(--accent);font-size:11px">
+            🌐 Google Calendar
+          </button>
+          <button class="btn btn-ghost btn-xs" id="msCalBtn" onclick="connectMicrosoftCalendar()" style="border-color:#0078d4;font-size:11px">
+            🪟 Outlook / Teams
+          </button>
+          <button class="btn btn-ghost btn-xs" onclick="refreshCalendarEvents()" id="calRefreshBtn" title="Refresh events" style="font-size:11px;display:none">↻ Refresh</button>
+        </div>
+        <div id="calConnectStatus" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
+      </div>
+      <!-- Today's meetings list -->
+      <div style="flex:1 1 300px;min-width:0">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Today's Meetings <span id="calEventCount" style="font-weight:400;text-transform:none"></span></div>
+        <div id="calendarEventsList" style="display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto">
+          <div style="font-size:12px;color:var(--text3);font-style:italic">Connect a calendar to see today's meetings</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Body -->
@@ -725,6 +783,8 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
         <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('What are the top 3 questions I should ask right now given the current discussion?')" style="border-color:var(--green)">💬 Questions to Ask</button>
         <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('What key decisions have been made so far in this meeting?')" style="border-color:var(--accent2)">✅ Decisions</button>
         <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('What is the current status of this meeting? What topics have been covered and what is remaining?')" style="border-color:var(--text3)">📊 Status Update</button>
+        <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('Summarize the key risks and concerns raised in this meeting.')" style="border-color:var(--red)">⚠️ Risks</button>
+        <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('Draft a follow-up email based on this meeting discussion.')" style="border-color:var(--text3)">✉️ Follow-up Email</button>
       </div>
       {% if session.company %}
       <div id="crossSessionCtx" style="margin-top:10px;font-size:11px;color:var(--text3)">
@@ -2633,6 +2693,280 @@ if (SESSION_TYPE === 'meeting') {
     speakerName = speakerName || getActiveSpeakerName();
     _origAddTranscriptEntryUI(text, type, speakerName);
   }
+
+  // ── Zoom / expand panel ───────────────────────────────────────────────────
+  let teamsZoomed = false;
+  function toggleTeamsZoom() {
+    teamsZoomed = !teamsZoomed;
+    const panel = document.getElementById('teamsRecorderPanel');
+    const btn = document.getElementById('teamsZoomBtn');
+    if (teamsZoomed) {
+      document.body.classList.add('teams-zoomed');
+      panel.classList.add('zoomed');
+      btn.textContent = '⤡';
+      btn.title = 'Collapse panel';
+    } else {
+      document.body.classList.remove('teams-zoomed');
+      panel.classList.remove('zoomed');
+      btn.textContent = '⤢';
+      btn.title = 'Expand panel';
+    }
+  }
+
+  // ── Calendar sync ─────────────────────────────────────────────────────────
+  let calendarConnected = false;
+  let calendarType = null; // 'google' | 'microsoft'
+
+  function toggleCalendarPanel() {
+    const panel = document.getElementById('calendarSyncPanel');
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen && !calendarConnected) {
+      document.getElementById('calConnectStatus').textContent = 'Choose a calendar provider to sync today\'s meetings.';
+    }
+  }
+
+  function connectGoogleCalendar() {
+    const btn = document.getElementById('googleCalBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Connecting…';
+    const CLIENT_ID = window.GOOGLE_CALENDAR_CLIENT_ID || '';
+    if (!CLIENT_ID) {
+      document.getElementById('calConnectStatus').textContent = '⚠ Google Calendar not configured (missing CLIENT_ID).';
+      btn.disabled = false;
+      btn.textContent = '🌐 Google Calendar';
+      return;
+    }
+    const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
+    const redirectUri = window.location.origin + '/oauth/google-calendar/callback/';
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(CLIENT_ID)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent`;
+    const popup = window.open(authUrl, 'googleCalAuth', 'width=500,height=620,left=300,top=100');
+    const pollTimer = setInterval(() => {
+      try {
+        if (popup.closed) {
+          clearInterval(pollTimer);
+          btn.disabled = false;
+          btn.textContent = '🌐 Google Calendar';
+          return;
+        }
+        const hash = popup.location.hash;
+        if (hash && hash.includes('access_token')) {
+          clearInterval(pollTimer);
+          popup.close();
+          const params = new URLSearchParams(hash.substring(1));
+          const token = params.get('access_token');
+          if (token) {
+            localStorage.setItem('gcal_token', token);
+            localStorage.setItem('gcal_token_ts', Date.now());
+            calendarConnected = true;
+            calendarType = 'google';
+            btn.textContent = '✅ Google Connected';
+            btn.style.borderColor = 'var(--green)';
+            document.getElementById('calRefreshBtn').style.display = '';
+            fetchGoogleCalendarEvents(token);
+          }
+        }
+      } catch(e) { /* cross-origin, still polling */ }
+    }, 500);
+  }
+
+  function connectMicrosoftCalendar() {
+    const btn = document.getElementById('msCalBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Connecting…';
+    const CLIENT_ID = window.MICROSOFT_CALENDAR_CLIENT_ID || '';
+    if (!CLIENT_ID) {
+      document.getElementById('calConnectStatus').textContent = '⚠ Microsoft Calendar not configured (missing CLIENT_ID).';
+      btn.disabled = false;
+      btn.textContent = '🪟 Outlook / Teams';
+      return;
+    }
+    const SCOPES = 'openid profile Calendars.Read offline_access';
+    const redirectUri = window.location.origin + '/oauth/microsoft-calendar/callback/';
+    const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${encodeURIComponent(CLIENT_ID)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}`;
+    const popup = window.open(authUrl, 'msCalAuth', 'width=500,height=620,left=300,top=100');
+    const pollTimer = setInterval(() => {
+      try {
+        if (popup.closed) {
+          clearInterval(pollTimer);
+          btn.disabled = false;
+          btn.textContent = '🪟 Outlook / Teams';
+          return;
+        }
+        const hash = popup.location.hash;
+        if (hash && hash.includes('access_token')) {
+          clearInterval(pollTimer);
+          popup.close();
+          const params = new URLSearchParams(hash.substring(1));
+          const token = params.get('access_token');
+          if (token) {
+            localStorage.setItem('mscal_token', token);
+            localStorage.setItem('mscal_token_ts', Date.now());
+            calendarConnected = true;
+            calendarType = 'microsoft';
+            btn.textContent = '✅ Outlook Connected';
+            btn.style.borderColor = 'var(--green)';
+            document.getElementById('calRefreshBtn').style.display = '';
+            fetchMicrosoftCalendarEvents(token);
+          }
+        }
+      } catch(e) { /* cross-origin, still polling */ }
+    }, 500);
+  }
+
+  async function fetchGoogleCalendarEvents(token) {
+    const statusEl = document.getElementById('calConnectStatus');
+    statusEl.textContent = '⏳ Fetching today\'s meetings…';
+    const today = new Date();
+    const timeMin = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+    const timeMax = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
+    try {
+      const r = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=20`,
+        { headers: { Authorization: 'Bearer ' + token } }
+      );
+      if (!r.ok) throw new Error('API error ' + r.status);
+      const d = await r.json();
+      renderCalendarEvents(d.items || []);
+      statusEl.textContent = `✅ Google Calendar synced`;
+    } catch(e) {
+      statusEl.textContent = '❌ Failed to fetch calendar: ' + e.message;
+      if (e.message.includes('401')) {
+        localStorage.removeItem('gcal_token');
+        document.getElementById('googleCalBtn').textContent = '🌐 Google Calendar';
+        document.getElementById('googleCalBtn').disabled = false;
+      }
+    }
+  }
+
+  async function fetchMicrosoftCalendarEvents(token) {
+    const statusEl = document.getElementById('calConnectStatus');
+    statusEl.textContent = '⏳ Fetching today\'s meetings…';
+    const today = new Date();
+    const startDt = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+    const endDt = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
+    try {
+      const r = await fetch(
+        `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${encodeURIComponent(startDt)}&endDateTime=${encodeURIComponent(endDt)}&$orderby=start/dateTime&$top=20&$select=subject,start,end,attendees,bodyPreview,onlineMeeting`,
+        { headers: { Authorization: 'Bearer ' + token } }
+      );
+      if (!r.ok) throw new Error('API error ' + r.status);
+      const d = await r.json();
+      const events = (d.value || []).map(ev => ({
+        summary: ev.subject,
+        start: { dateTime: ev.start?.dateTime },
+        end: { dateTime: ev.end?.dateTime },
+        attendees: (ev.attendees || []).map(a => ({
+          email: a.emailAddress?.address,
+          displayName: a.emailAddress?.name,
+          responseStatus: a.status?.response === 'accepted' ? 'accepted' : 'tentative'
+        }))
+      }));
+      renderCalendarEvents(events);
+      statusEl.textContent = `✅ Outlook Calendar synced`;
+    } catch(e) {
+      statusEl.textContent = '❌ Failed to fetch calendar: ' + e.message;
+    }
+  }
+
+  function renderCalendarEvents(events) {
+    const container = document.getElementById('calendarEventsList');
+    const countEl = document.getElementById('calEventCount');
+    if (!events.length) {
+      container.innerHTML = '<div style="font-size:12px;color:var(--text3);font-style:italic">No meetings scheduled today</div>';
+      countEl.textContent = '';
+      return;
+    }
+    countEl.textContent = `(${events.length})`;
+    container.innerHTML = '';
+    events.forEach((ev, i) => {
+      const startStr = ev.start?.dateTime
+        ? new Date(ev.start.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : (ev.start?.date ? 'All day' : '');
+      const endStr = ev.end?.dateTime
+        ? new Date(ev.end.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : '';
+      const timeLabel = endStr ? `${startStr} – ${endStr}` : startStr;
+      const attendeeCount = (ev.attendees || []).length;
+      const div = document.createElement('div');
+      div.className = 'cal-event-item';
+      div.setAttribute('title', `Click to load ${attendeeCount} participant${attendeeCount !== 1 ? 's' : ''} from this event`);
+      div.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;min-width:0">
+          <span style="font-size:12px;font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(ev.summary || 'Untitled')}</span>
+          <span class="evt-time" style="flex-shrink:0">${escHtml(timeLabel)}</span>
+        </div>
+        ${attendeeCount ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${attendeeCount} attendee${attendeeCount !== 1 ? 's' : ''} • click to sync participants</div>` : ''}
+      `;
+      div.addEventListener('click', () => loadCalendarMeeting(ev));
+      container.appendChild(div);
+    });
+  }
+
+  async function loadCalendarMeeting(calEvent) {
+    const attendees = calEvent.attendees || [];
+    if (!attendees.length) {
+      toast('No attendees found in this calendar event', 'info');
+      return;
+    }
+    let added = 0;
+    for (const attendee of attendees) {
+      const name = attendee.displayName || attendee.email || '';
+      if (!name) continue;
+      // Skip if already in participants
+      if (participants.some(p => p.name.toLowerCase() === name.toLowerCase())) continue;
+      try {
+        const r = await fetch(`/api/session/${SESSION_ID}/participants/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+          body: JSON.stringify({ name, role: attendee.email || '' }),
+        });
+        const d = await r.json();
+        if (d.id) {
+          participants.push({ id: d.id, name: d.name, role: d.role, color: d.color });
+          added++;
+        }
+      } catch(e) { /* skip failed attendee */ }
+    }
+    renderParticipants();
+    if (added > 0) {
+      toast(`Added ${added} participant${added !== 1 ? 's' : ''} from calendar`, 'success');
+    } else {
+      toast('All attendees already in participant list', 'info');
+    }
+    // Auto-expand panel to show the new participants
+    if (!teamsZoomed) toggleTeamsZoom();
+  }
+
+  function refreshCalendarEvents() {
+    const gcalToken = localStorage.getItem('gcal_token');
+    const mscalToken = localStorage.getItem('mscal_token');
+    if (calendarType === 'google' && gcalToken) fetchGoogleCalendarEvents(gcalToken);
+    else if (calendarType === 'microsoft' && mscalToken) fetchMicrosoftCalendarEvents(mscalToken);
+    else toast('No calendar connected', 'info');
+  }
+
+  // Restore calendar session on page load
+  (function restoreCalendarSession() {
+    const gcalToken = localStorage.getItem('gcal_token');
+    const gcalTs = parseInt(localStorage.getItem('gcal_token_ts') || '0');
+    const mscalToken = localStorage.getItem('mscal_token');
+    const mscalTs = parseInt(localStorage.getItem('mscal_token_ts') || '0');
+    const oneHour = 3600 * 1000;
+    if (gcalToken && (Date.now() - gcalTs < oneHour)) {
+      calendarConnected = true;
+      calendarType = 'google';
+      const btn = document.getElementById('googleCalBtn');
+      if (btn) { btn.textContent = '✅ Google Connected'; btn.style.borderColor = 'var(--green)'; }
+      document.getElementById('calRefreshBtn').style.display = '';
+    } else if (mscalToken && (Date.now() - mscalTs < oneHour)) {
+      calendarConnected = true;
+      calendarType = 'microsoft';
+      const btn = document.getElementById('msCalBtn');
+      if (btn) { btn.textContent = '✅ Outlook Connected'; btn.style.borderColor = 'var(--green)'; }
+      document.getElementById('calRefreshBtn').style.display = '';
+    }
+  })();
 
   loadParticipants();
   loadCrossSessionCtx();
