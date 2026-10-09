@@ -105,6 +105,13 @@ DEFAULT_AUTO_FIELD = (
     else "django.db.models.BigAutoField"
 )
 
+# Django's built-in apps (auth, admin, contenttypes) use AutoField in their
+# existing migrations. MongoDB requires ObjectIdAutoField, but the backend
+# handles the actual type coercion — suppressing this check allows migrate
+# to run successfully.
+if _using_mongo:
+    SILENCED_SYSTEM_CHECKS = ["mongodb.E001"]
+
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/login/"
