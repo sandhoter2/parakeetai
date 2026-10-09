@@ -3,24 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign In — ParakeetAI</title>
+  <title>Sign In — PARAKEETAI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0d0f18;
-      --bg2: #161927;
-      --bg3: #1f2235;
-      --border: #252840;
-      --accent: #7c6fff;
-      --accent2: #b09eff;
-      --green: #34d399;
-      --red: #f87171;
-      --text: #eef0f8;
-      --text2: #8b93b8;
-      --text3: #565e82;
-      --radius: 14px;
+      --bg: #040b10;
+      --bg2: #0a141c;
+      --bg3: #111d27;
+      --border: #1a2d3d;
+      --accent: #00c8ff;
+      --accent2: #6c63ff;
+      --green: #00ff9d;
+      --red: #ff4757;
+      --yellow: #ffd32a;
+      --text: #e0f2ff;
+      --text2: #7ab0cc;
+      --text3: #3d6880;
+      --mono: 'JetBrains Mono', monospace;
     }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -35,23 +36,22 @@
       position: relative;
       overflow: hidden;
     }
-    /* Background mesh gradient */
+    /* Robot dot grid */
     body::before {
       content: '';
       position: fixed; inset: 0;
-      background:
-        radial-gradient(ellipse 60% 50% at 20% 20%, rgba(124,111,255,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(176,158,255,0.07) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(52,211,153,0.04) 0%, transparent 70%);
+      background-image: radial-gradient(circle, rgba(0,200,255,0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
       pointer-events: none;
       z-index: 0;
     }
-    /* Subtle dot grid */
+    /* Cyan accent glow */
     body::after {
       content: '';
       position: fixed; inset: 0;
-      background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
-      background-size: 28px 28px;
+      background:
+        radial-gradient(ellipse 55% 45% at 15% 15%, rgba(0,200,255,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 45% 55% at 85% 85%, rgba(108,99,255,0.06) 0%, transparent 60%);
       pointer-events: none;
       z-index: 0;
     }
@@ -70,49 +70,61 @@
     }
     .brand-mark-wrap {
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .brand-mark {
-      width: 60px; height: 60px; border-radius: 18px;
-      background: linear-gradient(135deg, var(--accent), #5a4fd8);
+      width: 60px; height: 60px; border-radius: 4px;
+      background: rgba(0,200,255,0.08);
+      border: 1px solid rgba(0,200,255,0.35);
       display: flex; align-items: center; justify-content: center;
       font-size: 32px;
-      box-shadow: 0 8px 32px rgba(124,111,255,0.35);
+      box-shadow: 0 0 24px rgba(0,200,255,0.2), 0 0 48px rgba(0,200,255,0.08);
     }
     .brand-name {
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, var(--text) 40%, var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      font-family: var(--mono);
+      color: var(--accent);
+      text-shadow: 0 0 16px rgba(0,200,255,0.5);
     }
     .brand-sub {
-      font-size: 13px;
+      font-size: 11px;
       color: var(--text3);
       margin-top: 5px;
+      font-family: var(--mono);
+      letter-spacing: 0.5px;
     }
 
     .card {
-      background: rgba(22,25,39,0.8);
+      background: rgba(10,20,28,0.85);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 4px;
       padding: 32px;
-      box-shadow: 0 8px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(124,111,255,0.06) inset;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,200,255,0.04) inset;
       backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
     }
 
     .card-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       margin-bottom: 4px;
-      letter-spacing: -0.3px;
+      font-family: var(--mono);
+      color: var(--accent);
     }
+    .card-title::before { content: '// '; opacity: 0.5; }
     .card-sub {
-      font-size: 13px;
-      color: var(--text2);
+      font-size: 12px;
+      color: var(--text3);
       margin-bottom: 24px;
+      font-family: var(--mono);
     }
 
     .form-group {
@@ -120,18 +132,19 @@
     }
     .form-group label {
       display: block;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--text3);
       margin-bottom: 6px;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 1px;
+      font-family: var(--mono);
     }
     .form-control {
       width: 100%;
-      background: var(--bg3);
+      background: rgba(0,200,255,0.03);
       border: 1px solid var(--border);
-      border-radius: 9px;
+      border-radius: 4px;
       padding: 10px 14px;
       color: var(--text);
       font-size: 14px;
@@ -141,45 +154,46 @@
     }
     .form-control:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(124,111,255,0.15);
+      box-shadow: 0 0 0 2px rgba(0,200,255,0.12);
     }
     .form-control::placeholder { color: var(--text3); }
 
     .error-box {
-      background: rgba(248,113,113,0.08);
-      border: 1px solid rgba(248,113,113,0.25);
-      border-radius: 9px;
+      background: rgba(255,71,87,0.07);
+      border: 1px solid rgba(255,71,87,0.25);
+      border-radius: 4px;
       padding: 10px 14px;
       color: var(--red);
-      font-size: 13px;
+      font-size: 12px;
       margin-bottom: 18px;
       display: flex;
       align-items: center;
       gap: 8px;
+      font-family: var(--mono);
     }
 
     .btn-login {
       width: 100%;
       padding: 12px;
-      background: linear-gradient(135deg, var(--accent), #5a4fd8);
-      color: #fff;
-      border: none;
-      border-radius: 9px;
-      font-size: 15px;
-      font-weight: 600;
+      background: linear-gradient(135deg, rgba(0,200,255,0.15), rgba(108,99,255,0.15));
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.2s;
       margin-top: 4px;
-      letter-spacing: -0.1px;
-      font-family: inherit;
-      box-shadow: 0 4px 16px rgba(124,111,255,0.3);
+      letter-spacing: 1.5px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      box-shadow: 0 0 12px rgba(0,200,255,0.15);
     }
     .btn-login:hover {
-      background: linear-gradient(135deg, #8d82ff, var(--accent));
-      box-shadow: 0 6px 24px rgba(124,111,255,0.45);
-      transform: translateY(-1px);
+      background: linear-gradient(135deg, rgba(0,200,255,0.22), rgba(108,99,255,0.2));
+      box-shadow: 0 0 24px rgba(0,200,255,0.3);
     }
-    .btn-login:active { transform: translateY(0); box-shadow: none; }
+    .btn-login:active { transform: scale(0.99); box-shadow: none; }
 
     .divider {
       height: 1px;
@@ -189,43 +203,43 @@
 
     .hint {
       text-align: center;
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text3);
+      font-family: var(--mono);
     }
-    .hint a { color: var(--accent2); font-weight: 500; }
+    .hint a { color: var(--accent); font-weight: 600; text-decoration: none; }
     .hint a:hover { text-decoration: underline; }
 
     .features {
-      margin-top: 24px;
+      margin-top: 20px;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 8px;
     }
     .feature {
-      background: rgba(22,25,39,0.6);
+      background: rgba(0,200,255,0.02);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px;
+      border-radius: 4px;
+      padding: 12px;
       text-align: center;
-      backdrop-filter: blur(8px);
     }
-    .feature-icon { font-size: 20px; margin-bottom: 5px; }
-    .feature-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+    .feature-icon { font-size: 18px; margin-bottom: 4px; }
+    .feature-label { font-size: 11px; color: var(--text3); font-weight: 500; font-family: var(--mono); }
   </style>
 </head>
 <body>
   <div class="login-wrap">
     <div class="brand">
       <div class="brand-mark-wrap">
-        <div class="brand-mark">🦜</div>
+        <div class="brand-mark">🤖</div>
       </div>
-      <div class="brand-name">ParakeetAI</div>
-      <div class="brand-sub">Your AI assistant for interviews &amp; meetings</div>
+      <div class="brand-name">PARAKEETAI</div>
+      <div class="brand-sub">// AI assistant for interviews &amp; meetings</div>
     </div>
 
     <div class="card">
-      <div class="card-title">Welcome back</div>
-      <div class="card-sub">Sign in to access your sessions</div>
+      <div class="card-title">AUTHENTICATE</div>
+      <div class="card-sub">sign in to access your sessions</div>
 
       {% if error %}
       <div class="error-box">
@@ -263,7 +277,7 @@
           >
         </div>
 
-        <button type="submit" class="btn-login">Sign In</button>
+        <button type="submit" class="btn-login">▶ Sign In</button>
       </form>
 
       <div class="divider"></div>
