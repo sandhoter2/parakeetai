@@ -281,6 +281,36 @@ def api_transcript(request, session_id):
 
 
 @csrf_exempt
+@require_POST
+def api_save_audio_chunk(request, session_id):
+    """Save a raw audio chunk from MediaRecorder for the session recording."""
+    if (r := _auth_required(request)): return r
+    session = get_object_or_404(InterviewSession, id=session_id)
+
+    audio_data = request.body
+    if not audio_data:
+        return JsonResponse({"error": "no audio data"}, status=400)
+
+    seq = request.GET.get('seq') or request.headers.get('X-Chunk-Seq', '0')
+    try:
+        seq = int(seq)
+    except (ValueError, TypeError):
+        seq = 0
+
+    recordings_dir = settings.BASE_DIR / 'recordings'
+    recordings_dir.mkdir(exist_ok=True)
+    # Each session gets a subdirectory; chunks are numbered files
+    session_dir = recordings_dir / str(session_id)
+    session_dir.mkdir(exist_ok=True)
+    chunk_path = session_dir / f'{seq:04d}.webm'
+
+    with open(chunk_path, 'wb') as f:
+        f.write(audio_data)
+
+    return JsonResponse({"ok": True, "seq": seq, "bytes": len(audio_data)})
+
+
+@csrf_exempt
 def api_chat(request, session_id):
     """Stream Claude's answer as Server-Sent Events."""
     if (r := _auth_required(request)): return r

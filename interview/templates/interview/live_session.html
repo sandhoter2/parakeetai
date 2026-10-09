@@ -816,7 +816,35 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <!-- Input row: mic + question + AI help (buttons shown only in PiP via CSS override) -->
   <div class="ai-float-input-row" id="aiFloatInputRow">
     <button class="fmic-btn" id="fMicBtn" onclick="toggleMic()" title="Mic (your voice)">🎤</button>
-    <button class="fmic-btn" id="fTcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
+    <!-- ⚙ button + TC panel live here so both travel to PiP window together -->
+    <div style="position:relative;display:inline-flex">
+      <button class="fmic-btn" id="fTcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
+      <div class="transcribe-config-panel" id="tcPanel">
+        <div class="tc-row">
+          <span style="font-weight:600">Transcribe</span>
+          <span style="font-size:10px;color:var(--text3)">🎤 mic</span>
+        </div>
+        <div class="tc-row">
+          <span>Interval</span>
+          <select class="tc-select" id="tcIntervalSel" onchange="setTranscribeMode(this.value)">
+            <option value="manual">Manual</option>
+            <option value="2">2 sec</option>
+            <option value="5">5 sec</option>
+            <option value="10">10 sec</option>
+            <option value="30" selected>30 sec</option>
+            <option value="60">1 min</option>
+            <option value="120">2 min</option>
+            <option value="dynamic">Dynamic ✦</option>
+          </select>
+        </div>
+        <div class="tc-row" id="tcManualInfo" style="display:none">
+          <span style="font-size:11px;color:var(--text3)">Press ✨ AI Help to send when ready</span>
+        </div>
+        <div class="tc-row" id="tcDynamicInfo" style="display:none">
+          <span style="font-size:11px;color:var(--text3)">Auto-sends when a question ends ✦</span>
+        </div>
+      </div>
+    </div>
     <button class="fmic-btn" id="fMhBtn" onclick="toggleMHPanel()" title="Meeting helper — role-based question suggestions">💡</button>
     <input type="text" class="fq-input" id="fQuestionInput"
            placeholder="Type question or speak…"
@@ -941,35 +969,8 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 <div class="bottom-bar">
   <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Start/stop mic (your voice)">🎤</button>
 
-  <!-- Transcribe config button + popover -->
-  <div style="position:relative;display:flex;align-items:center;gap:4px">
-    <button class="tc-config-btn" id="tcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
-    <div class="transcribe-config-panel" id="tcPanel">
-      <div class="tc-row">
-        <span style="font-weight:600">Transcribe</span>
-        <span style="font-size:10px;color:var(--text3)">🎤 mic</span>
-      </div>
-      <div class="tc-row">
-        <span>Interval</span>
-        <select class="tc-select" id="tcIntervalSel" onchange="setTranscribeMode(this.value)">
-          <option value="manual">Manual</option>
-          <option value="2">2 sec</option>
-          <option value="5">5 sec</option>
-          <option value="10">10 sec</option>
-          <option value="30" selected>30 sec</option>
-          <option value="60">1 min</option>
-          <option value="120">2 min</option>
-          <option value="dynamic">Dynamic ✦</option>
-        </select>
-      </div>
-      <div class="tc-row" id="tcManualInfo" style="display:none">
-        <span style="font-size:11px;color:var(--text3)">Click ⏩ to send audio when ready</span>
-      </div>
-      <div class="tc-row" id="tcDynamicInfo" style="display:none">
-        <span style="font-size:11px;color:var(--text3)">Auto-sends when a question ends ✦</span>
-      </div>
-    </div>
-  </div>
+  <!-- Transcribe config button (TC panel lives in float input row so it travels to PiP) -->
+  <button class="tc-config-btn" id="tcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
 
   <!-- Meeting helper button + panel -->
   <div style="position:relative;display:flex;align-items:center">
@@ -1052,6 +1053,8 @@ let mediaRecorder = null;
 let audioChunks = [];
 let micActive = false;
 let micStream = null;
+let rawRecorder = null;
+let rawChunkSeq = 0;
 let autoAI = true;
 let isStreaming = false;
 let chunkTimer = null;
@@ -1298,11 +1301,15 @@ function clearSilenceWatch() {
 
 // ── Transcribe config panel ───────────────────────────────────────────────────
 function toggleTCPanel() {
-  const panel = document.getElementById('tcPanel');
-  const btn   = document.getElementById('tcConfigBtn');
+  // tcPanel lives inside #aiFloatPanel so it travels to PiP; use _doc() to find it
+  const doc = _doc();
+  const panel = doc.getElementById('tcPanel');
+  if (!panel) return;
   const isOpen = panel.classList.contains('open');
   panel.classList.toggle('open', !isOpen);
-  btn.classList.toggle('open', !isOpen);
+  // Highlight whichever ⚙ button is in the active document
+  const btn = doc.getElementById('fTcConfigBtn') || doc.getElementById('tcConfigBtn') || document.getElementById('tcConfigBtn');
+  if (btn) btn.classList.toggle('open', !isOpen);
 }
 
 // Returns true for numeric interval modes (e.g. '2', '5', '30', '120')
@@ -1330,12 +1337,13 @@ function setTranscribeMode(mode) {
   clearTimeout(autoTriggerTimer);
   autoTriggerTimer = null;
 
-  // Sync the dropdown
-  const sel = document.getElementById('tcIntervalSel');
+  // Sync the dropdown (tcPanel lives in float panel, use _doc() so PiP finds it)
+  const _d = _doc();
+  const sel = _d.getElementById('tcIntervalSel') || document.getElementById('tcIntervalSel');
   if (sel && sel.value !== mode) sel.value = mode;
 
-  const manualInfo  = document.getElementById('tcManualInfo');
-  const dynamicInfo = document.getElementById('tcDynamicInfo');
+  const manualInfo  = _d.getElementById('tcManualInfo')  || document.getElementById('tcManualInfo');
+  const dynamicInfo = _d.getElementById('tcDynamicInfo') || document.getElementById('tcDynamicInfo');
   if (manualInfo)  manualInfo.style.display  = mode === 'manual'  ? 'flex' : 'none';
   if (dynamicInfo) dynamicInfo.style.display = mode === 'dynamic' ? 'flex' : 'none';
 }
@@ -1626,6 +1634,7 @@ async function startMic() {
 
   micRecognition = makeMicRecognition();
   micRecognition.start();
+  startRawRecording(micStream);
 }
 
 function saveMicToServer(text) {
@@ -1635,6 +1644,51 @@ function saveMicToServer(text) {
     body: JSON.stringify({ transcripts: [{ content: text, type: 'microphone' }] })
   }).catch(() => {});
 }
+
+// ── Raw audio recording — continuous 30-second chunks saved to server ─────────
+function startRawRecording(stream) {
+  if (!stream || (rawRecorder && rawRecorder.state !== 'inactive')) return;
+  const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+    ? 'audio/webm;codecs=opus' : 'audio/webm';
+  try {
+    rawRecorder = new MediaRecorder(stream, { mimeType });
+    rawChunkSeq = 0;
+    rawRecorder.ondataavailable = (e) => {
+      if (!e.data || e.data.size < 100) return;
+      const seq = rawChunkSeq++;
+      const blob = e.data;
+      // Use sendBeacon for reliability (works even during page unload)
+      const url = `/api/session/${SESSION_ID}/audio-chunk/`;
+      const ok = navigator.sendBeacon
+        ? navigator.sendBeacon(url + `?seq=${seq}&csrf=${getCookie('csrftoken')}`, blob)
+        : false;
+      if (!ok) {
+        // Fallback to fetch
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': blob.type || 'audio/webm', 'X-Chunk-Seq': String(seq), 'X-CSRFToken': getCookie('csrftoken') },
+          body: blob,
+        }).catch(() => {});
+      }
+    };
+    rawRecorder.start(30000); // dataavailable every 30 seconds
+  } catch (err) {
+    console.warn('Raw audio recording unavailable:', err.message);
+  }
+}
+
+function stopRawRecording() {
+  if (rawRecorder && rawRecorder.state !== 'inactive') {
+    try { rawRecorder.stop(); } catch (_) {}
+  }
+  rawRecorder = null;
+}
+
+window.addEventListener('beforeunload', () => {
+  if (rawRecorder && rawRecorder.state === 'recording') {
+    try { rawRecorder.requestData(); rawRecorder.stop(); } catch (_) {}
+  }
+});
 
 function stopMic() {
   micActive = false;
@@ -1650,6 +1704,7 @@ function stopMic() {
   recDot.classList.remove('active');
   setStatus('Mic off');
   stopWaveform();
+  stopRawRecording();
 }
 
 
@@ -1766,6 +1821,10 @@ function clearInput() {
   if (qi) qi.value = '';
   if (fi) fi.value = '';
   micManualAccum = '';
+  micLastCommitted = '';
+  // Hide the interim transcript entry so the display matches the cleared input
+  if (interimEntry) interimEntry.style.display = 'none';
+  if (interimText) interimText.textContent = 'Transcribing…';
 }
 
 function saveAndClearInput() {
