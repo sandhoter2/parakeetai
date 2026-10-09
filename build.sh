@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
+# build.sh — runs on every Render deployment
+# Flow: install → collectstatic → check DB → migrate → seed templates
 set -o errexit
 
 pip install -r requirements.txt
 python manage.py collectstatic --no-input
-
-FIXTURE="fixtures/db_backup.json"
 
 # ── 1. Check database connection ─────────────────────────────────────────────
 echo ">>> Checking database connection ..."
@@ -21,32 +21,11 @@ except Exception as e:
     sys.exit(1)
 PYCHECK
 
-# ── 2. Run migrations ────────────────────────────────────────────────────────
+# ── 2. Run migrations (creates tables; 0010 seeds templates for existing users) ──
 echo ">>> Running migrations ..."
 python manage.py migrate --no-input
 
-# ── 3. Load fixture only if tables are empty (first deploy / fresh DB) ───────
-FIXTURE="fixtures/db_backup.json"
-
-if [ -f "$FIXTURE" ]; then
-  echo ">>> Checking if DB is empty ..."
-  IS_EMPTY=$(python - <<'PYEMPTY'
-import os, django
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "local_parakeet.settings")
-django.setup()
-from interview.models import InterviewSession
-from django.contrib.auth.models import User
-print("yes" if not User.objects.exists() and not InterviewSession.objects.exists() else "no")
-PYEMPTY
-)
-
-  if [ "$IS_EMPTY" = "yes" ]; then
-    echo ">>> DB is empty — loading initial data from $FIXTURE ..."
-    python manage.py loaddata "$FIXTURE" && echo "    Initial data loaded." \
-      || echo "    loaddata failed (fixture may be stale) — starting fresh."
-  else
-    echo ">>> DB already has data — skipping fixture load."
-  fi
-else
-  echo ">>> No fixture at $FIXTURE — starting with empty DB."
-fi
+# ── 3. Seed default templates for any user who has none ──────────────────────
+echo ">>> Seeding missing templates ..."
+python manage.py seed_templates
+echo "    Done."

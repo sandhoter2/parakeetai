@@ -3,6 +3,12 @@ import os
 from dotenv import load_dotenv
 
 try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except ImportError:
+    pass
+
+try:
     load_dotenv()
 except Exception:
     pass  # .env is git-crypt encrypted on Render; use injected env vars instead
@@ -77,12 +83,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "local_parakeet.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+_MYSQL_HOST = os.environ.get("MYSQL_HOST", "")
+if _MYSQL_HOST:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.environ.get("MYSQL_DB", "u288315318_parakeetai"),
+            "USER": os.environ.get("MYSQL_USER", "u288315318_parakeetai"),
+            "PASSWORD": os.environ.get("MYSQL_PASSWORD", ""),
+            "HOST": _MYSQL_HOST,
+            "PORT": os.environ.get("MYSQL_PORT", "3306"),
+            "OPTIONS": {"charset": "utf8mb4"},
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # MySQL backup config (credentials via env vars)
 MYSQL_BACKUP_CONFIG = {
