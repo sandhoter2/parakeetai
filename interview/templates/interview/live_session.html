@@ -1052,9 +1052,11 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     <button class="btn btn-ghost btn-sm" onclick="toggleQuickQ()" id="quickQBtn" title="Quick question presets">⚡ Quick</button>
     <button class="btn btn-ghost btn-sm" onclick="toggleFocusMode()" id="focusModeBtn" title="Focus mode — hide UI chrome (F)">⊡</button>
     <button class="btn btn-ghost btn-sm" onclick="openModal('shortcutsModal')" title="Keyboard shortcuts">⌨️</button>
+    {% if session.session_type != 'meeting' %}
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer">
       <div class="toggle on" id="autoToggle" onclick="toggleAuto()"></div><span class="auto-ai-label"> Auto AI</span>
     </label>
+    {% endif %}
     <button class="btn btn-ghost btn-sm" id="showAiBtn" onclick="restoreAIPanel()" style="display:none" title="Show AI Answer panel">✦ AI</button>
     <button class="btn btn-danger btn-sm" onclick="endSession()">End Session</button>
   </div>
@@ -1832,7 +1834,7 @@ startTimer();
 
 function toggleAuto() {
   autoAI = !autoAI;
-  autoToggle.classList.toggle('on', autoAI);
+  if (autoToggle) autoToggle.classList.toggle('on', autoAI);
 }
 
 // ── Network status ────────────────────────────────────────────────────────────
