@@ -440,6 +440,17 @@ body.pip-active .note-input-wrap { display: flex !important; }
   opacity: 0; transition: opacity 0.15s; flex-shrink: 0;
 }
 .transcript-entry:hover .entry-ts { opacity: 1; }
+.entry-actions {
+  display: none; margin-top: 5px; gap: 5px;
+}
+.transcript-entry:hover .entry-actions { display: flex; }
+.entry-action-btn {
+  font-size: 9px; font-family: var(--mono); padding: 2px 7px;
+  background: var(--accent-dim); border: 1px solid rgba(0,200,255,0.3);
+  border-radius: 3px; color: var(--accent); cursor: pointer; letter-spacing: 0.3px;
+  transition: all 0.15s;
+}
+.entry-action-btn:hover { background: var(--accent); color: var(--bg); }
 
 .interim-entry {
   padding: 8px 12px; border-radius: 4px;
@@ -2084,7 +2095,7 @@ function addTranscriptEntryUI(text, type, speakerName) {
   const label = speakerLabel(type, speakerName);
   const now = new Date();
   const ts = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-  div.innerHTML = `<div class="speaker"><span>${escHtml(label)}</span><span class="entry-ts">${ts}</span></div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div>`;
+  div.innerHTML = `<div class="speaker"><span>${escHtml(label)}</span><span class="entry-ts">${ts}</span></div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div><div class="entry-actions"><button class="entry-action-btn" onclick="event.stopPropagation();sendEntryToAI(this)" title="Ask AI about this">✨ Ask AI</button></div>`;
   div.addEventListener('click', () => populateInputFromTranscript(div.querySelector('.text').textContent));
   transcriptPanel.insertBefore(div, interimEntry);
   transcriptCount++;
@@ -2184,6 +2195,18 @@ function toggleFocusMode() {
     btn.title = _focusMode ? 'Exit focus mode (F)' : 'Focus mode — hide UI chrome (F)';
   }
   if (_focusMode) toast('Focus mode on — press F to exit', 'info', 2500);
+}
+
+// ── Ask AI About Entry ────────────────────────────────────────────────────────
+function sendEntryToAI(btn) {
+  const entry = btn.closest('.transcript-entry');
+  const text = entry?.querySelector('.text')?.textContent?.trim();
+  if (!text) return;
+  const qi = document.getElementById('questionInput');
+  const fqi = document.getElementById('fQuestionInput');
+  if (qi) qi.value = text;
+  if (fqi) fqi.value = text;
+  triggerAI();
 }
 
 // ── Copy Q+A Pair ─────────────────────────────────────────────────────────────
