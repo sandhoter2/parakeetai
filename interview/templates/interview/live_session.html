@@ -1991,6 +1991,7 @@ async function startMic() {
   const _fm = _doc().getElementById('fMicBtn');
   if (_fm) { _fm.classList.add('active'); _fm.textContent = '🔴'; }
   recDot.classList.add('active');
+  document.title = '🔴 Recording — ' + (document.title.replace(/^[🔴✨]\s*/,''));
   setStatus('Listening… speak your question');
   startWaveform(micStream);
 
@@ -2069,6 +2070,7 @@ function stopMic() {
   const _fmOff = _doc().getElementById('fMicBtn');
   if (_fmOff) { _fmOff.classList.remove('active'); _fmOff.textContent = '🎤'; }
   recDot.classList.remove('active');
+  document.title = document.title.replace(/^[🔴✨]\s*/,'');
   setStatus('Mic off');
   stopWaveform();
   stopRawRecording();
@@ -2580,6 +2582,7 @@ function triggerAI(question, fromVoice) {
   interimText.textContent = 'Transcribing…';
   if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
   isStreaming = true;
+  document.title = '✨ Thinking — ' + document.title.replace(/^[🔴✨]\s*/,'').replace(/^Thinking — /,'');
   aiHelpBtn.disabled = true;
   aiHelpBtn.textContent = '⏳ Thinking…';
   const fBtn = _doc().getElementById('fAiHelpBtn');
@@ -2640,6 +2643,7 @@ function triggerAI(question, fromVoice) {
     aiAnswerText.textContent = '❌ ' + err.message;
   }).finally(() => {
     isStreaming = false;
+    document.title = document.title.replace(/^✨ Thinking — /,'');
     aiHelpBtn.disabled = false;
     aiHelpBtn.textContent = '✨ AI Help';
     const fBtnF = _doc().getElementById('fAiHelpBtn');
