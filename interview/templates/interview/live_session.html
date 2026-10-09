@@ -103,6 +103,22 @@ body.teams-zoomed .main-layout {
   border-left: none !important;
 }
 
+/* Focus mode — hides nav + session bar for immersive reading */
+body.focus-mode .navbar { display: none !important; }
+body.focus-mode .session-bar { display: none !important; }
+body.focus-mode .mobile-tab-bar { display: none !important; }
+body.focus-mode #quickQStrip { display: none !important; }
+body.focus-mode .main-layout { height: calc(100vh - var(--bottom-bar-h, 68px)); }
+body.focus-mode .focus-hint { display: flex !important; }
+.focus-hint {
+  display: none;
+  position: fixed; top: 8px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.7); color: var(--text3);
+  font-size: 10px; font-family: var(--mono); padding: 3px 12px;
+  border-radius: 3px; z-index: 9999; pointer-events: none;
+  gap: 6px; align-items: center;
+}
+
 /* Column drag resizer */
 .col-resizer {
   cursor: col-resize;
@@ -814,6 +830,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 
 {% block content %}
 
+<div class="focus-hint">// focus mode — press F to exit</div>
 <div class="session-bar">
   <div class="session-info">
     <span class="rec-dot" id="recDot"></span>
@@ -824,6 +841,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   </div>
   <div class="session-controls">
     <button class="btn btn-ghost btn-sm" onclick="toggleQuickQ()" id="quickQBtn" title="Quick question presets">⚡ Quick</button>
+    <button class="btn btn-ghost btn-sm" onclick="toggleFocusMode()" id="focusModeBtn" title="Focus mode — hide UI chrome (F)">⊡</button>
     <button class="btn btn-ghost btn-sm" onclick="openModal('shortcutsModal')" title="Keyboard shortcuts">⌨️</button>
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer">
       <div class="toggle on" id="autoToggle" onclick="toggleAuto()"></div><span class="auto-ai-label"> Auto AI</span>
@@ -1209,6 +1227,8 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <tr><td>Focus note input</td><td><kbd>N</kbd></td></tr>
       <tr><td>Toggle mic</td><td><kbd>M</kbd></td></tr>
       <tr><td>Speak / stop AI answer (TTS)</td><td><kbd>S</kbd></td></tr>
+      <tr><td>Toggle focus mode</td><td><kbd>F</kbd></td></tr>
+      <tr><td>Export session as Markdown</td><td><kbd>X</kbd></td></tr>
       <tr><td>End session</td><td><kbd>Shift E</kbd></td></tr>
     </table>
     <div class="modal-footer">
@@ -2055,6 +2075,19 @@ function copyTranscriptLive() {
     lines.push(`[${label.toUpperCase()}]: ${text}`);
   });
   copyText(lines.join('\n\n'), 'Transcript');
+}
+
+// ── Focus Mode ────────────────────────────────────────────────────────────────
+let _focusMode = false;
+function toggleFocusMode() {
+  _focusMode = !_focusMode;
+  document.body.classList.toggle('focus-mode', _focusMode);
+  const btn = document.getElementById('focusModeBtn');
+  if (btn) {
+    btn.classList.toggle('active', _focusMode);
+    btn.title = _focusMode ? 'Exit focus mode (F)' : 'Focus mode — hide UI chrome (F)';
+  }
+  if (_focusMode) toast('Focus mode on — press F to exit', 'info', 2500);
 }
 
 // ── Bookmark AI Answer ────────────────────────────────────────────────────────
@@ -3017,6 +3050,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'm' || e.key === 'M') { e.preventDefault(); toggleMic(); }
   if (e.key === 's' || e.key === 'S') { e.preventDefault(); speakCurrentAI(); }
   if (e.shiftKey && (e.key === 'E' || e.key === 'e')) { e.preventDefault(); endSession(); }
+  if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFocusMode(); }
+  if (e.key === 'x' || e.key === 'X') { e.preventDefault(); exportSession(); }
 });
 
 // ── Teams Recorder ────────────────────────────────────────────────────────────
