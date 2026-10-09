@@ -3369,11 +3369,29 @@ const CONV_INSIGHT_TYPES = [
   {id:'wrap_up',       icon:'🎯',  name:'Wrap-Up Plan',       description:'How to close the conversation well',       prompt:'You are a real-time conversation coach. Based on the conversation so far, suggest how to wrap up effectively. What key points should be summarized? What commitments should be confirmed? What follow-up actions should be agreed upon? Be specific and actionable.'},
 ];
 let _activeInsightId = 'labels';
+let _convUserTemplates = [];
+let _convUserTemplatesLoaded = false;
+
+async function _loadConvUserTemplates() {
+  try {
+    const res = await fetch('/api/templates/?type=conversation');
+    if (res.ok) _convUserTemplates = await res.json();
+  } catch(e) {}
+  _convUserTemplatesLoaded = true;
+}
+
+function _getActiveInsight() {
+  if (_activeInsightId.startsWith('_utpl_')) {
+    const pk = parseInt(_activeInsightId.slice(6));
+    return _convUserTemplates.find(t => t.pk === pk) || null;
+  }
+  return CONV_INSIGHT_TYPES.find(x => x.id === _activeInsightId) || null;
+}
 
 function _renderConvInsightList() {
   const list = document.getElementById('convInsightList');
   if (!list) return;
-  list.innerHTML = CONV_INSIGHT_TYPES.map(t => `
+  const builtIn = CONV_INSIGHT_TYPES.map(t => `
     <div class="ai-tpl-item${t.id === _activeInsightId ? ' active' : ''}" onclick="_selectInsight(${JSON.stringify(t.id)})">
       <span class="ai-tpl-icon">${t.icon}</span>
       <div>
@@ -3381,14 +3399,26 @@ function _renderConvInsightList() {
         <div class="ai-tpl-desc">${t.description}</div>
       </div>
     </div>`).join('');
+  const userTpls = _convUserTemplates.map(t => {
+    const uid = '_utpl_' + t.pk;
+    return `
+    <div class="ai-tpl-item${uid === _activeInsightId ? ' active' : ''}" onclick="_selectInsight(${JSON.stringify(uid)})">
+      <span class="ai-tpl-icon">${t.icon || '💬'}</span>
+      <div>
+        <div class="ai-tpl-name">${t.name}${uid === _activeInsightId ? ' ✓' : ''}</div>
+        <div class="ai-tpl-desc">${t.description || ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  list.innerHTML = builtIn + (userTpls ? `<div style="border-top:1px solid var(--border);margin:4px 0"></div>${userTpls}` : '');
 }
 
 function _selectInsight(id) {
   _activeInsightId = id;
-  const t = CONV_INSIGHT_TYPES.find(x => x.id === id);
+  const t = _getActiveInsight();
   const btn = document.getElementById('convHelperBtn');
   const fBtn = _doc().getElementById('fConvHelperBtn');
-  const label = t ? t.icon : '🧠';
+  const label = t ? (t.icon || '🧠') : '🧠';
   if (btn)  btn.textContent = label;
   if (fBtn) fBtn.textContent = label;
   closeConvInsightDropdown();
@@ -3402,6 +3432,7 @@ function toggleConvInsightDropdown(e) {
   if (!dd || !btn) return;
   const isOpen = dd.classList.contains('open');
   if (!isOpen) {
+    if (!_convUserTemplatesLoaded) { _loadConvUserTemplates().then(_renderConvInsightList); }
     _renderConvInsightList();
     const rect = btn.getBoundingClientRect();
     const ddW = 230;
@@ -3702,10 +3733,9 @@ function triggerConvHelper() {
 
   if (entries.length === 0) { setStatus('No transcript yet'); return; }
 
-  const activeInsight = (typeof CONV_INSIGHT_TYPES !== 'undefined')
-    ? CONV_INSIGHT_TYPES.find(t => t.id === _activeInsightId) : null;
-  const insightLabel = activeInsight ? `${activeInsight.icon} ${activeInsight.name}` : '🧠 Conversation Insights';
-  const insightPrompt = activeInsight ? activeInsight.prompt : '';
+  const activeInsight = _getActiveInsight();
+  const insightLabel = activeInsight ? `${activeInsight.icon || '🧠'} ${activeInsight.name}` : '🧠 Conversation Insights';
+  const insightPrompt = activeInsight ? (activeInsight.prompt || '') : '';
 
   isStreaming = true;
   const btn  = document.getElementById('convHelperBtn');
@@ -3772,8 +3802,8 @@ function triggerConvHelper() {
     sessionCost = (_outTokens2 / 1000) * 0.003;
     const _costEl2 = document.getElementById('sessionCostDisplay');
     if (_costEl2) { _costEl2.textContent = `~$${sessionCost.toFixed(4)}`; _costEl2.style.display = ''; }
-    const _curInsight = (typeof CONV_INSIGHT_TYPES !== 'undefined') ? CONV_INSIGHT_TYPES.find(t => t.id === _activeInsightId) : null;
-    const _insightIcon = _curInsight ? _curInsight.icon : '🧠';
+    const _curInsight = _getActiveInsight();
+    const _insightIcon = _curInsight ? (_curInsight.icon || '🧠') : '🧠';
     if (btn)  { btn.disabled  = false; btn.textContent  = _insightIcon; }
     if (fBtn) { fBtn.disabled = false; fBtn.textContent = _insightIcon; }
     aiCursor.style.display = 'none';
