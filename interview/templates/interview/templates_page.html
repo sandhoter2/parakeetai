@@ -9,8 +9,9 @@
   .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; }
   .card h2 { font-size: 0.85rem; color: var(--text2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
   .type-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-  .type-ai  { background: rgba(0,200,255,.12); color: var(--accent); border: 1px solid rgba(0,200,255,.3); }
-  .type-mtg { background: rgba(0,255,157,.12); color: var(--green); border: 1px solid rgba(0,255,157,.3); }
+  .type-ai   { background: rgba(0,200,255,.12); color: var(--accent); border: 1px solid rgba(0,200,255,.3); }
+  .type-mtg  { background: rgba(0,255,157,.12); color: var(--green); border: 1px solid rgba(0,255,157,.3); }
+  .type-conv { background: rgba(124,58,237,.15); color: #a78bfa; border: 1px solid rgba(124,58,237,.35); }
   .status-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
   .s-active   { background: rgba(0,255,157,.1); color: var(--green); }
   .s-inactive { background: rgba(255,71,87,.1); color: var(--red); }
@@ -67,6 +68,7 @@
       <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All</button>
       <button class="filter-btn" data-filter="ai_help" onclick="setFilter('ai_help', this)">AI Help</button>
       <button class="filter-btn" data-filter="meeting_ai" onclick="setFilter('meeting_ai', this)">Meeting AI</button>
+      <button class="filter-btn" data-filter="conversation" onclick="setFilter('conversation', this)">Conversation</button>
       <input type="text" class="search-box" placeholder="Search templates…" oninput="filterTable()" id="searchBox">
     </div>
 
@@ -89,8 +91,10 @@
           <td>
             {% if t.template_type == "ai_help" %}
               <span class="type-pill type-ai">AI Help</span>
-            {% else %}
+            {% elif t.template_type == "meeting_ai" %}
               <span class="type-pill type-mtg">Meeting AI</span>
+            {% else %}
+              <span class="type-pill type-conv">Conversation</span>
             {% endif %}
           </td>
           <td style="color:var(--text2);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ t.description }}</td>
@@ -129,6 +133,7 @@
         <select id="fType">
           <option value="ai_help">AI Help</option>
           <option value="meeting_ai">Meeting AI</option>
+          <option value="conversation">Conversation</option>
         </select>
       </div>
     </div>
