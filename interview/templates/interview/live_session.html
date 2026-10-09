@@ -2,8 +2,8 @@
 {% block title %}{{ session.title }} — Live{% endblock %}
 
 {% block extra_style %}
-html { overflow-x: hidden; }
-body { overflow: hidden; }
+html { overflow: hidden; height: 100%; }
+body { overflow: hidden; display: flex; flex-direction: column; height: 100dvh; height: 100vh; }
 
 /* Session progress bar — thin strip above session bar */
 #sessionProgressBar {
@@ -23,6 +23,7 @@ body { overflow: hidden; }
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
   position: relative;
+  flex-shrink: 0;
 }
 /* animated border bottom line on session bar */
 .session-bar::after {
@@ -66,18 +67,27 @@ body { overflow: hidden; }
 .main-layout {
   display: grid;
   grid-template-columns: 1fr;
-  height: calc(100vh - 227px);
+  flex: 1 1 0;
+  min-height: 0;
   overflow: hidden;
-  transition: height 0.25s ease;
 }
 body.teams-zoomed .main-layout {
-  height: calc(100vh - 227px - 240px);
+  /* flex layout handles this automatically — teams panel just shrinks main-layout */
 }
 #teamsRecorderPanel {
-  transition: all 0.25s ease;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+  flex-shrink: 0;
+  /* Cap collapsed panel so it never eats main-layout space */
+  max-height: 42px; overflow: hidden;
 }
-#teamsRecorderPanel.zoomed #recorderPanelBody {
-  max-height: 240px;
+#teamsRecorderPanel.panel-open {
+  max-height: 260px;
+  overflow: visible;
+}
+#teamsRecorderPanel.zoomed.panel-open {
+  max-height: 320px;
+}
+#teamsRecorderPanel.panel-open #recorderPanelBody {
   overflow-y: auto;
 }
 .cal-event-item {
@@ -118,7 +128,7 @@ body.focus-mode .navbar { display: none !important; }
 body.focus-mode .session-bar { display: none !important; }
 body.focus-mode .mobile-tab-bar { display: none !important; }
 body.focus-mode #quickQStrip { display: none !important; }
-body.focus-mode .main-layout { height: calc(100vh - var(--bottom-bar-h, 68px)); }
+body.focus-mode .main-layout { flex: 1 1 0; min-height: 0; }
 body.focus-mode .focus-hint { display: flex !important; }
 .focus-hint {
   display: none;
@@ -627,7 +637,7 @@ body.pip-active .note-input-wrap { display: flex !important; }
 .qq-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
 .bottom-bar {
-  display: flex; align-items: center; padding: 8px 14px;
+  display: flex; align-items: center; padding: 8px 14px; flex-shrink: 0;
   background: var(--bg2); border-top: 1px solid var(--border); gap: 8px; flex-wrap: nowrap;
   position: relative;
 }
@@ -847,8 +857,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 .mobile-tab-bar { display: none; }
 
 @media (max-width: 640px) {
-  /* Full-height flex column */
-  body { display: flex !important; flex-direction: column; height: 100dvh; height: 100vh; }
+  /* Full-height flex column — body already set globally, just ensure navbar is static */
   .navbar { position: static !important; flex-shrink: 0; padding: 8px 14px; }
   .navbar-brand { font-size: 15px; }
   .navbar-brand > span { font-size: 18px; }
@@ -891,7 +900,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     grid-template-columns: 1fr !important;
     transition: none !important;
   }
-  body.teams-zoomed .main-layout { height: auto !important; }
+  body.teams-zoomed .main-layout { flex: 1 1 0 !important; min-height: 0 !important; }
   .col-resizer { display: none !important; }
 
   /* Tab visibility: only show the active panel */
@@ -1241,7 +1250,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   </div>
 
   <!-- Body -->
-  <div id="recorderPanelBody" style="padding:12px 16px;display:flex;gap:16px;flex-wrap:wrap;min-width:0;max-width:100%;overflow:hidden">
+  <div id="recorderPanelBody" style="padding:12px 16px;display:flex;gap:16px;flex-wrap:wrap;min-width:0;max-width:100%">
 
     <!-- Left: Participants -->
     <div style="flex:1 1 200px;min-width:0;overflow:hidden">
@@ -3834,10 +3843,12 @@ if (SESSION_TYPE === 'meeting') {
   let participants = [];
   let activeSpeaker = null;
   let recorderPanelOpen = true;
+  // Start open on load
+  document.getElementById('teamsRecorderPanel').classList.add('panel-open');
 
   function toggleRecorderPanel() {
     recorderPanelOpen = !recorderPanelOpen;
-    document.getElementById('recorderPanelBody').style.display = recorderPanelOpen ? 'flex' : 'none';
+    document.getElementById('teamsRecorderPanel').classList.toggle('panel-open', recorderPanelOpen);
     document.getElementById('recorderPanelToggle').textContent = recorderPanelOpen ? '▲' : '▼';
   }
 
