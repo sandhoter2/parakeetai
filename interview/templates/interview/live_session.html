@@ -480,7 +480,76 @@ body.pip-active .note-input-wrap { display: flex !important; }
 .bottom-bar.recording .question-input-wrap { display: none; }
 
 /* AI answer content styles */
-.ai-answer { font-size: 14px; line-height: 1.75; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+.ai-answer { font-size: 14px; line-height: 1.75; color: var(--text); word-break: break-word; }
+.ai-item-a { font-size: 13px; line-height: 1.65; }
+
+/* Markdown rendered inside AI answers */
+.ai-answer p, .ai-item-a p { margin: 0 0 10px; }
+.ai-answer p:last-child, .ai-item-a p:last-child { margin-bottom: 0; }
+
+.ai-answer h1, .ai-answer h2, .ai-answer h3,
+.ai-item-a h1, .ai-item-a h2, .ai-item-a h3 {
+  font-family: var(--mono); color: var(--accent); margin: 14px 0 6px;
+  letter-spacing: 0.3px; font-weight: 700;
+}
+.ai-answer h1, .ai-item-a h1 { font-size: 15px; border-bottom: 1px solid rgba(0,200,255,0.2); padding-bottom: 4px; }
+.ai-answer h2, .ai-item-a h2 { font-size: 14px; }
+.ai-answer h3, .ai-item-a h3 { font-size: 13px; color: var(--accent2); }
+
+.ai-answer code, .ai-item-a code {
+  font-family: var(--mono); font-size: 11.5px;
+  background: rgba(0,200,255,0.08); color: var(--accent);
+  border: 1px solid rgba(0,200,255,0.18); border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.ai-answer pre, .ai-item-a pre {
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(0,200,255,0.18);
+  border-radius: 5px; padding: 12px 14px; margin: 10px 0;
+  overflow-x: auto; position: relative;
+  box-shadow: inset 0 0 20px rgba(0,200,255,0.03);
+}
+.ai-answer pre code, .ai-item-a pre code {
+  background: none; border: none; padding: 0; font-size: 12px;
+  color: #e2e8f0; display: block;
+}
+
+.ai-answer ul, .ai-item-a ul,
+.ai-answer ol, .ai-item-a ol {
+  padding-left: 20px; margin: 6px 0 10px;
+}
+.ai-answer li, .ai-item-a li { margin-bottom: 4px; line-height: 1.6; }
+.ai-answer ul li::marker, .ai-item-a ul li::marker { color: var(--accent); }
+.ai-answer ol li::marker, .ai-item-a ol li::marker { color: var(--accent2); font-family: var(--mono); font-size: 11px; }
+
+.ai-answer blockquote, .ai-item-a blockquote {
+  border-left: 3px solid var(--accent); margin: 10px 0;
+  padding: 6px 12px; background: rgba(0,200,255,0.05);
+  color: var(--text2); border-radius: 0 4px 4px 0; font-style: italic;
+}
+
+.ai-answer strong, .ai-item-a strong { color: var(--text); font-weight: 700; }
+.ai-answer em, .ai-item-a em { color: var(--text2); }
+
+.ai-answer hr, .ai-item-a hr {
+  border: none; border-top: 1px solid var(--border2); margin: 14px 0;
+}
+
+.ai-answer table, .ai-item-a table {
+  border-collapse: collapse; width: 100%; font-size: 12px;
+  margin: 10px 0; display: block; overflow-x: auto;
+}
+.ai-answer th, .ai-item-a th {
+  background: rgba(0,200,255,0.1); color: var(--accent);
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.5px; padding: 6px 10px; border: 1px solid var(--border2);
+}
+.ai-answer td, .ai-item-a td {
+  padding: 5px 10px; border: 1px solid var(--border);
+  color: var(--text2); vertical-align: top;
+}
+.ai-answer tr:hover td, .ai-item-a tr:hover td { background: rgba(0,200,255,0.04); }
+
 .ai-cursor {
   display: inline-block; width: 8px; height: 14px;
   background: var(--accent); animation: blink 0.9s infinite;
@@ -511,8 +580,7 @@ body.pip-active .note-input-wrap { display: flex !important; }
   cursor: pointer;
 }
 .ai-item-q:hover { color: var(--accent); }
-.ai-item-a { font-size: 13px; line-height: 1.65; white-space: pre-wrap; }
-.ai-item-actions { display:flex; gap:6px; margin-top:10px; }
+.ai-item-actions { display:flex; gap:6px; margin-top:10px; flex-wrap: wrap; }
 .ai-item.minimized { padding: 8px 12px; opacity: 0.5; }
 .ai-item.minimized .ai-item-q { margin-bottom: 0; }
 .ai-item.minimized .ai-item-a,
@@ -524,7 +592,7 @@ body.pip-active .note-input-wrap { display: flex !important; }
 .bionic-on .ai-answer b,
 .bionic-on .ai-item-a b { font-weight: 700; color: var(--text); }
 .bionic-on .ai-answer,
-.bionic-on .ai-item-a { white-space: pre-wrap; word-break: break-word; }
+.bionic-on .ai-item-a { word-break: break-word; }
 .bionic-on .ai-answer mark,
 .bionic-on .ai-item-a mark {
   background: rgba(0,200,255,0.12);
@@ -1288,7 +1356,139 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js" integrity="sha512-rqRix3vHGBfad2LtSlKt9e3bstQCqYcvnMpT8cRo7cHXvzMXNZJBTCUFSEJEECqHJj0CUpHJ2E5FP4eKvCxg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+/* Inline markdown renderer — covers headers, code blocks, tables, blockquotes, lists, inline code, bold, italic, links, hr */
+(function() {
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function inlineMarkdown(text) {
+    // code spans first (protect from further processing)
+    const codeSpans = [];
+    text = text.replace(/`([^`\n]+?)`/g, (_, c) => {
+      codeSpans.push(`<code>${esc(c)}</code>`);
+      return '\x00CODE' + (codeSpans.length - 1) + '\x00';
+    });
+    // bold+italic, bold, italic
+    text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    text = text.replace(/_(.+?)_/g, '<em>$1</em>');
+    // links
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    // restore code spans
+    text = text.replace(/\x00CODE(\d+)\x00/g, (_, i) => codeSpans[+i]);
+    return text;
+  }
+
+  function parseMarkdown(md) {
+    const lines = md.split('\n');
+    let html = '';
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      // fenced code block
+      if (/^```/.test(line)) {
+        const lang = line.slice(3).trim();
+        let code = '';
+        i++;
+        while (i < lines.length && !/^```/.test(lines[i])) {
+          code += lines[i] + '\n';
+          i++;
+        }
+        html += `<pre><code class="language-${esc(lang)}">${esc(code.replace(/\n$/,''))}</code></pre>`;
+        i++;
+        continue;
+      }
+
+      // hr
+      if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
+        html += '<hr>';
+        i++;
+        continue;
+      }
+
+      // headings
+      const hm = line.match(/^(#{1,6})\s+(.*)/);
+      if (hm) {
+        const lvl = hm[1].length;
+        html += `<h${lvl}>${inlineMarkdown(esc(hm[2]))}</h${lvl}>`;
+        i++;
+        continue;
+      }
+
+      // blockquote
+      if (/^>\s?/.test(line)) {
+        let bq = '';
+        while (i < lines.length && /^>\s?/.test(lines[i])) {
+          bq += lines[i].replace(/^>\s?/,'') + '\n';
+          i++;
+        }
+        html += `<blockquote>${parseMarkdown(bq.trim())}</blockquote>`;
+        continue;
+      }
+
+      // table (must have | in line and next line is separator)
+      if (/\|/.test(line) && i + 1 < lines.length && /^\|?[\s\-:|]+\|/.test(lines[i+1])) {
+        const headers = line.trim().replace(/^\||\|$/g,'').split('|').map(h => h.trim());
+        i += 2; // skip header + separator
+        let tbody = '';
+        while (i < lines.length && /\|/.test(lines[i]) && lines[i].trim() !== '') {
+          const cells = lines[i].trim().replace(/^\||\|$/g,'').split('|').map(c => c.trim());
+          tbody += '<tr>' + cells.map(c => `<td>${inlineMarkdown(esc(c))}</td>`).join('') + '</tr>';
+          i++;
+        }
+        html += '<table><thead><tr>' + headers.map(h => `<th>${inlineMarkdown(esc(h))}</th>`).join('') + '</tr></thead><tbody>' + tbody + '</tbody></table>';
+        continue;
+      }
+
+      // unordered list
+      if (/^[\*\-\+]\s/.test(line)) {
+        let items = '';
+        while (i < lines.length && /^[\*\-\+]\s/.test(lines[i])) {
+          items += `<li>${inlineMarkdown(esc(lines[i].replace(/^[\*\-\+]\s/,'')))}</li>`;
+          i++;
+        }
+        html += `<ul>${items}</ul>`;
+        continue;
+      }
+
+      // ordered list
+      if (/^\d+\.\s/.test(line)) {
+        let items = '';
+        while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+          items += `<li>${inlineMarkdown(esc(lines[i].replace(/^\d+\.\s/,'')))}</li>`;
+          i++;
+        }
+        html += `<ol>${items}</ol>`;
+        continue;
+      }
+
+      // blank line
+      if (line.trim() === '') {
+        i++;
+        continue;
+      }
+
+      // paragraph — collect consecutive non-blank, non-special lines
+      let para = '';
+      while (i < lines.length && lines[i].trim() !== '' &&
+             !/^(#{1,6}\s|```|>\s?|[\*\-\+]\s|\d+\.\s)/.test(lines[i]) &&
+             !/^(-{3,}|\*{3,}|_{3,})$/.test(lines[i].trim()) &&
+             !/\|/.test(lines[i])) {
+        para += (para ? ' ' : '') + lines[i].trim();
+        i++;
+      }
+      if (para) html += `<p>${inlineMarkdown(esc(para))}</p>`;
+    }
+    return html;
+  }
+
+  window.marked = { parse: parseMarkdown };
+})();
+</script>
 <script>
 const SESSION_ID = "{{ session.id }}";
 const LANGUAGE = "{{ session.language }}";
