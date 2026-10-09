@@ -963,8 +963,10 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
             <option value="dynamic">Dynamic ✦</option>
           </select>
         </div>
-        <div class="tc-row" id="tcManualInfo" style="display:none">
-          <span style="font-size:11px;color:var(--text3)">Press ✨ AI Help to send when ready</span>
+        <div class="tc-row" id="tcManualInfo" style="display:none;flex-direction:column;gap:4px">
+          <span style="font-size:11px;color:var(--yellow)">⚠ Words won't show in transcript until committed</span>
+          <span style="font-size:11px;color:var(--text3)">Press ✨ AI Help (or 💾 Save) to commit speech to transcript</span>
+          <button onclick="setTranscribeMode('30');toggleTCPanel()" style="margin-top:2px;font-size:11px;padding:3px 8px;background:rgba(0,200,255,0.1);border:1px solid var(--accent);border-radius:6px;color:var(--accent);cursor:pointer">Switch to 30s mode →</button>
         </div>
         <div class="tc-row" id="tcDynamicInfo" style="display:none">
           <span style="font-size:11px;color:var(--text3)">Auto-sends when a question ends ✦</span>
@@ -1095,6 +1097,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 <!-- Bottom bar -->
 <div class="bottom-bar">
   <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Start/stop mic (your voice)">🎤</button>
+  <span id="micModeBadge" onclick="toggleTCPanel()" title="Transcribe mode — click to change" style="font-size:10px;font-family:var(--mono);color:var(--text3);padding:2px 7px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);cursor:pointer;white-space:nowrap;line-height:1.8;transition:color .2s,border-color .2s">30s</span>
 
   <!-- Transcribe config button (TC panel lives in float input row so it travels to PiP) -->
   <button class="tc-config-btn" id="tcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
@@ -1491,6 +1494,16 @@ function setTranscribeMode(mode) {
   const dynamicInfo = _d.getElementById('tcDynamicInfo') || document.getElementById('tcDynamicInfo');
   if (manualInfo)  manualInfo.style.display  = mode === 'manual'  ? 'flex' : 'none';
   if (dynamicInfo) dynamicInfo.style.display = mode === 'dynamic' ? 'flex' : 'none';
+
+  // Update visible mic mode badge
+  const modeLabels = { manual:'MANUAL', dynamic:'Dynamic', '2':'2s', '5':'5s', '10':'10s', '30':'30s', '60':'1min', '120':'2min' };
+  const badge = document.getElementById('micModeBadge');
+  if (badge) {
+    badge.textContent = modeLabels[mode] || mode;
+    badge.style.color = mode === 'manual' ? 'var(--yellow)' : 'var(--text3)';
+    badge.style.borderColor = mode === 'manual' ? 'var(--yellow)' : 'var(--border)';
+    badge.style.background = mode === 'manual' ? 'rgba(255,211,42,0.08)' : 'var(--bg3)';
+  }
 }
 
 
@@ -1724,10 +1737,11 @@ function makeMicRecognition() {
         refreshMHSuggestions();
         if (autoAI && (transcribeMode !== 'dynamic' || isQuestionEnding(text))) triggerAI(text, true);
       } else {
-        // Manual: accumulate finals — do NOT save or add to transcript until ⏩ is pressed
+        // Manual: accumulate finals — do NOT save or add to transcript until committed
         micManualAccum = (micManualAccum ? micManualAccum + ' ' : '') + text;
         setMicInputText(micManualAccum);
         interimText.textContent = micManualAccum;
+        if (interimLabel) { interimLabel.textContent = 'ACCUMULATING'; interimLabel.style.color = 'var(--yellow)'; }
         interimEntry.style.display = 'flex';
         if (transcriptPlaceholder) transcriptPlaceholder.style.display = 'none';
         transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
@@ -1780,6 +1794,11 @@ async function startMic() {
   micRecognition = makeMicRecognition();
   micRecognition.start();
   startRawRecording(micStream);
+
+  // Warn clearly if manual mode is active — words won't appear in transcript automatically
+  if (transcribeMode === 'manual') {
+    toast('⚠ Manual mode — speech accumulates but won\'t appear in transcript until you press ✨ AI Help or 💾 Save', 'warn', 6000);
+  }
 }
 
 function saveMicToServer(text) {
@@ -2002,8 +2021,10 @@ function saveAndClearInput() {
   const qi = document.getElementById('questionInput');
   const text = qi ? qi.value.trim() : '';
   if (!text) return;
+  micManualAccum = '';
   addTranscriptEntryUI(text, 'microphone');
   saveMicToServer(text);
+  if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
   clearInput();
   setStatus('Saved to transcript ✓');
 }
@@ -2024,6 +2045,7 @@ function triggerAI(question, fromVoice) {
     addTranscriptEntryUI(accum, 'microphone');
     interimEntry.style.display = 'none';
     interimText.textContent = 'Transcribing…';
+    if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
     question = accum;
     fromVoice = true; // already saved above
   }
