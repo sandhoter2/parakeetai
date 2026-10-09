@@ -3420,6 +3420,14 @@ function closeConvInsightDropdown() {
   document.getElementById('convInsightDropdown')?.classList.remove('open');
 }
 document.addEventListener('click', e => { if (!e.target.closest('#convInsightWrap') && !e.target.closest('#fConvInsightWrap')) closeConvInsightDropdown(); });
+document.addEventListener('click', e => {
+  if (!e.target.closest('#fTcConfigBtn') && !e.target.closest('#micModeBadge') && !e.target.closest('#tcPanel')) {
+    const panel = document.getElementById('tcPanel');
+    const btn   = document.getElementById('fTcConfigBtn');
+    if (panel) panel.classList.remove('open');
+    if (btn)   btn.classList.remove('open');
+  }
+});
 
 // Load AI Help templates on page init
 _loadAITemplates();

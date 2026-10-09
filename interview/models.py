@@ -204,7 +204,8 @@ class DbSyncLog(models.Model):
 class PromptTemplate(models.Model):
     TYPE_AI_HELP = "ai_help"
     TYPE_MEETING_AI = "meeting_ai"
-    TYPE_CHOICES = [("ai_help", "AI Help"), ("meeting_ai", "Meeting AI")]
+    TYPE_CONVERSATION = "conversation"
+    TYPE_CHOICES = [("ai_help", "AI Help"), ("meeting_ai", "Meeting AI"), ("conversation", "Conversation")]
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="prompt_templates")
     name = models.CharField(max_length=100)
