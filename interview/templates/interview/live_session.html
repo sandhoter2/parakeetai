@@ -262,8 +262,8 @@ body.teams-zoomed .main-layout {
   border-top: 1px solid rgba(108,99,255,0.2);
   flex-shrink: 0;
 }
-/* float panel mic/sys/settings/forward buttons hidden when embedded (bottom bar has them) */
-#fMicBtn, #fSysBtn, #fTcConfigBtn, #fTcSendBtn, #fAiHelpBtn, .fai-btn { display: none !important; }
+/* float panel mic/settings/forward buttons hidden when embedded (bottom bar has them) */
+#fMicBtn, #fTcConfigBtn, #fTcSendBtn, #fAiHelpBtn, .fai-btn { display: none !important; }
 /* When PiP is active: hide the main-window bottom bar (controls moved to PiP window) */
 body.pip-active .bottom-bar { display: none !important; }
 /* When PiP is active: keep note strip visible so user can still annotate */
@@ -275,8 +275,7 @@ body.pip-active .note-input-wrap { display: flex !important; }
   transition: all 0.2s; background: var(--bg3); color: var(--text); flex-shrink: 0;
 }
 .ai-float-input-row .fmic-btn.active { background: rgba(248,113,113,0.2); border-color: var(--red); color: var(--red); animation: micPulse 1.5s infinite; }
-.ai-float-input-row .fmic-btn.sys-active { background: rgba(253,224,71,0.15); border-color: var(--yellow); animation: micPulse 1.5s infinite; }
-.ai-float-input-row .fmic-btn:hover:not(.active):not(.sys-active) { border-color: var(--accent); }
+.ai-float-input-row .fmic-btn:hover:not(.active) { border-color: var(--accent); }
 .ai-float-input-row .fq-input {
   flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(108,99,255,0.3);
   border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 12px;
@@ -429,7 +428,6 @@ body.pip-active .note-input-wrap { display: flex !important; }
 }
 .mic-btn.active { background: rgba(248,113,113,0.15); border-color: var(--red); color: var(--red); animation: micPulse 1.5s infinite; }
 .mic-btn:hover:not(.active) { border-color: var(--accent); }
-.sys-btn.active { background: rgba(253,224,71,0.15); border-color: var(--yellow); animation: micPulse 1.5s infinite; }
 @keyframes micPulse { 0%,100%{box-shadow:0 0 0 0 rgba(248,113,113,0.3)} 50%{box-shadow:0 0 0 8px rgba(248,113,113,0)} }
 
 .question-input-wrap {
@@ -595,7 +593,6 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <div class="panel">
     <div class="panel-header">
       <span class="panel-title">🎙️ Transcript</span>
-      <span id="sysTranscribingDot" style="display:none;width:7px;height:7px;border-radius:50%;background:var(--yellow);animation:micPulse 0.8s infinite;flex-shrink:0" title="System audio transcribing…"></span>
       <div class="panel-header-actions">
         <div class="font-controls">
           <button class="font-btn" onclick="adjustFontSize(-1)" title="Decrease font">A-</button>
@@ -692,7 +689,6 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <!-- Input row: mic + question + AI help (buttons shown only in PiP via CSS override) -->
   <div class="ai-float-input-row" id="aiFloatInputRow">
     <button class="fmic-btn" id="fMicBtn" onclick="toggleMic()" title="Mic (your voice)">🎤</button>
-    <button class="fmic-btn" id="fSysBtn" onclick="toggleSystemAudio()" title="System audio (interviewer)">🖥️</button>
     <button class="fmic-btn" id="fTcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
     <button class="fmic-btn" id="fTcSendBtn" onclick="transcribeNow()" title="Send audio now">⏩</button>
     <button class="fmic-btn" id="fMhBtn" onclick="toggleMHPanel()" title="Meeting helper — role-based question suggestions">💡</button>
@@ -818,7 +814,6 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 <!-- Bottom bar -->
 <div class="bottom-bar">
   <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Start/stop mic (your voice)">🎤</button>
-  <button class="mic-btn sys-btn" id="sysBtn" onclick="toggleSystemAudio()" title="Capture interviewer audio — open Zoom/Teams/Meet in a browser tab, click this, select that tab with Share tab audio checked">🖥️</button>
 
   <!-- Transcribe config button + popover -->
   <div style="position:relative;display:flex;align-items:center;gap:4px">
@@ -930,13 +925,7 @@ function getCookie(name) {
 let mediaRecorder = null;
 let audioChunks = [];
 let micActive = false;
-let sysActive = false;
-let sysRecorder = null;
-let sysChunks = [];
-let sysTimer = null;
-let sysStream = null;
-let sysAudioStream = null; // audio-only stream for waveform
-let micStream = null;      // keep ref so waveform can fall back to mic
+let micStream = null;
 let autoAI = true;
 let isStreaming = false;
 let chunkTimer = null;
@@ -1140,7 +1129,7 @@ function startSilenceWatch(onSilence, watchStream) {
   silenceAnalyser.fftSize = 2048;
   const buf = new Float32Array(silenceAnalyser.fftSize);
 
-  const activeStream = watchStream || micStream || sysAudioStream;
+  const activeStream = watchStream || micStream;
   if (activeStream) {
     try { audioContext.createMediaStreamSource(activeStream).connect(silenceAnalyser); }
     catch(_) {}
@@ -1207,19 +1196,6 @@ function setTranscribeMode(mode) {
   clearTimeout(autoTriggerTimer);
   autoTriggerTimer = null;
 
-  if (mode === 'manual') {
-    // Clear interval timer so recorder doesn't stop on its own
-    clearTimeout(sysTimer);
-    sysTimer = null;
-  } else if (sysActive) {
-    // Restart the chunk loop with the new mode/interval
-    if (sysRecorder && sysRecorder.state === 'recording') {
-      sysRecorder.stop();
-    } else if (restartSysChunkFn) {
-      restartSysChunkFn();
-    }
-  }
-
   // Sync the dropdown
   const sel = document.getElementById('tcIntervalSel');
   if (sel && sel.value !== mode) sel.value = mode;
@@ -1235,16 +1211,13 @@ function setTranscribeMode(mode) {
 
 function updateSendBtn() {
   const btn = document.getElementById('tcSendBtn');
-  if (btn) btn.style.display = (transcribeMode === 'manual' && (micActive || sysActive)) ? 'flex' : 'none';
+  if (btn) btn.style.display = (transcribeMode === 'manual' && micActive) ? 'flex' : 'none';
 }
 
-let stopChunkEarlyFn    = null;
-let stopSysChunkEarlyFn = null;
-let restartSysChunkFn   = null; // set inside startSystemAudio to expose startSysChunk
+let stopChunkEarlyFn = null;
 
 function transcribeNow() {
   if (micActive && stopChunkEarlyFn) stopChunkEarlyFn();
-  if (sysActive && stopSysChunkEarlyFn) stopSysChunkEarlyFn();
 }
 
 // Initialize TC panel UI from stored prefs
@@ -1544,9 +1517,6 @@ async function startMic() {
   updateSendBtn();
 
   micRecognition.start();
-
-  // Auto-start system audio alongside mic so one button captures both
-  if (!sysActive) startSystemAudio().catch(err => console.warn('[startMic] system audio failed:', err));
 }
 
 function saveMicToServer(text) {
@@ -1572,141 +1542,12 @@ function stopMic() {
   recDot.classList.remove('active');
   setStatus('Mic off');
   updateSendBtn();
-  // Also stop system audio — it was started automatically with the mic
-  if (sysActive) stopSystemAudio();
-  else stopWaveform();
+  stopWaveform();
 }
 
-// ── SYSTEM / TAB AUDIO (Zoom, Teams, Meet, etc.) ──────────────────────────
-const sysBtn = document.getElementById('sysBtn');
-
-async function toggleSystemAudio() {
-  if (!sysActive) await startSystemAudio();
-  else stopSystemAudio();
-}
-
-async function startSystemAudio() {
-  try {
-    // Request screen share with audio; user picks the tab/window and enables "Share audio"
-    sysStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-  } catch(err) {
-    setStatus('System audio blocked: ' + err.message);
-    alert('Could not capture system audio.\n\nHow to capture Zoom / Teams / Meet audio:\n1. Open Zoom (or Teams/Meet) in a BROWSER TAB — use web.zoom.us, teams.microsoft.com, or meet.google.com\n2. Click 🖥️ again → when the share picker opens, choose that browser TAB\n3. Check the "Share tab audio" checkbox at the bottom of the picker\n4. Click Share\n\nNote: Native desktop apps (Zoom.app, Teams.app) cannot be captured by the browser — use the web version instead.');
-    return;
-  }
-
-  // Stop any video tracks immediately — we only want audio
-  sysStream.getVideoTracks().forEach(t => t.stop());
-
-  const audioTracks = sysStream.getAudioTracks();
-  if (!audioTracks.length) {
-    setStatus('No audio track found — check "Share audio" when sharing');
-    alert('No audio track captured — the share picker returned no audio.\n\nSteps to fix:\n1. Use Zoom/Teams/Meet in a BROWSER TAB (web version, not the desktop app)\n2. In the share picker, select that tab\n3. Check "Share tab audio" at the bottom before clicking Share\n\nIf you shared a screen or window, those do not support audio on macOS — pick a specific browser tab instead.');
-    sysStream.getTracks().forEach(t => t.stop());
-    sysStream = null;
-    return;
-  }
-
-  // If video tracks were stopped the stream may end — recreate with just audio
-  sysAudioStream = new MediaStream(audioTracks);
-
-  sysActive = true;
-  sysBtn.classList.add('active');
-  sysBtn.textContent = '🟡';
-  const _fsOn = _doc().getElementById('fSysBtn');
-  if (_fsOn) { _fsOn.classList.add('sys-active'); _fsOn.textContent = '🟡'; }
-  setStatus('Capturing system audio…');
-  startWaveform(sysAudioStream);
-
-  // Handle stream ending (user stops share via browser UI)
-  audioTracks[0].onended = () => stopSystemAudio();
-
-  function stopSysChunkEarly() {
-    clearTimeout(sysTimer);
-    if (sysRecorder && sysRecorder.state === 'recording') sysRecorder.stop();
-  }
-  stopSysChunkEarlyFn = stopSysChunkEarly;
-  restartSysChunkFn   = () => startSysChunk();
-  updateSendBtn();
-
-  function makeSysRecorder() {
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
-    const rec = new MediaRecorder(sysAudioStream, mimeType ? { mimeType } : {});
-    const chunks = [];
-    rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-    rec.onstop = () => {
-      // Ping-pong: start next recorder immediately — don't wait for API
-      if (sysActive && transcribeMode !== 'manual') startSysChunk();
-      if (!chunks.length) return;
-      const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
-      sendAudioChunk(blob, rec.mimeType || 'audio/webm', 'system'); // fire-and-forget
-    };
-    return rec;
-  }
-
-  function startSysChunk() {
-    if (!sysActive) return;
-    sysRecorder = makeSysRecorder();
-    sysRecorder.start(250);
-
-    if (isIntervalMode(transcribeMode)) {
-      sysTimer = setTimeout(() => {
-        if (sysRecorder && sysRecorder.state === 'recording') sysRecorder.stop();
-      }, transcribeIntervalSec * 1000);
-    }
-    // manual: no timer — user clicks ⏩
-    // dynamic: no timer — stops when question-end detected in sendAudioChunk
-  }
-  startSysChunk();
-}
-
-function stopSystemAudio() {
-  sysActive = false;
-  sysAudioStream = null;
-  stopSysChunkEarlyFn = null;
-  clearTimeout(sysTimer);
-  if (sysRecorder && sysRecorder.state === 'recording') sysRecorder.stop();
-  if (!micActive) {
-    interimEntry.style.display = 'none';
-    interimEntry.classList.remove('sys');
-    interimText.textContent = 'Transcribing…';
-    if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
-    if (transcriptPlaceholder && transcriptCount === 0) transcriptPlaceholder.style.display = 'flex';
-  }
-  if (sysStream) { sysStream.getTracks().forEach(t => t.stop()); sysStream = null; }
-  sysBtn.classList.remove('active');
-  sysBtn.textContent = '🖥️';
-  const _fsOff = _doc().getElementById('fSysBtn');
-  if (_fsOff) { _fsOff.classList.remove('sys-active'); _fsOff.textContent = '🖥️'; }
-  // If mic is still active, keep waveform showing mic
-  if (micActive && micStream) startWaveform(micStream);
-  else stopWaveform();
-  setStatus('System audio off');
-  updateSendBtn();
-}
-
-let sysTranscribingCount = 0;
-function setSysTranscribing(on) {
-  sysTranscribingCount = Math.max(0, sysTranscribingCount + (on ? 1 : -1));
-  const dot = document.getElementById('sysTranscribingDot');
-  if (dot) dot.style.display = sysTranscribingCount > 0 ? 'inline-block' : 'none';
-}
 
 async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
   if (blob.size < 500) return;
-
-  const isSys = speaker === 'system';
-  if (isSys) {
-    setSysTranscribing(true);
-    interimEntry.classList.add('sys');
-    interimText.textContent = '🖥️ Transcribing…';
-    if (interimLabel) { interimLabel.textContent = 'INTERVIEWER'; interimLabel.style.color = 'var(--yellow)'; }
-    interimEntry.style.display = 'flex';
-    if (transcriptPlaceholder) transcriptPlaceholder.style.display = 'none';
-    transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
-  }
 
   const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
   const formData = new FormData();
@@ -1720,16 +1561,6 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
       body: formData,
     });
     const data = await resp.json();
-    if (isSys) {
-      setSysTranscribing(false);
-      if (sysTranscribingCount === 0) {
-        interimEntry.style.display = 'none';
-        interimEntry.classList.remove('sys');
-        interimText.textContent = 'Transcribing…';
-        if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
-        if (transcriptPlaceholder && transcriptCount === 0) transcriptPlaceholder.style.display = 'flex';
-      }
-    }
 
     if (data.error) { setStatus('Transcribe error: ' + data.error); return; }
     if (!data.text || !data.text.trim()) return;
@@ -1738,38 +1569,11 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
     refreshMHSuggestions();
     setStatus('Transcribed ✓');
 
-    // Sync system audio into both chat input boxes — replace with just this chunk
-    // (transcript keeps all history; chat box shows only the latest thing said)
-    if (isSys) {
-      const trimmed = data.text.trim();
-      const qi = document.getElementById('questionInput');
-      const fi = (typeof _doc === 'function') ? _doc().getElementById('fQuestionInput') : null;
-      if (qi) qi.value = trimmed;
-      if (fi) fi.value = trimmed;
-      micManualAccum = trimmed;
-    }
-
-    // Dynamic mode: stop current sys chunk early when a question ending is detected
-    if (transcribeMode === 'dynamic' && isSys && isQuestionEnding(data.text)) {
-      clearTimeout(sysTimer);
-      sysTimer = null;
-      if (stopSysChunkEarlyFn) stopSysChunkEarlyFn();
-    }
-
     if (autoAI && transcribeMode !== 'manual' && data.text.includes('?')) {
       clearTimeout(autoTriggerTimer);
       autoTriggerTimer = setTimeout(() => triggerAI(data.text.trim(), true), 1200);
     }
   } catch(err) {
-    if (isSys) {
-      setSysTranscribing(false);
-      if (sysTranscribingCount === 0) {
-        interimEntry.style.display = 'none';
-        interimEntry.classList.remove('sys');
-        interimText.textContent = 'Transcribing…';
-        if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
-      }
-    }
     setStatus('Error: ' + err.message);
   }
 }
@@ -1895,7 +1699,6 @@ function triggerAI(question, fromVoice) {
   // Clear the interim transcript entry so the panel looks clean after submit
   interimEntry.style.display = 'none';
   interimText.textContent = 'Transcribing…';
-  interimEntry.classList.remove('sys');
   if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
   isStreaming = true;
   aiHelpBtn.disabled = true;
@@ -2281,22 +2084,14 @@ document.addEventListener('DOMContentLoaded', () => {
     floatInput.addEventListener('input', () => { mainInput.value = floatInput.value; });
     mainInput.addEventListener('input',  () => { floatInput.value = mainInput.value; });
   }
-  // Sync mic/sys button states to float copies
+  // Sync mic button state to float copy
   const origMic = document.getElementById('micBtn');
-  const origSys = document.getElementById('sysBtn');
   const fMic    = document.getElementById('fMicBtn');
-  const fSys    = document.getElementById('fSysBtn');
   if (origMic && fMic) {
     const obs = new MutationObserver(() => {
       fMic.classList.toggle('active', origMic.classList.contains('active'));
     });
     obs.observe(origMic, { attributes: true, attributeFilter: ['class'] });
-  }
-  if (origSys && fSys) {
-    const obs = new MutationObserver(() => {
-      fSys.classList.toggle('sys-active', origSys.classList.contains('active'));
-    });
-    obs.observe(origSys, { attributes: true, attributeFilter: ['class'] });
   }
 });
 
@@ -2398,7 +2193,7 @@ async function popOutAI() {
       const _proxyScript = pipWin.document.createElement('script');
       _proxyScript.textContent = `
         const _pipFns = ['popOutAI','toggleAiPanel','toggleBionic','adjustAIFontSize',
-          'regenAI','copyCurrentAI','clearAI','triggerAI','toggleMic','toggleSystemAudio',
+          'regenAI','copyCurrentAI','clearAI','triggerAI','toggleMic',
           'restoreTranscript','copyText','setFloatOpacity','openModal','adjustFontSize',
           'toggleTCPanel','transcribeNow','clearInput','saveAndClearInput'];
         _pipFns.forEach(fn => {
@@ -2446,7 +2241,7 @@ async function popOutAI() {
         #aiFloatPanel .ai-float-bar { cursor:default; border-radius:0!important; }
         #aiFloatPanel .ai-float-foot { display:none!important; }
         /* Show all control buttons in PiP window */
-        #fMicBtn, #fSysBtn, #fTcConfigBtn, #fTcSendBtn, #fAiHelpBtn, .fai-btn { display: inline-flex !important; }
+        #fMicBtn, #fTcConfigBtn, #fTcSendBtn, #fAiHelpBtn, .fai-btn { display: inline-flex !important; }
       `;
       pipWin.document.head.appendChild(bodyStyle);
 
