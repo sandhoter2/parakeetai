@@ -428,12 +428,70 @@ body.pip-active .note-input-wrap { display: flex !important; }
   background: var(--bg3); border-left: 2px solid transparent;
   animation: fadeIn 0.2s ease;
   cursor: pointer; transition: background 0.1s, border-color 0.1s;
+  position: relative;
 }
 .transcript-entry:hover { background: var(--bg4); border-left-color: var(--accent) !important; }
 .transcript-entry:hover::after {
   content: '↗'; font-size: 10px; color: var(--text3);
   float: right; margin-top: 2px;
 }
+/* Selection checkbox */
+.entry-select-cb {
+  position: absolute; left: -8px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; border-radius: 3px;
+  border: 1.5px solid var(--border2); background: var(--bg2);
+  cursor: pointer; opacity: 0; transition: opacity 0.15s, background 0.1s;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; flex-shrink: 0; z-index: 2;
+}
+.transcript-entry:hover .entry-select-cb,
+body.tc-select-mode .entry-select-cb { opacity: 1; }
+.transcript-entry.selected .entry-select-cb {
+  opacity: 1; background: var(--accent); border-color: var(--accent); color: var(--bg);
+}
+.transcript-entry.selected {
+  background: rgba(0,200,255,0.08) !important;
+  border-left-color: var(--accent) !important;
+  box-shadow: inset 0 0 0 1px rgba(0,200,255,0.15);
+}
+/* Floating multi-select action bar */
+#tcMultiBar {
+  display: none; position: sticky; bottom: 0;
+  background: var(--bg2); border-top: 1px solid var(--accent);
+  padding: 8px 12px; gap: 8px; align-items: center; flex-wrap: wrap;
+  z-index: 100; flex-shrink: 0;
+  box-shadow: 0 -4px 20px rgba(0,200,255,0.12);
+}
+#tcMultiBar.visible { display: flex; }
+.tc-multi-count {
+  font-size: 10px; font-family: var(--mono); font-weight: 700;
+  color: var(--accent); white-space: nowrap; flex-shrink: 0;
+  background: var(--accent-dim); border: 1px solid var(--accent);
+  border-radius: 3px; padding: 2px 8px;
+}
+.tc-multi-input {
+  flex: 1; min-width: 180px; background: var(--bg3);
+  border: 1px solid var(--border2); border-radius: 4px;
+  color: var(--text); font-size: 12px; font-family: var(--mono);
+  padding: 5px 10px; outline: none; transition: border-color 0.15s;
+}
+.tc-multi-input:focus { border-color: var(--accent); }
+.tc-multi-input::placeholder { color: var(--text3); }
+.tc-multi-send {
+  padding: 6px 14px; font-size: 11px; font-weight: 700;
+  background: var(--accent); border: 1px solid var(--accent);
+  border-radius: 4px; color: var(--bg); cursor: pointer;
+  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
+  transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.tc-multi-send:hover { box-shadow: 0 0 14px var(--accent-glow); }
+.tc-multi-clear {
+  padding: 5px 10px; font-size: 10px; font-family: var(--mono);
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 4px; color: var(--text3); cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.tc-multi-clear:hover { border-color: var(--red); color: var(--red); }
 .transcript-entry.microphone { border-left-color: rgba(0,200,255,0.5); }
 .transcript-entry.system { border-left-color: rgba(255,211,42,0.5); }
 .transcript-entry .speaker {
@@ -1039,6 +1097,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
         <button class="btn btn-ghost btn-xs" onclick="copyTranscriptLive()" title="Copy all">📋</button>
         <button class="btn btn-ghost btn-xs" onclick="exportSession()" title="Export session as Markdown">⬇ Export</button>
         <button class="btn btn-ghost btn-xs" onclick="clearTranscript()" title="Clear transcript">🗑</button>
+        <button class="btn btn-ghost btn-xs" id="tcSelectBtn" onclick="toggleSelectMode()" title="Select entries to send as context to AI">☐ Select</button>
         <span id="transcriptCount" style="font-size:10px;color:var(--text3);font-family:var(--mono)">{{ transcripts.count }}</span>
         <button class="btn btn-ghost btn-xs" id="transcriptMinBtn" onclick="minimizeTranscript()" title="Minimize transcript">⊟</button>
       </div>
@@ -1083,6 +1142,13 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
           <span id="interimText">Transcribing…</span>
         </div>
       </div>
+    </div>
+    <!-- Multi-select action bar — appears when entries are selected -->
+    <div id="tcMultiBar">
+      <span class="tc-multi-count" id="tcMultiCount">0 selected</span>
+      <input id="tcMultiQuestion" class="tc-multi-input" type="text" placeholder="// ask AI about selected entries…" onkeydown="if(event.key==='Enter'){event.preventDefault();sendSelectedToAI()}">
+      <button class="tc-multi-send" onclick="sendSelectedToAI()">✨ Ask AI</button>
+      <button class="tc-multi-clear" onclick="clearSelection()">✕ Clear</button>
     </div>
   </div>
 
@@ -2506,10 +2572,11 @@ function addTranscriptEntryUI(text, type, speakerName) {
   const now = new Date();
   const ts = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   const tone = _detectTone(text);
-  div.innerHTML = `<div class="speaker"><span class="speaker-name-editable" title="Click to rename this speaker">${escHtml(label.toUpperCase())}</span>${tone ? `<span class="speaker-tone" title="Tone">${tone}</span>` : ''}<span class="entry-ts">${ts}</span></div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div><div class="entry-actions"><button class="entry-action-btn" onclick="event.stopPropagation();sendEntryToAI(this)" title="Ask AI about this">✨ Ask AI</button><button class="entry-action-btn" onclick="event.stopPropagation();editTranscriptEntry(this)" title="Edit">✎ Edit</button><button class="entry-action-btn" style="color:var(--red);border-color:rgba(255,80,80,0.3)" onclick="event.stopPropagation();deleteTranscriptEntry(this)" title="Delete">✕</button></div>`;
+  div.innerHTML = `<div class="entry-select-cb" title="Select for multi-send">✓</div><div class="speaker"><span class="speaker-name-editable" title="Click to rename this speaker">${escHtml(label.toUpperCase())}</span>${tone ? `<span class="speaker-tone" title="Tone">${tone}</span>` : ''}<span class="entry-ts">${ts}</span></div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div><div class="entry-actions"><button class="entry-action-btn" onclick="event.stopPropagation();sendEntryToAI(this)" title="Ask AI about this">✨ Ask AI</button><button class="entry-action-btn" onclick="event.stopPropagation();editTranscriptEntry(this)" title="Edit">✎ Edit</button><button class="entry-action-btn" style="color:var(--red);border-color:rgba(255,80,80,0.3)" onclick="event.stopPropagation();deleteTranscriptEntry(this)" title="Delete">✕</button></div>`;
   // Bind rename click on the speaker name span
   div.querySelector('.speaker-name-editable').addEventListener('click', e => { e.stopPropagation(); _startSpeakerRename(e.currentTarget, type); });
-  div.addEventListener('click', () => populateInputFromTranscript(div.querySelector('.text').textContent));
+  div.querySelector('.entry-select-cb').addEventListener('click', e => { e.stopPropagation(); toggleEntrySelection(div); });
+  div.addEventListener('click', e => { if (document.body.classList.contains('tc-select-mode')) { toggleEntrySelection(div); } else { populateInputFromTranscript(div.querySelector('.text').textContent); } });
   transcriptPanel.insertBefore(div, interimEntry);
   transcriptCount++;
   document.getElementById('transcriptCount').textContent = `${transcriptCount}`;
@@ -2529,7 +2596,70 @@ function clearTranscript() {
   document.querySelectorAll('#transcriptPanel .transcript-entry').forEach(e => e.remove());
   transcriptCount = 0;
   document.getElementById('transcriptCount').textContent = '0';
+  clearSelection();
   toast('Transcript view cleared', 'info');
+}
+
+// ── Multi-select transcript ───────────────────────────────────────────────────
+const _tcSelected = new Set();
+let _tcSelectMode = false;
+
+function toggleSelectMode() {
+  _tcSelectMode = !_tcSelectMode;
+  document.body.classList.toggle('tc-select-mode', _tcSelectMode);
+  const btn = document.getElementById('tcSelectBtn');
+  if (btn) btn.textContent = _tcSelectMode ? '☑ Done' : '☐ Select';
+  if (!_tcSelectMode) clearSelection();
+}
+
+function toggleEntrySelection(entry) {
+  if (_tcSelected.has(entry)) {
+    _tcSelected.delete(entry);
+    entry.classList.remove('selected');
+  } else {
+    _tcSelected.add(entry);
+    entry.classList.add('selected');
+  }
+  _updateMultiBar();
+}
+
+function _updateMultiBar() {
+  const bar = document.getElementById('tcMultiBar');
+  const countEl = document.getElementById('tcMultiCount');
+  if (!bar) return;
+  if (_tcSelected.size === 0) {
+    bar.classList.remove('visible');
+  } else {
+    bar.classList.add('visible');
+    if (countEl) countEl.textContent = `${_tcSelected.size} selected`;
+  }
+}
+
+function clearSelection() {
+  _tcSelected.forEach(e => e.classList.remove('selected'));
+  _tcSelected.clear();
+  _updateMultiBar();
+}
+
+function sendSelectedToAI() {
+  if (!_tcSelected.size) return;
+  const ordered = Array.from(document.querySelectorAll('#transcriptPanel .transcript-entry'))
+    .filter(e => _tcSelected.has(e));
+  const context = ordered.map(e => {
+    const spk = e.querySelector('.speaker-name-editable')?.textContent || 'SPEAKER';
+    const txt = e.querySelector('.text')?.textContent?.trim() || '';
+    return `[${spk}]: ${txt}`;
+  }).join('\n');
+  const q = document.getElementById('tcMultiQuestion')?.value?.trim() || '';
+  const full = q
+    ? `Context from transcript:\n${context}\n\nQuestion: ${q}`
+    : `Context from transcript:\n${context}`;
+  const qi = document.getElementById('questionInput');
+  if (qi) qi.value = full;
+  document.getElementById('tcMultiQuestion').value = '';
+  clearSelection();
+  if (_tcSelectMode) toggleSelectMode();
+  triggerAI();
 }
 
 function copyTranscriptLive() {
