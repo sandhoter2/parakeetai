@@ -857,6 +857,16 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
         <button class="btn btn-ghost btn-xs" id="transcriptMinBtn" onclick="minimizeTranscript()" title="Minimize transcript">⊟</button>
       </div>
     </div>
+    <!-- Scroll-lock indicator — shown when user has scrolled up -->
+    <div id="transcriptScrollBadge"
+         onclick="_transcriptScrollLocked=false;_transcriptNewCount=0;this.style.display='none';transcriptPanel.scrollTop=transcriptPanel.scrollHeight"
+         style="display:none;position:sticky;bottom:8px;left:50%;transform:translateX(-50%);
+                background:var(--accent);color:var(--bg);border-radius:16px;
+                padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer;
+                font-family:var(--mono);letter-spacing:0.5px;white-space:nowrap;
+                box-shadow:0 2px 12px rgba(0,200,255,0.4);z-index:10;
+                align-items:center;gap:6px">
+    </div>
     <div class="panel-body" id="transcriptPanel">
       {% if not transcripts %}
       <div id="transcriptPlaceholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--text3);text-align:center;padding:32px">
@@ -1163,6 +1173,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <tr><td>Focus question input</td><td><kbd>/</kbd></td></tr>
       <tr><td>Focus note input</td><td><kbd>N</kbd></td></tr>
       <tr><td>Toggle mic</td><td><kbd>M</kbd></td></tr>
+      <tr><td>Speak / stop AI answer (TTS)</td><td><kbd>S</kbd></td></tr>
       <tr><td>End session</td><td><kbd>Shift E</kbd></td></tr>
     </table>
     <div class="modal-footer">
@@ -1302,6 +1313,19 @@ const autoToggle = document.getElementById('autoToggle');
 const waveformWrap = document.getElementById('waveformWrap');
 const waveformCanvas = document.getElementById('waveformCanvas');
 const waveCtx = waveformCanvas.getContext('2d');
+
+// ── Transcript scroll-lock listener ──────────────────────────────────────────
+transcriptPanel.addEventListener('scroll', () => {
+  const atBottom = transcriptPanel.scrollHeight - transcriptPanel.scrollTop - transcriptPanel.clientHeight < 40;
+  if (atBottom) {
+    _transcriptScrollLocked = false;
+    _transcriptNewCount = 0;
+    const badge = document.getElementById('transcriptScrollBadge');
+    if (badge) badge.style.display = 'none';
+  } else {
+    _transcriptScrollLocked = true;
+  }
+});
 
 // ── Elapsed Timer ─────────────────────────────────────────────────────────────
 function startTimer() {
@@ -2347,7 +2371,19 @@ function endSession() {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function scrollTranscript() { transcriptPanel.scrollTop = transcriptPanel.scrollHeight; }
+let _transcriptScrollLocked = false;
+let _transcriptNewCount = 0;
+
+function scrollTranscript() {
+  if (_transcriptScrollLocked) {
+    _transcriptNewCount++;
+    const badge = document.getElementById('transcriptScrollBadge');
+    if (badge) { badge.textContent = '↓ ' + _transcriptNewCount + ' new'; badge.style.display = 'flex'; }
+    return;
+  }
+  transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
+}
+
 function scrollAI() { aiPanel.scrollTop = aiPanel.scrollHeight; }
 function setStatus(msg) { statusChip.textContent = msg; }
 function escHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -2804,6 +2840,7 @@ document.addEventListener('keydown', e => {
   if (e.key === '/') { e.preventDefault(); questionInput.focus(); }
   if (e.key === 'n' || e.key === 'N') { e.preventDefault(); document.getElementById('noteInput').focus(); }
   if (e.key === 'm' || e.key === 'M') { e.preventDefault(); toggleMic(); }
+  if (e.key === 's' || e.key === 'S') { e.preventDefault(); speakCurrentAI(); }
   if (e.shiftKey && (e.key === 'E' || e.key === 'e')) { e.preventDefault(); endSession(); }
 });
 
