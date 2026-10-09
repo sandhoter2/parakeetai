@@ -899,6 +899,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <button class="float-ctrl-btn" onclick="adjustAIFontSize(1)" title="Larger font">A+</button>
       <button class="float-ctrl-btn" id="regenBtn" onclick="regenAI()" style="display:none" title="Regenerate">🔄</button>
       <button class="float-ctrl-btn" id="copyAIBtn" onclick="copyCurrentAI()" style="display:none" title="Copy">📋</button>
+      <button class="float-ctrl-btn" id="speakAIBtn" onclick="speakCurrentAI()" style="display:none" title="Read aloud (TTS)">🔊</button>
       <button class="float-ctrl-btn" onclick="clearAI()" id="clearAIBtn" style="display:none" title="Clear">🗑</button>
       <button class="float-ctrl-btn" id="popOutBtn" onclick="event.stopPropagation();popOutAI()" title="Pop out as floating window">⧉</button>
       <button class="float-ctrl-btn" id="collapseBtn" onclick="event.stopPropagation();toggleAiPanel()" title="Collapse to bubble">✕</button>
@@ -935,6 +936,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <div class="ai-answer" id="aiAnswerText"></div><span class="ai-cursor" id="aiCursor"></span>
       <div class="ai-live-actions" id="aiLiveActions" style="display:none">
         <button class="btn btn-ghost btn-xs" onclick="copyCurrentAI()">📋 Copy</button>
+        <button class="btn btn-ghost btn-xs" onclick="speakCurrentAI()" id="speakLiveBtn">🔊 Speak</button>
         <button class="btn btn-ghost btn-xs" onclick="regenAI()">🔄 Regenerate</button>
       </div>
     </div>
@@ -2132,6 +2134,7 @@ function triggerAI(question, fromVoice) {
     _df.getElementById('aiLiveActions').style.display = 'flex';
     _df.getElementById('copyAIBtn').style.display = 'flex';
     _df.getElementById('regenBtn').style.display = 'flex';
+    _df.getElementById('speakAIBtn').style.display = 'flex';
     const finalAnswer = aiAnswerText.textContent;
     aiAnswerText.dataset.plain = finalAnswer;
     if (bionicMode) {
@@ -2177,7 +2180,7 @@ function archiveAI(question, answer) {
   }
   item.innerHTML = `<div class="ai-item-q">Q: ${escHtml(question.slice(0,120))}</div>`;
   item.appendChild(answerEl);
-  item.insertAdjacentHTML('beforeend', `<div class="ai-item-actions"><button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">📋 Copy</button></div>`);
+  item.insertAdjacentHTML('beforeend', `<div class="ai-item-actions"><button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">📋 Copy</button><button class="btn btn-ghost btn-xs" onclick="speakAI(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,this)">🔊 Speak</button></div>`);
   // Toggle minimized on click of the question line
   item.querySelector('.ai-item-q').addEventListener('click', () => item.classList.toggle('minimized'));
   hist.prepend(item);
@@ -2196,7 +2199,47 @@ function clearAI() {
   _dc.getElementById('clearAIBtn').style.display = 'none';
   _dc.getElementById('copyAIBtn').style.display = 'none';
   _dc.getElementById('regenBtn').style.display = 'none';
+  _dc.getElementById('speakAIBtn').style.display = 'none';
+  stopSpeak();
   // keep bionic-on class so toggle state is preserved
+}
+
+// ── TEXT TO SPEECH ────────────────────────────────────────────────────────────
+let _ttsUtterance = null;
+let _ttsSpeaking = false;
+
+function speakAI(text, btn) {
+  if (!window.speechSynthesis) { toast('TTS not supported in this browser', 'warn'); return; }
+  if (_ttsSpeaking) { stopSpeak(); return; }
+  const cleaned = text.replace(/[#*`_~>\[\]]/g, ' ').replace(/\s+/g,' ').trim();
+  if (!cleaned) return;
+  _ttsUtterance = new SpeechSynthesisUtterance(cleaned);
+  _ttsUtterance.rate = 1.05;
+  _ttsUtterance.pitch = 1.0;
+  _ttsSpeaking = true;
+  const _d = _doc();
+  if (btn) { btn.textContent = '⏹ Stop'; btn.style.color = 'var(--yellow)'; }
+  const speakBtn = _d.getElementById('speakAIBtn');
+  if (speakBtn) { speakBtn.textContent = '⏹'; speakBtn.title = 'Stop reading'; speakBtn.style.color = 'var(--yellow)'; }
+  const speakLiveBtn = _d.getElementById('speakLiveBtn');
+  if (speakLiveBtn) { speakLiveBtn.textContent = '⏹ Stop'; speakLiveBtn.style.color = 'var(--yellow)'; }
+  _ttsUtterance.onend = _ttsUtterance.onerror = () => {
+    _ttsSpeaking = false;
+    if (btn) { btn.textContent = '🔊 Speak'; btn.style.color = ''; }
+    if (speakBtn) { speakBtn.textContent = '🔊'; speakBtn.title = 'Read aloud (TTS)'; speakBtn.style.color = ''; }
+    if (speakLiveBtn) { speakLiveBtn.textContent = '🔊 Speak'; speakLiveBtn.style.color = ''; }
+  };
+  speechSynthesis.speak(_ttsUtterance);
+}
+
+function speakCurrentAI() {
+  const text = (aiAnswerText && aiAnswerText.dataset.plain) ? aiAnswerText.dataset.plain : (aiAnswerText ? aiAnswerText.textContent : '');
+  speakAI(text, null);
+}
+
+function stopSpeak() {
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  _ttsSpeaking = false;
 }
 
 // ── CONVERSATION HELPER ───────────────────────────────────────────────────────
