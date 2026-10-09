@@ -3359,62 +3359,62 @@ document.addEventListener('click', e => {
 });
 
 // ── CONVERSATION INSIGHTS DROPDOWN ───────────────────────────────────────────
-const CONV_INSIGHT_TYPES = [
-  {id:'labels',        icon:'🏷️',  name:'Label & Analyze',    description:'Label entries + tone, dynamic, key fact', prompt:''},
-  {id:'next_questions',icon:'💬',  name:'What to Ask Next',   description:'Top 3 questions to ask right now',        prompt:'You are a real-time conversation coach. Based on the conversation transcript below, suggest the top 3 most impactful questions to ask next. For each, give the question and one sentence on why it matters right now. Be direct and tactical.'},
-  {id:'topics',        icon:'📋',  name:'Topics to Cover',    description:'Key topics not yet addressed',             prompt:'You are a real-time conversation coach. Based on the conversation so far, identify the key topics or areas that have NOT yet been covered but should be. List them in priority order (most critical first) with a brief reason for each. Be concise.'},
-  {id:'key_points',    icon:'⭐',  name:'Key Points Recap',   description:'Most important points so far',             prompt:'You are a real-time conversation analyst. Summarize the 5 most important points, decisions, or facts from this conversation so far. Use a numbered list. Be precise and brutally concise.'},
-  {id:'blind_spots',   icon:'🔍',  name:'Blind Spots',        description:'Gaps, assumptions, missing context',       prompt:'You are a real-time conversation analyst. Identify the blind spots, unstated assumptions, and missing context in this conversation. What is NOT being said that should be addressed? List each gap with a one-sentence explanation.'},
-  {id:'flow',          icon:'🌊',  name:'Conversation Flow',  description:'How the conversation is progressing',      prompt:'You are a real-time conversation coach. Analyze the flow and momentum of this conversation: what phase is it in (opening/exploration/deep dive/closing), who is leading, what is the underlying dynamic, and what tension or alignment exists? End with one concrete tactical suggestion to improve the conversation direction.'},
-  {id:'wrap_up',       icon:'🎯',  name:'Wrap-Up Plan',       description:'How to close the conversation well',       prompt:'You are a real-time conversation coach. Based on the conversation so far, suggest how to wrap up effectively. What key points should be summarized? What commitments should be confirmed? What follow-up actions should be agreed upon? Be specific and actionable.'},
-];
-let _activeInsightId = 'labels';
-let _convUserTemplates = [];
-let _convUserTemplatesLoaded = false;
+const _INSIGHT_KEY = 'convInsight_default';
+let CONV_TEMPLATES = [];
+let _convTemplatesLoaded = false;
 
-async function _loadConvUserTemplates() {
+let _activeInsightId = (function() {
+  try { return localStorage.getItem(_INSIGHT_KEY) || ''; } catch(e) { return ''; }
+})();
+
+async function _loadConvTemplates() {
   try {
     const res = await fetch('/api/templates/?type=conversation');
-    if (res.ok) _convUserTemplates = await res.json();
+    if (res.ok) CONV_TEMPLATES = await res.json();
   } catch(e) {}
-  _convUserTemplatesLoaded = true;
+  if (!CONV_TEMPLATES.length) {
+    CONV_TEMPLATES = [
+      {pk: -1, icon:'🏷️', name:'Label & Analyze',  description:'Label entries + tone, dynamic, key fact',    prompt:''},
+      {pk: -2, icon:'💬', name:'What to Ask Next',  description:'Top 3 questions to ask right now',          prompt:'You are a real-time conversation coach. Based on the conversation transcript below, suggest the top 3 most impactful questions to ask next. For each, give the question and one sentence on why it matters right now. Be direct and tactical.'},
+      {pk: -3, icon:'📋', name:'Topics to Cover',   description:'Key topics not yet addressed',               prompt:'You are a real-time conversation coach. Based on the conversation so far, identify the key topics or areas that have NOT yet been covered but should be. List them in priority order (most critical first) with a brief reason for each. Be concise.'},
+      {pk: -4, icon:'⭐', name:'Key Points Recap',  description:'Most important points so far',               prompt:'You are a real-time conversation analyst. Summarize the 5 most important points, decisions, or facts from this conversation so far. Use a numbered list. Be precise and brutally concise.'},
+      {pk: -5, icon:'🔍', name:'Blind Spots',        description:'Gaps, assumptions, missing context',         prompt:'You are a real-time conversation analyst. Identify the blind spots, unstated assumptions, and missing context in this conversation. What is NOT being said that should be addressed? List each gap with a one-sentence explanation.'},
+      {pk: -6, icon:'🌊', name:'Conversation Flow',  description:'How the conversation is progressing',        prompt:'You are a real-time conversation coach. Analyze the flow and momentum of this conversation: what phase is it in (opening/exploration/deep dive/closing), who is leading, what is the underlying dynamic, and what tension or alignment exists? End with one concrete tactical suggestion to improve the conversation direction.'},
+      {pk: -7, icon:'🎯', name:'Wrap-Up Plan',        description:'How to close the conversation well',         prompt:'You are a real-time conversation coach. Based on the conversation so far, suggest how to wrap up effectively. What key points should be summarized? What commitments should be confirmed? What follow-up actions should be agreed upon? Be specific and actionable.'},
+    ];
+  }
+  if (!CONV_TEMPLATES.find(t => String(t.pk) === String(_activeInsightId))) {
+    _activeInsightId = String(CONV_TEMPLATES[0].pk);
+    try { localStorage.setItem(_INSIGHT_KEY, _activeInsightId); } catch(e) {}
+  }
+  _convTemplatesLoaded = true;
+  _renderConvInsightList();
 }
 
 function _getActiveInsight() {
-  if (_activeInsightId.startsWith('_utpl_')) {
-    const pk = parseInt(_activeInsightId.slice(6));
-    return _convUserTemplates.find(t => t.pk === pk) || null;
-  }
-  return CONV_INSIGHT_TYPES.find(x => x.id === _activeInsightId) || null;
+  return CONV_TEMPLATES.find(t => String(t.pk) === String(_activeInsightId)) || CONV_TEMPLATES[0] || null;
 }
 
 function _renderConvInsightList() {
   const list = document.getElementById('convInsightList');
   if (!list) return;
-  const builtIn = CONV_INSIGHT_TYPES.map(t => `
-    <div class="ai-tpl-item${t.id === _activeInsightId ? ' active' : ''}" onclick="_selectInsight(${JSON.stringify(t.id)})">
+  if (!CONV_TEMPLATES.length) {
+    list.innerHTML = '<div style="padding:12px;color:var(--text3);font-size:12px">Loading…</div>';
+    return;
+  }
+  list.innerHTML = CONV_TEMPLATES.map(t => `
+    <div class="ai-tpl-item${String(t.pk) === String(_activeInsightId) ? ' active' : ''}" onclick="selectInsight(${t.pk})">
       <span class="ai-tpl-icon">${t.icon}</span>
       <div>
-        <div class="ai-tpl-name">${t.name}${t.id === _activeInsightId ? ' ✓' : ''}</div>
-        <div class="ai-tpl-desc">${t.description}</div>
-      </div>
-    </div>`).join('');
-  const userTpls = _convUserTemplates.map(t => {
-    const uid = '_utpl_' + t.pk;
-    return `
-    <div class="ai-tpl-item${uid === _activeInsightId ? ' active' : ''}" onclick="_selectInsight(${JSON.stringify(uid)})">
-      <span class="ai-tpl-icon">${t.icon || '💬'}</span>
-      <div>
-        <div class="ai-tpl-name">${t.name}${uid === _activeInsightId ? ' ✓' : ''}</div>
+        <div class="ai-tpl-name">${t.name}</div>
         <div class="ai-tpl-desc">${t.description || ''}</div>
       </div>
-    </div>`;
-  }).join('');
-  list.innerHTML = builtIn + (userTpls ? `<div style="border-top:1px solid var(--border);margin:4px 0"></div>${userTpls}` : '');
+    </div>`).join('');
 }
 
-function _selectInsight(id) {
-  _activeInsightId = id;
+function selectInsight(pk) {
+  _activeInsightId = String(pk);
+  try { localStorage.setItem(_INSIGHT_KEY, _activeInsightId); } catch(e) {}
   const t = _getActiveInsight();
   const btn = document.getElementById('convHelperBtn');
   const fBtn = _doc().getElementById('fConvHelperBtn');
@@ -3432,8 +3432,8 @@ function toggleConvInsightDropdown(e) {
   if (!dd || !btn) return;
   const isOpen = dd.classList.contains('open');
   if (!isOpen) {
-    if (!_convUserTemplatesLoaded) { _loadConvUserTemplates().then(_renderConvInsightList); }
-    _renderConvInsightList();
+    if (!_convTemplatesLoaded) { _loadConvTemplates(); }
+    else _renderConvInsightList();
     const rect = btn.getBoundingClientRect();
     const ddW = 230;
     const ddH = 240;
@@ -3460,8 +3460,9 @@ document.addEventListener('click', e => {
   }
 });
 
-// Load AI Help templates on page init
+// Load AI Help and Conversation templates on page init
 _loadAITemplates();
+_loadConvTemplates();
 
 // Apply template prompt prefix to the question before sending
 function _applyTemplate(question) {

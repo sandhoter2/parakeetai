@@ -1502,6 +1502,7 @@ def api_templates_list(request):
     data = [
         {
             "id": t.pk,
+            "pk": t.pk,
             "name": t.name,
             "description": t.description,
             "prompt": t.prompt,
