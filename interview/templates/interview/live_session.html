@@ -584,7 +584,7 @@ body.pip-active .note-input-wrap { display: flex !important; }
 }
 
 .question-input-wrap {
-  flex: 1; display: flex; align-items: center;
+  flex: 1; display: flex; align-items: center; position: relative;
   background: var(--bg3); border: 1px solid var(--border2); border-radius: 4px;
   padding: 0 12px; gap: 8px; min-width: 0;
   transition: border-color 0.15s;
@@ -902,6 +902,8 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
         <span id="tcWordCount" title="Total words captured" style="color:var(--text3)">0w</span>
         <span style="opacity:0.3">|</span>
         <span id="tcSpeakRate" title="Speaking rate (words per minute, last 60s)" style="color:var(--text3)">—</span>
+        <span style="opacity:0.3">|</span>
+        <span id="tcTopKeywords" title="Top keywords in transcript" style="color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
       </div>
       <div class="panel-header-actions">
         <div class="font-controls">
@@ -1240,7 +1242,11 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <div class="question-input-wrap">
     <input type="text" class="question-input" id="questionInput"
            placeholder="Type a question or let the mic capture it… (Enter to send)"
-           onkeydown="if(event.key==='Enter')triggerAI()">
+           onkeydown="if(event.key==='Enter')triggerAI()"
+           oninput="_updateQInputCount(this)">
+    <span id="qInputCount" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);
+          font-size:9px;font-family:var(--mono);color:var(--text3);pointer-events:none;opacity:0;
+          transition:opacity 0.2s"></span>
   </div>
 
   <div class="ai-btn-group" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
@@ -1411,6 +1417,17 @@ const waveformWrap = document.getElementById('waveformWrap');
 const waveformCanvas = document.getElementById('waveformCanvas');
 const waveCtx = waveformCanvas.getContext('2d');
 
+// Live word count on question input
+function _updateQInputCount(inp) {
+  const el = document.getElementById('qInputCount');
+  if (!el) return;
+  const val = inp.value.trim();
+  if (!val) { el.style.opacity = '0'; return; }
+  const wc = val.split(/\s+/).filter(Boolean).length;
+  el.textContent = wc + 'w';
+  el.style.opacity = '1';
+}
+
 // Smart paste: when user pastes 40+ chars into question input, nudge them to trigger AI
 questionInput.addEventListener('paste', () => {
   setTimeout(() => {
@@ -1545,9 +1562,13 @@ function drawWave() {
   const w = waveformCanvas.width, h = waveformCanvas.height;
   waveCtx.clearRect(0, 0, w, h);
 
+  // Pick waveform color: gold while AI is streaming, cyan otherwise
+  const waveColor = isStreaming ? '#ffd700' : '#00c8ff';
+  const waveGlow = isStreaming ? 'rgba(255,215,0,0.15)' : 'rgba(0,200,255,0.15)';
+
   // Glow pass
   waveCtx.beginPath();
-  waveCtx.strokeStyle = 'rgba(0,200,255,0.15)';
+  waveCtx.strokeStyle = waveGlow;
   waveCtx.lineWidth = 5;
   const sliceW = w / data.length;
   let x = 0;
@@ -1561,7 +1582,7 @@ function drawWave() {
 
   // Sharp line pass
   waveCtx.beginPath();
-  waveCtx.strokeStyle = '#00c8ff';
+  waveCtx.strokeStyle = waveColor;
   waveCtx.lineWidth = 1.5;
   x = 0;
   for (let i = 0; i < data.length; i++) {
@@ -2097,13 +2118,23 @@ function speakerLabel(type, speakerName) {
   return type;
 }
 
-// Word count and speaking rate tracking
+// Word count, speaking rate and keyword tracking
 let _totalWords = 0;
 const _speakEvents = []; // {ts, words}
+const _kwFreq = {};
+const _KW_STOP = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','is','are','was','were','be','been','it','this','that','have','had','do','did','not','i','you','we','they','he','she','so','as','if','by','from','up','about','can','will','what','how','when','where','just','also','all','its','my','your','our','their','any','some','more','out','there','then']);
 function _updateWordStats(text) {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   _totalWords += words;
   _speakEvents.push({ ts: Date.now(), words });
+  // Update keyword frequency
+  text.trim().toLowerCase().replace(/[^a-z\s]/g,'').split(/\s+/).forEach(w => {
+    if (w.length > 3 && !_KW_STOP.has(w)) _kwFreq[w] = (_kwFreq[w] || 0) + 1;
+  });
+  // Show top 3 keywords
+  const top3 = Object.entries(_kwFreq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
+  const kwEl = document.getElementById('tcTopKeywords');
+  if (kwEl) kwEl.textContent = top3.length ? top3.join(' · ') : '';
   // Keep only events in last 60s
   const cutoff = Date.now() - 60000;
   while (_speakEvents.length && _speakEvents[0].ts < cutoff) _speakEvents.shift();
@@ -2398,6 +2429,8 @@ function clearInput() {
   // Hide the interim transcript entry so the display matches the cleared input
   if (interimEntry) interimEntry.style.display = 'none';
   if (interimText) interimText.textContent = 'Transcribing…';
+  const qc = document.getElementById('qInputCount');
+  if (qc) qc.style.opacity = '0';
 }
 
 function saveAndClearInput() {
