@@ -555,6 +555,137 @@ body.pip-active .note-input-wrap { display: flex !important; }
 .shortcuts-table td { padding:8px 10px; border-bottom:1px solid var(--border); }
 .shortcuts-table td:first-child { color:var(--text3); width:45%; }
 kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; padding:2px 6px; font-size:11px; font-family:monospace; }
+
+/* ── MOBILE RESPONSIVE ──────────────────────────────────────────────────── */
+.mobile-tab-bar { display: none; }
+
+@media (max-width: 640px) {
+  /* Full-height flex column */
+  body { display: flex !important; flex-direction: column; height: 100dvh; height: 100vh; }
+  .navbar { position: static !important; flex-shrink: 0; padding: 8px 14px; }
+  .navbar-brand { font-size: 15px; }
+  .navbar-brand > span { font-size: 18px; }
+
+  /* Session bar: compact, wrap gracefully */
+  .session-bar { flex-shrink: 0; padding: 6px 12px; flex-wrap: wrap; gap: 4px; }
+  .session-info { gap: 6px; min-width: 0; flex: 1 1 auto; overflow: hidden; }
+  .session-info h2 { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .session-controls { gap: 5px; flex-shrink: 0; }
+  .session-controls > button:first-child { display: none; } /* hide ⌨️ shortcuts btn */
+  .elapsed-timer { font-size: 11px; padding: 2px 5px; }
+  label[for] { font-size: 11px !important; }
+
+  /* Mobile panel tab bar */
+  .mobile-tab-bar {
+    display: flex !important;
+    flex-shrink: 0;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+  }
+  .mobile-tab-btn {
+    flex: 1; padding: 9px 4px; font-size: 12px; font-weight: 600;
+    background: transparent; border: none; border-bottom: 2px solid transparent;
+    color: var(--text2); cursor: pointer; transition: color 0.15s, border-color 0.15s;
+    letter-spacing: 0.2px;
+  }
+  .mobile-tab-btn.active {
+    color: var(--accent2);
+    border-bottom-color: var(--accent);
+    background: rgba(108,99,255,0.06);
+  }
+
+  /* Main layout: flex:1 fills remaining space, single column */
+  .main-layout,
+  .main-layout.with-ai {
+    flex: 1 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    grid-template-columns: 1fr !important;
+    transition: none !important;
+  }
+  body.teams-zoomed .main-layout { height: auto !important; }
+  .col-resizer { display: none !important; }
+
+  /* Tab visibility: only show the active panel */
+  .main-layout .panel { display: none !important; }
+  .main-layout.mobile-tab-transcript .panel { display: flex !important; }
+  .main-layout:not(.mobile-tab-ai) #aiFloatPanel.ai-panel-embedded { display: none !important; }
+  .main-layout.mobile-tab-ai #aiFloatPanel.ai-panel-embedded {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0;
+    border: none !important;
+    grid-column: 1 !important;
+  }
+
+  /* Collapse AI float controls on mobile */
+  .ai-float-bar { padding: 7px 10px; }
+  #opacitySlider { display: none; }
+  .float-ctrl-btn { width: 28px; height: 28px; font-size: 11px; }
+  .ai-float-title { font-size: 12px; }
+
+  /* Note strip */
+  .note-input-wrap { flex-shrink: 0; padding: 5px 10px; }
+
+  /* Bottom bar: wraps into 2 rows on mobile */
+  .bottom-bar {
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    gap: 7px;
+    align-items: center;
+  }
+  .bottom-bar > .mic-btn { width: 40px; height: 40px; font-size: 17px; }
+  .waveform-wrap { flex: 1; min-width: 50px; max-height: 36px; }
+
+  /* Question input → full-width second row */
+  .question-input-wrap {
+    order: 5;
+    flex: 0 0 100% !important;
+    width: 100% !important;
+  }
+
+  /* AI help group → full-width third row */
+  .ai-btn-group {
+    order: 6;
+    width: 100% !important;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 6px !important;
+    align-items: center;
+  }
+  .ai-btn-group .ai-help-btn:first-child { flex: 1; padding: 9px 10px; font-size: 12px; }
+  .ai-btn-group > div { display: flex !important; gap: 4px; }
+  .ai-btn-group > div .ai-help-btn { font-size: 10px !important; padding: 5px 8px !important; }
+  .ai-btn-group > span { display: none; } /* hide kbd hint */
+
+  /* Status chip → hidden on mobile */
+  .status-chip { display: none !important; }
+
+  /* Transcript panel: compact */
+  .panel-header { padding: 7px 12px; }
+  .panel-body { padding: 10px; }
+  .transcript-entry { padding: 8px 10px; margin-bottom: 7px; }
+
+  /* Meeting helper panel: stay on screen */
+  .meeting-helper-panel {
+    min-width: 240px;
+    max-width: calc(100vw - 20px);
+    left: auto !important;
+    right: 0;
+  }
+  /* TC panel: constrain width */
+  .transcribe-config-panel { min-width: 200px; }
+
+  /* Float panel: prevent horizontal overflow when floating */
+  #aiFloatPanel:not(.ai-panel-embedded) {
+    max-width: calc(100vw - 16px) !important;
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+  }
+}
 {% endblock %}
 
 {% block navbar_actions %}
@@ -588,7 +719,13 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 .toggle.on::after { transform:translateX(16px); }
 </style>
 
-<div class="main-layout with-ai">
+<!-- Mobile-only panel tab switcher -->
+<div class="mobile-tab-bar" id="mobileTabBar">
+  <button class="mobile-tab-btn active" id="mTabTranscript" onclick="switchMobileTab('transcript')">🎙️ Transcript</button>
+  <button class="mobile-tab-btn" id="mTabAI" onclick="switchMobileTab('ai')">✨ AI Answer</button>
+</div>
+
+<div class="main-layout with-ai" id="mainLayout">
   <!-- Transcript Panel — left column -->
   <div class="panel">
     <div class="panel-header">
@@ -609,7 +746,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <div id="transcriptPlaceholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--text3);text-align:center;padding:32px">
         <span style="font-size:36px">🎙️</span>
         <p style="font-size:14px;color:var(--text2)">No transcript yet</p>
-        <p style="font-size:12px">Click the mic <strong style="color:var(--accent2)">🎤</strong> or system audio <strong style="color:var(--yellow)">🖥️</strong> button below to start capturing.</p>
+        <p style="font-size:12px">Click the mic <strong style="color:var(--accent2)">🎤</strong> button below to start capturing.</p>
       </div>
       {% endif %}
       {% for entry in transcripts %}
@@ -822,7 +959,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     <div class="transcribe-config-panel" id="tcPanel">
       <div class="tc-row">
         <span style="font-weight:600">Transcribe</span>
-        <span style="font-size:10px;color:var(--text3)">🎤 🖥️ shared</span>
+        <span style="font-size:10px;color:var(--text3)">🎤 mic</span>
       </div>
       <div class="tc-row">
         <span>Interval</span>
@@ -880,7 +1017,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
            onkeydown="if(event.key==='Enter')triggerAI()">
   </div>
 
-  <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
+  <div class="ai-btn-group" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
     <button class="ai-help-btn" id="aiHelpBtn" onclick="triggerAI()">✨ AI Help</button>
     <div style="display:flex;gap:4px">
       <button class="ai-help-btn" style="font-size:10px;padding:2px 7px;background:var(--bg3);color:var(--text2)" onclick="clearInput()" title="Clear input">✕ Clear</button>
@@ -2766,5 +2903,51 @@ if (SESSION_TYPE === 'meeting') {
   loadParticipants();
   loadCrossSessionCtx();
 }
+
+// ── Mobile tab switching ──────────────────────────────────────────────────
+let _mobileActiveTab = 'transcript';
+
+function switchMobileTab(tab) {
+  _mobileActiveTab = tab;
+  const layout = document.getElementById('mainLayout');
+  if (!layout) return;
+  layout.classList.toggle('mobile-tab-transcript', tab === 'transcript');
+  layout.classList.toggle('mobile-tab-ai', tab === 'ai');
+  const tBtn = document.getElementById('mTabTranscript');
+  const aBtn = document.getElementById('mTabAI');
+  if (tBtn) tBtn.classList.toggle('active', tab === 'transcript');
+  if (aBtn) aBtn.classList.toggle('active', tab === 'ai');
+  // Scroll transcript to bottom when switching to it
+  if (tab === 'transcript') {
+    const tp = document.getElementById('transcriptPanel');
+    if (tp) tp.scrollTop = tp.scrollHeight;
+  }
+}
+
+// Initialize mobile tab state and auto-switch to AI when a response arrives
+(function initMobile() {
+  const isMobile = () => window.matchMedia('(max-width: 640px)').matches;
+  if (isMobile()) {
+    switchMobileTab('transcript');
+  }
+  // Patch triggerAI to auto-switch to AI tab on mobile
+  const _origTriggerAI = triggerAI;
+  triggerAI = function() {
+    const result = _origTriggerAI.apply(this, arguments);
+    if (isMobile()) switchMobileTab('ai');
+    return result;
+  };
+  // Handle resize: add/remove mobile tab classes
+  window.addEventListener('resize', () => {
+    if (isMobile()) {
+      switchMobileTab(_mobileActiveTab);
+    } else {
+      const layout = document.getElementById('mainLayout');
+      if (layout) {
+        layout.classList.remove('mobile-tab-transcript', 'mobile-tab-ai');
+      }
+    }
+  }, { passive: true });
+})();
 </script>
 {% endblock %}
