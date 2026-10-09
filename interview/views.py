@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1496,7 +1497,10 @@ def templates_page(request):
 @login_required
 def api_templates_list(request):
     tpl_type = request.GET.get("type")
-    qs = PromptTemplate.objects.filter(owner=request.user, is_active=True)
+    # Return the user's own templates plus superuser-owned shared templates
+    admin_ids = list(User.objects.filter(is_superuser=True).values_list("id", flat=True))
+    owner_ids = list({request.user.id} | set(admin_ids))
+    qs = PromptTemplate.objects.filter(owner_id__in=owner_ids, is_active=True)
     if tpl_type:
         qs = qs.filter(template_type=tpl_type)
     data = [
