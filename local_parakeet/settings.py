@@ -83,8 +83,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "local_parakeet.wsgi.application"
 
+_DATABASE_URL = os.environ.get("DATABASE_URL", "")
 _MYSQL_HOST = os.environ.get("MYSQL_HOST", "")
-if _MYSQL_HOST:
+if _DATABASE_URL:
+    import dj_database_url
+    DATABASES = {"default": dj_database_url.config(default=_DATABASE_URL, conn_max_age=600)}
+elif _MYSQL_HOST:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
