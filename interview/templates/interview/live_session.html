@@ -434,6 +434,10 @@ body.pip-active .note-input-wrap { display: flex !important; }
 .transcript-entry .speaker::before { content: '// '; opacity: 0.4; }
 .transcript-entry.microphone .speaker { color: var(--accent); }
 .transcript-entry.system .speaker { color: var(--yellow); }
+.speaker-name-editable { cursor: pointer; border-bottom: 1px dashed currentColor; opacity: 0.9; transition: opacity 0.15s; }
+.speaker-name-editable:hover { opacity: 1; }
+.speaker-tone { font-size: 10px; margin-left: 4px; opacity: 0.75; cursor: default; }
+.speaker-rename-input { background: var(--bg); border: 1px solid var(--accent); border-radius: 3px; color: var(--accent); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 1px 5px; width: 120px; outline: none; }
 .transcript-entry .text { font-size: 13px; line-height: 1.55; }
 .transcript-entry .entry-ts {
   font-size: 9px; font-family: var(--mono); color: var(--text3);
@@ -2316,11 +2320,74 @@ function populateInputFromTranscript(text) {
   if (fi) fi.value = text;
 }
 
+// ── Speaker rename + tone system ─────────────────────────────────────────────
+const _SPEAKER_NAMES_KEY = `speakerNames_${SESSION_ID}`;
+const _SPEAKER_COLORS = { microphone: 'var(--accent)', system: 'var(--yellow)', note: 'var(--text3)' };
+const _SPEAKER_DEFAULTS = { microphone: 'You', system: 'Interviewer', note: 'Note' };
+
+function _loadSpeakerNames() {
+  try { return JSON.parse(localStorage.getItem(_SPEAKER_NAMES_KEY) || '{}'); } catch(e) { return {}; }
+}
+function _saveSpeakerName(type, name) {
+  const names = _loadSpeakerNames();
+  names[type] = name;
+  try { localStorage.setItem(_SPEAKER_NAMES_KEY, JSON.stringify(names)); } catch(e) {}
+}
+
 function speakerLabel(type, speakerName) {
   if (speakerName) return speakerName;
-  if (type === 'microphone') return 'You';
-  if (type === 'system') return 'Interviewer';
-  return type;
+  const stored = _loadSpeakerNames();
+  if (stored[type]) return stored[type];
+  return _SPEAKER_DEFAULTS[type] || type;
+}
+
+// Detect tone emoji from text content
+function _detectTone(text) {
+  const t = text.toLowerCase();
+  if (/\b(error|fail|broken|bug|crash|wrong|problem|issue|frustrat|angry|terrible|worst|hate)\b/.test(t)) return '😤';
+  if (/\b(great|excellent|perfect|amazing|love|wonderful|fantastic|brilliant|awesome)\b/.test(t)) return '😊';
+  if (/\b(maybe|perhaps|not sure|unsure|wonder|think|curious|interesting|confus)\b/.test(t)) return '🤔';
+  if (/\b(todo|action|follow.?up|remind|deadline|assign|owner|task|must|need to|should)\b/.test(t)) return '📌';
+  if (/^(yes|no|ok|okay|sure|agree|correct|right|exactly|absolutely|definitely)[\s.,!]/.test(t)) return '✓';
+  return '';
+}
+
+// Rename a speaker type everywhere in the transcript
+function renameSpeaker(type, newName) {
+  const trimmed = newName.trim();
+  if (!trimmed) return;
+  _saveSpeakerName(type, trimmed);
+  document.querySelectorAll(`.transcript-entry.${type} .speaker-name-editable`).forEach(el => {
+    el.textContent = trimmed.toUpperCase();
+    el.title = 'Click to rename';
+  });
+  toast(`// ${_SPEAKER_DEFAULTS[type] || type} → "${trimmed}"`, 'success', 2500);
+}
+
+// Inline rename: clicking the speaker name shows an input
+function _startSpeakerRename(span, type) {
+  const current = span.textContent;
+  const inp = document.createElement('input');
+  inp.className = 'speaker-rename-input';
+  inp.value = current;
+  inp.title = 'Enter to rename all entries · Esc to cancel';
+  span.replaceWith(inp);
+  inp.focus(); inp.select();
+  let _committed = false;
+  const commit = () => {
+    if (_committed) return; _committed = true;
+    const val = inp.value.trim() || current;
+    renameSpeaker(type, val);
+    const newSpan = document.createElement('span');
+    newSpan.className = 'speaker-name-editable';
+    newSpan.title = 'Click to rename this speaker';
+    newSpan.textContent = val.toUpperCase();
+    newSpan.addEventListener('click', e => { e.stopPropagation(); _startSpeakerRename(newSpan, type); });
+    if (inp.parentNode) inp.replaceWith(newSpan);
+  };
+  const cancel = () => { if (_committed) return; _committed = true; if (inp.parentNode) inp.replaceWith(span); };
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commit(); } if (e.key === 'Escape') { cancel(); } });
+  inp.addEventListener('blur', commit);
 }
 
 // Word count, speaking rate and keyword tracking
@@ -2378,7 +2445,10 @@ function addTranscriptEntryUI(text, type, speakerName) {
   const label = speakerLabel(type, speakerName);
   const now = new Date();
   const ts = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-  div.innerHTML = `<div class="speaker"><span>${escHtml(label)}</span><span class="entry-ts">${ts}</span></div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div><div class="entry-actions"><button class="entry-action-btn" onclick="event.stopPropagation();sendEntryToAI(this)" title="Ask AI about this">✨ Ask AI</button><button class="entry-action-btn" onclick="event.stopPropagation();editTranscriptEntry(this)" title="Edit">✎ Edit</button><button class="entry-action-btn" style="color:var(--red);border-color:rgba(255,80,80,0.3)" onclick="event.stopPropagation();deleteTranscriptEntry(this)" title="Delete">✕</button></div>`;
+  const tone = _detectTone(text);
+  div.innerHTML = `<div class="speaker"><span class="speaker-name-editable" title="Click to rename this speaker">${escHtml(label.toUpperCase())}</span>${tone ? `<span class="speaker-tone" title="Tone">${tone}</span>` : ''}<span class="entry-ts">${ts}</span></div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div><div class="entry-actions"><button class="entry-action-btn" onclick="event.stopPropagation();sendEntryToAI(this)" title="Ask AI about this">✨ Ask AI</button><button class="entry-action-btn" onclick="event.stopPropagation();editTranscriptEntry(this)" title="Edit">✎ Edit</button><button class="entry-action-btn" style="color:var(--red);border-color:rgba(255,80,80,0.3)" onclick="event.stopPropagation();deleteTranscriptEntry(this)" title="Delete">✕</button></div>`;
+  // Bind rename click on the speaker name span
+  div.querySelector('.speaker-name-editable').addEventListener('click', e => { e.stopPropagation(); _startSpeakerRename(e.currentTarget, type); });
   div.addEventListener('click', () => populateInputFromTranscript(div.querySelector('.text').textContent));
   transcriptPanel.insertBefore(div, interimEntry);
   transcriptCount++;
