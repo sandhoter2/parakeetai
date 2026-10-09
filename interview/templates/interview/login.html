@@ -3,25 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign In — HappyHelper</title>
+  <title>Sign In — ParakeetAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0f1117;
-      --bg2: #1a1d27;
-      --bg3: #252836;
-      --border: #2e3147;
-      --accent: #6c63ff;
-      --accent2: #a78bfa;
+      --bg: #0d0f18;
+      --bg2: #161927;
+      --bg3: #1f2235;
+      --border: #252840;
+      --accent: #7c6fff;
+      --accent2: #b09eff;
       --green: #34d399;
       --red: #f87171;
-      --text: #e2e8f0;
-      --text2: #94a3b8;
-      --text3: #64748b;
-      --radius: 12px;
+      --text: #eef0f8;
+      --text2: #8b93b8;
+      --text3: #565e82;
+      --radius: 14px;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -30,28 +32,58 @@
       justify-content: center;
       font-size: 14px;
       line-height: 1.6;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Background mesh gradient */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 20%, rgba(124,111,255,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(176,158,255,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(52,211,153,0.04) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    /* Subtle dot grid */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 0;
     }
 
     .login-wrap {
       width: 100%;
       max-width: 420px;
       padding: 24px;
+      position: relative;
+      z-index: 1;
     }
 
     .brand {
       text-align: center;
-      margin-bottom: 36px;
+      margin-bottom: 32px;
     }
-    .brand-logo {
-      font-size: 48px;
-      display: block;
-      margin-bottom: 12px;
-      filter: drop-shadow(0 0 20px rgba(108,99,255,0.5));
+    .brand-mark-wrap {
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .brand-mark {
+      width: 60px; height: 60px; border-radius: 18px;
+      background: linear-gradient(135deg, var(--accent), #5a4fd8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      box-shadow: 0 8px 32px rgba(124,111,255,0.35);
     }
     .brand-name {
       font-size: 26px;
       font-weight: 800;
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text) 40%, var(--accent2));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -59,21 +91,23 @@
     .brand-sub {
       font-size: 13px;
       color: var(--text3);
-      margin-top: 4px;
+      margin-top: 5px;
     }
 
     .card {
-      background: var(--bg2);
+      background: rgba(22,25,39,0.8);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 32px;
-      box-shadow: 0 4px 40px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(124,111,255,0.06) inset;
+      backdrop-filter: blur(12px);
     }
 
     .card-title {
       font-size: 18px;
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
+      letter-spacing: -0.3px;
     }
     .card-sub {
       font-size: 13px;
@@ -86,18 +120,18 @@
     }
     .form-group label {
       display: block;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      color: var(--text2);
+      color: var(--text3);
       margin-bottom: 6px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
     }
     .form-control {
       width: 100%;
       background: var(--bg3);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 9px;
       padding: 10px 14px;
       color: var(--text);
       font-size: 14px;
@@ -107,14 +141,14 @@
     }
     .form-control:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
+      box-shadow: 0 0 0 3px rgba(124,111,255,0.15);
     }
     .form-control::placeholder { color: var(--text3); }
 
     .error-box {
-      background: rgba(248,113,113,0.1);
-      border: 1px solid rgba(248,113,113,0.3);
-      border-radius: 8px;
+      background: rgba(248,113,113,0.08);
+      border: 1px solid rgba(248,113,113,0.25);
+      border-radius: 9px;
       padding: 10px 14px;
       color: var(--red);
       font-size: 13px;
@@ -127,23 +161,25 @@
     .btn-login {
       width: 100%;
       padding: 12px;
-      background: linear-gradient(135deg, var(--accent), #5a52e0);
+      background: linear-gradient(135deg, var(--accent), #5a4fd8);
       color: #fff;
       border: none;
-      border-radius: 8px;
+      border-radius: 9px;
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.2s;
       margin-top: 4px;
-      letter-spacing: 0.3px;
+      letter-spacing: -0.1px;
+      font-family: inherit;
+      box-shadow: 0 4px 16px rgba(124,111,255,0.3);
     }
     .btn-login:hover {
-      background: linear-gradient(135deg, #7b72ff, var(--accent));
-      box-shadow: 0 4px 16px rgba(108,99,255,0.4);
+      background: linear-gradient(135deg, #8d82ff, var(--accent));
+      box-shadow: 0 6px 24px rgba(124,111,255,0.45);
       transform: translateY(-1px);
     }
-    .btn-login:active { transform: translateY(0); }
+    .btn-login:active { transform: translateY(0); box-shadow: none; }
 
     .divider {
       height: 1px;
@@ -153,35 +189,38 @@
 
     .hint {
       text-align: center;
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text3);
     }
-    .hint a { color: var(--accent2); text-decoration: none; }
+    .hint a { color: var(--accent2); font-weight: 500; }
     .hint a:hover { text-decoration: underline; }
 
     .features {
-      margin-top: 32px;
+      margin-top: 24px;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
     }
     .feature {
-      background: var(--bg2);
+      background: rgba(22,25,39,0.6);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 14px;
       text-align: center;
+      backdrop-filter: blur(8px);
     }
-    .feature-icon { font-size: 22px; margin-bottom: 6px; }
-    .feature-label { font-size: 12px; color: var(--text2); }
+    .feature-icon { font-size: 20px; margin-bottom: 5px; }
+    .feature-label { font-size: 12px; color: var(--text2); font-weight: 500; }
   </style>
 </head>
 <body>
   <div class="login-wrap">
     <div class="brand">
-      <span class="brand-logo">😊</span>
-      <div class="brand-name">HappyHelper</div>
-      <div class="brand-sub">Your AI assistant for interviews & meetings</div>
+      <div class="brand-mark-wrap">
+        <div class="brand-mark">🦜</div>
+      </div>
+      <div class="brand-name">ParakeetAI</div>
+      <div class="brand-sub">Your AI assistant for interviews &amp; meetings</div>
     </div>
 
     <div class="card">

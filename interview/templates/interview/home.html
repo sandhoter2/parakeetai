@@ -39,10 +39,14 @@ body.os-win .dl-btn-win { box-shadow: 0 0 0 2px currentColor; }
 
 .page-header {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 28px; gap: 16px; flex-wrap: wrap;
 }
-.page-header h1 { font-size: 22px; font-weight: 700; }
-.page-header p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.page-header h1 {
+  font-size: 24px; font-weight: 800; letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--text) 50%, var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.page-header p { font-size: 13px; color: var(--text3); margin-top: 3px; }
 
 .toolbar {
   display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
@@ -50,26 +54,29 @@ body.os-win .dl-btn-win { box-shadow: 0 0 0 2px currentColor; }
 .search-wrap {
   flex: 1; min-width: 220px; max-width: 380px;
   display: flex; align-items: center;
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
-  padding: 0 12px; gap: 8px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 9px;
+  padding: 0 12px; gap: 8px; transition: border-color 0.15s;
 }
+.search-wrap:focus-within { border-color: var(--accent); }
 .search-wrap input {
   flex: 1; background: transparent; border: none; outline: none;
-  color: var(--text); font-size: 13px; padding: 8px 0;
+  color: var(--text); font-size: 13px; padding: 9px 0; font-family: inherit;
 }
 .search-wrap input::placeholder { color: var(--text3); }
 
-.filter-tabs { display: flex; gap: 4px; }
+.filter-tabs {
+  display: flex; gap: 2px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 3px;
+}
 .filter-tab {
-  padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 500;
-  cursor: pointer; border: 1px solid transparent; color: var(--text2);
+  padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: none; color: var(--text3);
   transition: all 0.15s; background: transparent;
 }
 .filter-tab.active {
-  color: var(--text); border-bottom: 2px solid var(--accent);
-  border-radius: 0; font-weight: 600;
+  color: var(--text); background: var(--bg3); font-weight: 600;
 }
-.filter-tab:hover:not(.active) { color: var(--text); }
+.filter-tab:hover:not(.active) { color: var(--text2); }
 
 .view-toggle { display: flex; gap: 2px; margin-left: auto; }
 .view-btn {
@@ -178,15 +185,25 @@ body.os-win .dl-btn-win { box-shadow: 0 0 0 2px currentColor; }
 .session-card-actions { display: flex; gap: 8px; margin-top: 12px; }
 
 .stats-bar {
-  display: flex; gap: 24px; margin-bottom: 20px;
+  display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;
 }
-.stat { }
-.stat-val { font-size: 20px; font-weight: 700; color: var(--accent2); }
-.stat-label { font-size: 11px; color: var(--text3); }
+.stat {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 20px; flex: 1; min-width: 110px;
+}
+.stat-val {
+  font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: var(--accent2);
+  line-height: 1.1;
+}
+.stat-label { font-size: 11px; color: var(--text3); margin-top: 3px; font-weight: 500; }
 
-.empty-state { text-align: center; padding: 80px 24px; color: var(--text2); }
-.empty-state h2 { font-size: 20px; margin-bottom: 10px; color: var(--text); }
-.empty-state p { margin-bottom: 24px; }
+.empty-state {
+  text-align: center; padding: 80px 24px; color: var(--text2);
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+}
+.empty-state-icon { font-size: 48px; margin-bottom: 16px; filter: grayscale(0.3); }
+.empty-state h2 { font-size: 20px; margin-bottom: 8px; color: var(--text); font-weight: 700; letter-spacing: -0.3px; }
+.empty-state p { margin-bottom: 24px; font-size: 14px; color: var(--text3); max-width: 340px; margin-inline: auto; }
 {% endblock %}
 
 {% block content %}
@@ -362,7 +379,7 @@ body.os-win .dl-btn-win { box-shadow: 0 0 0 2px currentColor; }
 
   {% else %}
   <div class="empty-state">
-    <div style="font-size:48px;margin-bottom:16px">🎙️</div>
+    <div class="empty-state-icon">🎙️</div>
     <h2>No sessions yet</h2>
     <p>Create your first interview session and let AI help you ace it.</p>
     <a href="/session/new/" class="btn btn-primary">+ Create Session</a>

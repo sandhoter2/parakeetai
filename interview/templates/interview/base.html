@@ -4,29 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}HappyHelper{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f1117;
-      --bg2: #1a1d27;
-      --bg3: #252836;
-      --bg4: #2e3147;
-      --border: #2e3147;
-      --accent: #6c63ff;
-      --accent2: #a78bfa;
+      --bg: #0d0f18;
+      --bg2: #161927;
+      --bg3: #1f2235;
+      --bg4: #2a2e45;
+      --border: #252840;
+      --border2: #2e3350;
+      --accent: #7c6fff;
+      --accent2: #b09eff;
+      --accent-glow: rgba(124,111,255,0.25);
       --green: #34d399;
       --red: #f87171;
       --yellow: #fbbf24;
       --blue: #60a5fa;
-      --text: #e2e8f0;
-      --text2: #94a3b8;
-      --text3: #64748b;
+      --text: #eef0f8;
+      --text2: #8b93b8;
+      --text3: #565e82;
       --radius: 10px;
+      --nav-h: 58px;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -41,23 +46,45 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 24px;
-      background: var(--bg2);
+      padding: 0 24px;
+      height: var(--nav-h);
+      background: rgba(13,15,24,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
       z-index: 200;
     }
     .navbar-brand {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
-      color: var(--accent2);
+      color: var(--text);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      letter-spacing: -0.3px;
     }
-    .navbar-brand span { font-size: 22px; }
-    .navbar-actions { display: flex; gap: 10px; align-items: center; }
+    .navbar-brand:hover { text-decoration: none; }
+    .brand-mark {
+      width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), #5a4fd8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; box-shadow: 0 2px 12px var(--accent-glow);
+    }
+    .navbar-actions { display: flex; gap: 8px; align-items: center; }
+    .nav-user-badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 4px 10px 4px 4px;
+      border-radius: 20px; border: 1px solid var(--border);
+      background: var(--bg3); font-size: 13px; color: var(--text2);
+    }
+    .nav-avatar {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff; text-transform: uppercase;
+    }
 
     .btn {
       display: inline-flex;
@@ -68,25 +95,31 @@
       border: none;
       cursor: pointer;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       transition: all 0.15s;
       text-decoration: none;
+      font-family: inherit;
+      letter-spacing: -0.1px;
     }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { background: #5a52e0; text-decoration: none; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #5a4fd8);
+      color: #fff;
+      box-shadow: 0 2px 10px var(--accent-glow);
+    }
+    .btn-primary:hover { background: linear-gradient(135deg, #8d82ff, var(--accent)); box-shadow: 0 4px 18px var(--accent-glow); text-decoration: none; transform: translateY(-1px); }
     .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--border); text-decoration: none; }
-    .btn-danger { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+    .btn-secondary:hover { background: var(--bg4); text-decoration: none; }
+    .btn-danger { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
     .btn-danger:hover { background: var(--red); color: #fff; text-decoration: none; }
-    .btn-success { background: var(--green); color: #0f172a; }
-    .btn-success:hover { background: #10b981; }
+    .btn-success { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+    .btn-success:hover { background: var(--green); color: #0f172a; text-decoration: none; }
     .btn-ghost { background: transparent; color: var(--text2); border: 1px solid transparent; }
-    .btn-ghost:hover { background: var(--bg3); border-color: var(--border); text-decoration: none; }
+    .btn-ghost:hover { background: var(--bg3); border-color: var(--border); text-decoration: none; color: var(--text); }
     .btn-sm { padding: 5px 12px; font-size: 12px; }
     .btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 6px; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
 
-    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
 
     .card {
       background: var(--bg2);
@@ -163,15 +196,19 @@
 <body>
   <nav class="navbar">
     <a href="/" class="navbar-brand" style="text-decoration:none">
-      <span>😊</span> HappyHelper
+      <div class="brand-mark">🦜</div>
+      ParakeetAI
     </a>
     <div class="navbar-actions">
       {% block navbar_actions %}
       {% if user.is_authenticated %}
-      <span style="font-size:12px;color:var(--text3);padding:0 4px;">{{ user.username }}</span>
-      <a href="/profile/" class="btn btn-ghost btn-sm">👤 Profile</a>
-      <a href="/settings/" class="btn btn-ghost btn-sm">⚙️ Settings</a>
+      <a href="/profile/" class="btn btn-ghost btn-sm">Profile</a>
+      <a href="/settings/" class="btn btn-ghost btn-sm">Settings</a>
       <a href="/session/new/" class="btn btn-primary btn-sm">+ New Session</a>
+      <div class="nav-user-badge">
+        <div class="nav-avatar">{{ user.username|first }}</div>
+        <span>{{ user.username }}</span>
+      </div>
       <form method="post" action="/logout/" style="display:inline">
         {% csrf_token %}
         <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--red)">Sign Out</button>
