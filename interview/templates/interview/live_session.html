@@ -1298,7 +1298,10 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
            placeholder="Type question or speak…"
            onkeydown="if(event.key==='Enter')triggerAI()">
     <button class="fai-btn" id="fAiHelpBtn" onclick="triggerAI()">✨ AI Help</button>
-    <button class="fai-btn" id="fConvHelperBtn" onclick="triggerConvHelper()" title="Conversation insights" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">🧠</button>
+    <div class="ai-split-wrap" id="fConvInsightWrap" style="position:relative;display:inline-flex;flex-shrink:0">
+      <button class="fai-btn" id="fConvHelperBtn" onclick="triggerConvHelper()" title="Conversation insights" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:6px 0 0 6px;border-right:none;padding-right:4px">🧠</button>
+      <button class="fai-btn" id="fConvInsightArrow" onclick="toggleConvInsightDropdown(event)" title="Choose insight type" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);font-size:10px;padding:0 5px;border-radius:0 6px 6px 0;min-width:18px">▾</button>
+    </div>
     <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:10px;padding:2px 6px" onclick="clearInput()" title="Clear input">✕ Clear</button>
     <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:10px;padding:2px 6px" onclick="saveAndClearInput()" title="Save to transcript">💾 Save</button>
   </div>
@@ -1434,8 +1437,15 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Start/stop mic (your voice)">🎤</button>
   <span id="micModeBadge" onclick="toggleTCPanel()" title="Transcribe mode — click to change" style="font-size:10px;font-family:var(--mono);color:var(--text3);padding:2px 7px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);cursor:pointer;white-space:nowrap;line-height:1.8;transition:color .2s,border-color .2s">30s</span>
 
-  <!-- Conversation Helper (brain → dropdown template picker inside AI split button now) -->
-  <button class="tc-config-btn" id="convHelperBtn" onclick="triggerConvHelper()" title="Conversation insights — label entries, extract tone and key facts" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:#7c3aed;color:#fff;font-size:15px">🧠</button>
+  <!-- Conversation Insights split button + dropdown -->
+  <div class="ai-split-wrap" id="convInsightWrap" style="position:relative;display:inline-flex;flex-shrink:0">
+    <button class="tc-config-btn" id="convHelperBtn" onclick="triggerConvHelper()" title="Conversation insights — analyze the full session" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:#7c3aed;color:#fff;font-size:15px;border-radius:6px 0 0 6px;border-right:none;padding-right:4px">🧠</button>
+    <button class="tc-config-btn" id="convInsightArrow" onclick="toggleConvInsightDropdown(event)" title="Choose insight type" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:#7c3aed;color:#fff;font-size:10px;padding:0 5px;border-radius:0 6px 6px 0;min-width:18px">▾</button>
+    <div class="ai-tpl-dropdown" id="convInsightDropdown" style="min-width:250px;max-height:320px">
+      <div class="ai-tpl-header"><span>Insight Type</span></div>
+      <div id="convInsightList"></div>
+    </div>
+  </div>
 
   <!-- Meeting helper button + panel -->
   <div style="position:relative;display:flex;align-items:center">
@@ -3338,6 +3348,65 @@ function closeMeetingAIDropdown() {
 }
 document.addEventListener('click', e => { if (!e.target.closest('#meetingAISplitWrap')) closeMeetingAIDropdown(); });
 
+// ── CONVERSATION INSIGHTS DROPDOWN ───────────────────────────────────────────
+const CONV_INSIGHT_TYPES = [
+  {id:'labels',        icon:'🏷️',  name:'Label & Analyze',    description:'Label entries + tone, dynamic, key fact', prompt:''},
+  {id:'next_questions',icon:'💬',  name:'What to Ask Next',   description:'Top 3 questions to ask right now',        prompt:'You are a real-time conversation coach. Based on the conversation transcript below, suggest the top 3 most impactful questions to ask next. For each, give the question and one sentence on why it matters right now. Be direct and tactical.'},
+  {id:'topics',        icon:'📋',  name:'Topics to Cover',    description:'Key topics not yet addressed',             prompt:'You are a real-time conversation coach. Based on the conversation so far, identify the key topics or areas that have NOT yet been covered but should be. List them in priority order (most critical first) with a brief reason for each. Be concise.'},
+  {id:'key_points',    icon:'⭐',  name:'Key Points Recap',   description:'Most important points so far',             prompt:'You are a real-time conversation analyst. Summarize the 5 most important points, decisions, or facts from this conversation so far. Use a numbered list. Be precise and brutally concise.'},
+  {id:'blind_spots',   icon:'🔍',  name:'Blind Spots',        description:'Gaps, assumptions, missing context',       prompt:'You are a real-time conversation analyst. Identify the blind spots, unstated assumptions, and missing context in this conversation. What is NOT being said that should be addressed? List each gap with a one-sentence explanation.'},
+  {id:'flow',          icon:'🌊',  name:'Conversation Flow',  description:'How the conversation is progressing',      prompt:'You are a real-time conversation coach. Analyze the flow and momentum of this conversation: what phase is it in (opening/exploration/deep dive/closing), who is leading, what is the underlying dynamic, and what tension or alignment exists? End with one concrete tactical suggestion to improve the conversation direction.'},
+  {id:'wrap_up',       icon:'🎯',  name:'Wrap-Up Plan',       description:'How to close the conversation well',       prompt:'You are a real-time conversation coach. Based on the conversation so far, suggest how to wrap up effectively. What key points should be summarized? What commitments should be confirmed? What follow-up actions should be agreed upon? Be specific and actionable.'},
+];
+let _activeInsightId = 'labels';
+
+function _renderConvInsightList() {
+  const list = document.getElementById('convInsightList');
+  if (!list) return;
+  list.innerHTML = CONV_INSIGHT_TYPES.map(t => `
+    <div class="ai-tpl-item${t.id === _activeInsightId ? ' active' : ''}" onclick="_selectInsight(${JSON.stringify(t.id)})">
+      <span class="ai-tpl-icon">${t.icon}</span>
+      <div>
+        <div class="ai-tpl-name">${t.name}${t.id === _activeInsightId ? ' ✓' : ''}</div>
+        <div class="ai-tpl-desc">${t.description}</div>
+      </div>
+    </div>`).join('');
+}
+
+function _selectInsight(id) {
+  _activeInsightId = id;
+  const t = CONV_INSIGHT_TYPES.find(x => x.id === id);
+  const btn = document.getElementById('convHelperBtn');
+  const fBtn = _doc().getElementById('fConvHelperBtn');
+  const label = t ? t.icon : '🧠';
+  if (btn)  btn.textContent = label;
+  if (fBtn) fBtn.textContent = label;
+  closeConvInsightDropdown();
+  triggerConvHelper();
+}
+
+function toggleConvInsightDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('convInsightDropdown');
+  const btn = document.getElementById('convInsightArrow');
+  if (!dd || !btn) return;
+  const isOpen = dd.classList.contains('open');
+  if (!isOpen) {
+    _renderConvInsightList();
+    const rect = btn.getBoundingClientRect();
+    dd.style.position = 'fixed';
+    dd.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+    dd.style.right = (window.innerWidth - rect.right) + 'px';
+    dd.style.top = 'auto';
+    dd.style.left = 'auto';
+    dd.classList.add('open');
+  } else dd.classList.remove('open');
+}
+function closeConvInsightDropdown() {
+  document.getElementById('convInsightDropdown')?.classList.remove('open');
+}
+document.addEventListener('click', e => { if (!e.target.closest('#convInsightWrap') && !e.target.closest('#fConvInsightWrap')) closeConvInsightDropdown(); });
+
 // Load AI Help templates on page init
 _loadAITemplates();
 
@@ -3611,6 +3680,11 @@ function triggerConvHelper() {
 
   if (entries.length === 0) { setStatus('No transcript yet'); return; }
 
+  const activeInsight = (typeof CONV_INSIGHT_TYPES !== 'undefined')
+    ? CONV_INSIGHT_TYPES.find(t => t.id === _activeInsightId) : null;
+  const insightLabel = activeInsight ? `${activeInsight.icon} ${activeInsight.name}` : '🧠 Conversation Insights';
+  const insightPrompt = activeInsight ? activeInsight.prompt : '';
+
   isStreaming = true;
   const btn  = document.getElementById('convHelperBtn');
   const fBtn = _doc().getElementById('fConvHelperBtn');
@@ -3623,7 +3697,7 @@ function triggerConvHelper() {
   const _hist = _d.getElementById('aiHistory');
   if (_hist) _hist.style.display = 'none';
   aiLive.style.display = 'block';
-  aiTriggerText.textContent = '🧠 Conversation Insights';
+  aiTriggerText.textContent = insightLabel;
   aiAnswerText.textContent = '';
   aiAnswerText.style.fontSize = aiFontSize + 'px';
   aiCursor.style.display = 'inline-block';
@@ -3639,7 +3713,7 @@ function triggerConvHelper() {
   fetch(`/api/session/${SESSION_ID}/conversation-helper/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-    body: JSON.stringify({ entries }),
+    body: JSON.stringify({ entries, insight_prompt: insightPrompt }),
   }).then(async (resp) => {
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
@@ -3676,8 +3750,10 @@ function triggerConvHelper() {
     sessionCost = (_outTokens2 / 1000) * 0.003;
     const _costEl2 = document.getElementById('sessionCostDisplay');
     if (_costEl2) { _costEl2.textContent = `~$${sessionCost.toFixed(4)}`; _costEl2.style.display = ''; }
-    if (btn)  { btn.disabled  = false; btn.textContent  = '🧠'; }
-    if (fBtn) { fBtn.disabled = false; fBtn.textContent = '🧠'; }
+    const _curInsight = (typeof CONV_INSIGHT_TYPES !== 'undefined') ? CONV_INSIGHT_TYPES.find(t => t.id === _activeInsightId) : null;
+    const _insightIcon = _curInsight ? _curInsight.icon : '🧠';
+    if (btn)  { btn.disabled  = false; btn.textContent  = _insightIcon; }
+    if (fBtn) { fBtn.disabled = false; fBtn.textContent = _insightIcon; }
     aiCursor.style.display = 'none';
     setStatus('Insights ready ✓');
     const _df = _doc();

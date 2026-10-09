@@ -394,6 +394,8 @@ def api_conversation_helper(request, session_id):
         return JsonResponse({"error": "invalid JSON"}, status=400)
 
     entries = data.get("entries", [])
+    insight_prompt = data.get("insight_prompt", "")
+
     if not entries:
         # Fall back to the last 20 transcript entries from DB
         recent = session.transcripts.order_by("-created_at")[:20]
@@ -418,6 +420,7 @@ def api_conversation_helper(request, session_id):
         for i, e in enumerate(entries)
     )
     user_msg = f"Transcript entries to analyze:\n{lines}"
+    system_prompt = insight_prompt if insight_prompt else _CONV_HELPER_PROMPT
 
     def stream_sse():
         yield f"data: {json.dumps({'type': 'start'})}\n\n"
@@ -425,7 +428,7 @@ def api_conversation_helper(request, session_id):
             stream = client.chat.completions.create(
                 model=model,
                 messages=[
-                    {"role": "system", "content": _CONV_HELPER_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_msg},
                 ],
                 max_tokens=500,
