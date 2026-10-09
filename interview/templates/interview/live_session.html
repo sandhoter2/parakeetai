@@ -40,6 +40,7 @@ body { overflow: hidden; display: flex; flex-direction: column; height: 100dvh; 
   color: var(--text);
 }
 .session-info span { color: var(--text3); font-size: 11px; font-family: var(--mono); }
+.session-cost { color: rgba(52,211,153,0.7) !important; font-size: 10px !important; font-family: var(--mono); letter-spacing: 0.5px; }
 .session-controls { display: flex; align-items: center; gap: 8px; }
 
 /* REC indicator — robot style */
@@ -492,8 +493,21 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
   transition: all 0.15s; white-space: nowrap;
 }
 .tc-multi-clear:hover { border-color: var(--red); color: var(--red); }
-.transcript-entry.microphone { border-left-color: rgba(0,200,255,0.5); }
-.transcript-entry.system { border-left-color: rgba(255,211,42,0.5); }
+.transcript-entry.microphone {
+  border-left-color: rgba(0,200,255,0.5);
+  margin-left: 12%;
+  background: rgba(0,200,255,0.04);
+}
+.transcript-entry.system {
+  border-left-color: rgba(255,211,42,0.5);
+  margin-right: 12%;
+  background: rgba(255,211,42,0.04);
+}
+.transcript-entry.note {
+  border-left-color: rgba(168,85,247,0.5);
+  margin-left: 8%; margin-right: 8%;
+  background: rgba(168,85,247,0.04);
+}
 .transcript-entry .speaker {
   font-size: 10px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 1px; margin-bottom: 3px;
@@ -1047,6 +1061,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     {% if session.company %}<span class="session-company">{{ session.company }}</span>{% endif %}
     <span class="badge" id="statusBadge" style="background:rgba(251,191,36,0.15);color:#fbbf24">{{ session.status }}</span>
     <span class="elapsed-timer" id="elapsedTimer">00:00</span>
+    <span class="session-cost" id="sessionCostDisplay" title="Estimated AI cost this session" style="display:none">~$0.0000</span>
   </div>
   <div class="session-controls">
     <button class="btn btn-ghost btn-sm" onclick="toggleQuickQ()" id="quickQBtn" title="Quick question presets">⚡ Quick</button>
@@ -1641,6 +1656,8 @@ let rawRecorder = null;
 let rawChunkSeq = 0;
 let autoAI = true;
 let isStreaming = false;
+let sessionCost = 0;
+let _sessionOutputChars = 0;
 let chunkTimer = null;
 let autoTriggerTimer = null;
 
@@ -3214,6 +3231,7 @@ function triggerAI(question, fromVoice) {
           const d = JSON.parse(line.slice(6));
           if (d.type === 'text') {
             aiAnswerText.textContent += d.text;
+            _sessionOutputChars += d.text.length;
             scrollAI();
             const _wc2 = aiAnswerText.textContent.trim().split(/\s+/).filter(Boolean).length;
             const _rt2El = document.getElementById('aiReadTime');
@@ -3230,6 +3248,14 @@ function triggerAI(question, fromVoice) {
     aiAnswerText.textContent = '❌ ' + err.message;
   }).finally(() => {
     isStreaming = false;
+    // Estimate cost: output tokens ≈ chars/4, ~$0.003/1K tokens
+    const _outTokens = _sessionOutputChars / 4;
+    sessionCost = (_outTokens / 1000) * 0.003;
+    const _costEl = document.getElementById('sessionCostDisplay');
+    if (_costEl) {
+      _costEl.textContent = `~$${sessionCost.toFixed(4)}`;
+      _costEl.style.display = '';
+    }
     document.title = document.title.replace(/^✨ Thinking — /,'');
     aiHelpBtn.disabled = false;
     aiHelpBtn.textContent = '✨ AI Help';
@@ -3429,7 +3455,11 @@ function triggerConvHelper() {
         if (!line.startsWith('data: ')) continue;
         try {
           const d = JSON.parse(line.slice(6));
-          if (d.type === 'text') { aiAnswerText.textContent += d.text; scrollAI(); }
+          if (d.type === 'text') {
+            aiAnswerText.textContent += d.text;
+            _sessionOutputChars += d.text.length;
+            scrollAI();
+          }
           else if (d.type === 'error') { aiAnswerText.textContent += '\n\n❌ ' + d.error; }
         } catch {}
       }
@@ -3438,6 +3468,10 @@ function triggerConvHelper() {
     aiAnswerText.textContent = '❌ ' + err.message;
   }).finally(() => {
     isStreaming = false;
+    const _outTokens2 = _sessionOutputChars / 4;
+    sessionCost = (_outTokens2 / 1000) * 0.003;
+    const _costEl2 = document.getElementById('sessionCostDisplay');
+    if (_costEl2) { _costEl2.textContent = `~$${sessionCost.toFixed(4)}`; _costEl2.style.display = ''; }
     if (btn)  { btn.disabled  = false; btn.textContent  = '🧠'; }
     if (fBtn) { fBtn.disabled = false; fBtn.textContent = '🧠'; }
     aiCursor.style.display = 'none';
