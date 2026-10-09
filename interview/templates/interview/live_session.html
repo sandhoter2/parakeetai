@@ -1557,9 +1557,12 @@ function makeMicRecognition() {
 
     // Show live interim speech in both the chat input AND the transcript panel (real-time)
     if (interimStr) {
-      setMicInputText(interimStr);
-      // Show interim in transcript panel as live preview
-      interimText.textContent = interimStr;
+      // In manual mode, prefix accumulated finals so user sees the whole utterance so far
+      const displayText = transcribeMode === 'manual' && micManualAccum
+        ? micManualAccum + ' ' + interimStr
+        : interimStr;
+      setMicInputText(displayText);
+      interimText.textContent = displayText;
       interimEntry.style.display = 'flex';
       if (transcriptPlaceholder) transcriptPlaceholder.style.display = 'none';
       transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
@@ -1583,13 +1586,10 @@ function makeMicRecognition() {
         refreshMHSuggestions();
         if (autoAI && (transcribeMode !== 'dynamic' || isQuestionEnding(text))) triggerAI(text, true);
       } else {
-        // Manual: each final chunk saved individually — transcript keeps all history,
-        // chat box shows only this chunk so AI Help always sends the latest thing said
-        saveMicToServer(text);
-        addTranscriptEntryUI(text, 'microphone');
-        micManualAccum = text;
-        setMicInputText(text);
-        interimText.textContent = text;
+        // Manual: accumulate finals — do NOT save or add to transcript until ⏩ is pressed
+        micManualAccum = (micManualAccum ? micManualAccum + ' ' : '') + text;
+        setMicInputText(micManualAccum);
+        interimText.textContent = micManualAccum;
         interimEntry.style.display = 'flex';
         if (transcriptPlaceholder) transcriptPlaceholder.style.display = 'none';
         transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
@@ -1643,11 +1643,15 @@ async function startMic() {
 
   // ⏩ in manual mode = submit whatever is typed in the input
   stopChunkEarlyFn = () => {
-    const text = getMicInputText().trim();
+    const text = (micManualAccum || getMicInputText()).trim();
     if (text) {
       saveMicToServer(text);
+      addTranscriptEntryUI(text, 'microphone');
       micManualAccum = '';
-      triggerAI(text, true); // already saved above
+      setMicInputText('');
+      interimEntry.style.display = 'none';
+      interimText.textContent = 'Transcribing…';
+      triggerAI(text, true);
     }
   };
   updateSendBtn();
