@@ -732,6 +732,53 @@ def api_delete_participant(request, session_id, participant_id):
 
 @csrf_exempt
 @require_POST
+def api_scan_participants(request, session_id):
+    """Receive a screenshot, call Groq vision to extract participant names."""
+    import base64, re
+    if (r := _auth_required(request)): return r
+    get_object_or_404(InterviewSession, id=session_id)
+
+    screenshot = request.FILES.get("screenshot")
+    if not screenshot:
+        return JsonResponse({"error": "No screenshot provided"}, status=400)
+
+    api_key = getattr(settings, "GROQ_API_KEY", None)
+    if not api_key:
+        return JsonResponse({"error": "GROQ_API_KEY not configured"}, status=500)
+
+    mime = screenshot.content_type or "image/png"
+    b64 = base64.b64encode(screenshot.read()).decode("utf-8")
+
+    try:
+        client = openai_lib.OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
+        resp = client.chat.completions.create(
+            model="llama-3.2-11b-vision-preview",
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
+                    {"type": "text", "text": (
+                        "This is a screenshot of a Teams, Zoom, or Google Meet meeting. "
+                        "List ONLY the participant/attendee names visible in the participants panel, "
+                        "video tiles, or attendee list. Return a JSON array of name strings only, "
+                        "like [\"Alice\", \"Bob\"]. If no participant names are clearly visible, return []."
+                    )},
+                ],
+            }],
+            max_tokens=500,
+        )
+        content = resp.choices[0].message.content.strip()
+        match = re.search(r"\[.*?\]", content, re.DOTALL)
+        names = json.loads(match.group()) if match else []
+        names = [n for n in names if isinstance(n, str) and n.strip()]
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"names": names})
+
+
+@csrf_exempt
+@require_POST
 def api_update_entry_speaker(request, session_id, entry_id):
     """Assign a speaker_name to a transcript entry."""
     if (r := _auth_required(request)): return r

@@ -1362,6 +1362,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
                onkeydown="if(event.key==='Enter')addParticipant()">
         <input id="newParticipantRole" type="text" class="form-control" placeholder="Role (opt)" style="font-size:12px;padding:4px 8px;width:80px;flex-shrink:0">
         <button class="btn btn-primary btn-xs" onclick="addParticipant()" style="white-space:nowrap;flex-shrink:0">+ Add</button>
+        <button class="btn btn-ghost btn-xs" id="scanScreenBtn" onclick="scanTeamsParticipants()" title="Capture your screen to auto-detect participant names" style="white-space:nowrap;flex-shrink:0;border-color:var(--accent)">👥 Scan</button>
       </div>
     </div>
 
@@ -4252,6 +4253,81 @@ if (SESSION_TYPE === 'meeting') {
       document.getElementById('newParticipantRole').value = '';
       renderParticipants();
       toast(`Added ${name}`, 'success');
+    }
+  }
+
+  async function scanTeamsParticipants() {
+    const btn = document.getElementById('scanScreenBtn');
+    const orig = btn.textContent;
+    btn.textContent = '⏳ Scanning…';
+    btn.disabled = true;
+    try {
+      // Request screen share (video required for the frame, audio not needed)
+      let display;
+      try {
+        display = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      } catch (e) {
+        toast('Screen share cancelled', 'info');
+        return;
+      }
+
+      const videoTrack = display.getVideoTracks()[0];
+      // Capture a single frame via ImageCapture if available, else fallback to video element
+      let blob;
+      if (typeof ImageCapture !== 'undefined') {
+        const ic = new ImageCapture(videoTrack);
+        const bitmap = await ic.grabFrame();
+        display.getTracks().forEach(t => t.stop());
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width; canvas.height = bitmap.height;
+        canvas.getContext('2d').drawImage(bitmap, 0, 0);
+        blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      } else {
+        // Safari / older browsers: use a video element
+        const video = document.createElement('video');
+        video.srcObject = new MediaStream([videoTrack]);
+        video.muted = true;
+        await video.play();
+        await new Promise(res => { video.onloadeddata = res; setTimeout(res, 2000); });
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 1280; canvas.height = video.videoHeight || 720;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        video.srcObject = null;
+        display.getTracks().forEach(t => t.stop());
+        blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      }
+
+      const form = new FormData();
+      form.append('screenshot', blob, 'screen.png');
+      const resp = await fetch(`/api/session/${SESSION_ID}/scan-participants/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        body: form,
+      });
+      const data = await resp.json();
+      if (!resp.ok) { toast(data.error || 'Scan failed', 'error'); return; }
+
+      const names = (data.names || []).filter(n => n && n.trim());
+      if (!names.length) { toast('No participant names detected in screenshot', 'info'); return; }
+
+      let added = 0;
+      for (const name of names) {
+        if (participants.find(p => p.name.toLowerCase() === name.toLowerCase())) continue;
+        const r2 = await fetch(`/api/session/${SESSION_ID}/participants/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+          body: JSON.stringify({ name: name.trim() }),
+        });
+        const d = await r2.json();
+        if (d.id) { participants.push({ id: d.id, name: d.name, role: d.role, color: d.color }); added++; }
+      }
+      renderParticipants();
+      toast(added ? `Added ${added} participant${added > 1 ? 's' : ''} from screen` : 'Participants already in list', added ? 'success' : 'info');
+    } catch (e) {
+      toast('Scan error: ' + e.message, 'error');
+    } finally {
+      btn.textContent = orig;
+      btn.disabled = false;
     }
   }
 

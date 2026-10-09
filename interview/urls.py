@@ -26,6 +26,7 @@ urlpatterns = [
     # Teams Recorder
     path("api/session/<uuid:session_id>/participants/", views.api_meeting_participants, name="api_participants"),
     path("api/session/<uuid:session_id>/participants/<uuid:participant_id>/delete/", views.api_delete_participant, name="api_delete_participant"),
+    path("api/session/<uuid:session_id>/scan-participants/", views.api_scan_participants, name="api_scan_participants"),
     path("api/session/<uuid:session_id>/entry/<uuid:entry_id>/speaker/", views.api_update_entry_speaker, name="api_entry_speaker"),
     path("api/session/<uuid:session_id>/meeting-summary/", views.api_meeting_summary, name="api_meeting_summary"),
     path("api/build-conversation/", views.api_build_conversation, name="api_build_conversation"),
