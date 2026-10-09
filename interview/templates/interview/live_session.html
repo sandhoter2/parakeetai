@@ -904,6 +904,8 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
         <span id="tcSpeakRate" title="Speaking rate (words per minute, last 60s)" style="color:var(--text3)">—</span>
         <span style="opacity:0.3">|</span>
         <span id="tcTopKeywords" title="Top keywords in transcript" style="color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <span style="opacity:0.3">|</span>
+        <span id="tcSpeakerRatio" title="Your speaking share" style="color:var(--text3)"></span>
       </div>
       <div class="panel-header-actions">
         <div class="font-controls">
@@ -1183,7 +1185,8 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <span style="font-size:11px;color:var(--yellow);font-weight:600;white-space:nowrap">📝 Note:</span>
   <input type="text" class="note-input" id="noteInput"
          placeholder="Add interviewer note / question (Enter to save)…"
-         onkeydown="if(event.key==='Enter')addNote()">
+         onkeydown="if(event.key==='Enter')addNote()"
+         oninput="_saveNoteDraft(this.value)">
   <button class="btn btn-ghost btn-xs" onclick="addNote()" style="color:var(--yellow);white-space:nowrap">+ Add</button>
 </div>
 
@@ -2120,12 +2123,16 @@ function speakerLabel(type, speakerName) {
 
 // Word count, speaking rate and keyword tracking
 let _totalWords = 0;
+let _micWords = 0;    // words from microphone (you)
+let _sysWords = 0;    // words from system/interviewer
 const _speakEvents = []; // {ts, words}
 const _kwFreq = {};
 const _KW_STOP = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','is','are','was','were','be','been','it','this','that','have','had','do','did','not','i','you','we','they','he','she','so','as','if','by','from','up','about','can','will','what','how','when','where','just','also','all','its','my','your','our','their','any','some','more','out','there','then']);
-function _updateWordStats(text) {
+function _updateWordStats(text, type) {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   _totalWords += words;
+  if (type === 'microphone') _micWords += words;
+  else if (type === 'system') _sysWords += words;
   _speakEvents.push({ ts: Date.now(), words });
   // Update keyword frequency
   text.trim().toLowerCase().replace(/[^a-z\s]/g,'').split(/\s+/).forEach(w => {
@@ -2151,6 +2158,14 @@ function _updateWordStats(text) {
       srEl.style.color = '';
     }
   }
+  // Speaker ratio badge
+  const ratioEl = document.getElementById('tcSpeakerRatio');
+  if (ratioEl && (_micWords + _sysWords) > 0) {
+    const youPct = Math.round((_micWords / (_micWords + _sysWords)) * 100);
+    ratioEl.textContent = `you ${youPct}%`;
+    ratioEl.style.color = youPct > 70 ? 'var(--yellow)' : youPct < 30 ? 'var(--text3)' : 'var(--green)';
+    ratioEl.title = `You: ${_micWords}w  Interviewer: ${_sysWords}w`;
+  }
 }
 
 function addTranscriptEntryUI(text, type, speakerName) {
@@ -2166,7 +2181,7 @@ function addTranscriptEntryUI(text, type, speakerName) {
   transcriptPanel.insertBefore(div, interimEntry);
   transcriptCount++;
   document.getElementById('transcriptCount').textContent = `${transcriptCount}`;
-  if (type === 'microphone' || type === 'system') _updateWordStats(text);
+  if (type === 'microphone' || type === 'system') _updateWordStats(text, type);
   scrollTranscript();
   // Auto-type into question input when transcript is minimized
   if (transcriptMinimized) {
@@ -2398,10 +2413,28 @@ function exportSession() {
 }
 
 // ── Notes ─────────────────────────────────────────────────────────────────────
+let _noteDraftTimer = null;
+const _NOTE_DRAFT_KEY = `noteDraft_${SESSION_ID}`;
+function _saveNoteDraft(val) {
+  clearTimeout(_noteDraftTimer);
+  _noteDraftTimer = setTimeout(() => {
+    try { localStorage.setItem(_NOTE_DRAFT_KEY, val); } catch(e) {}
+  }, 500);
+}
+// Restore draft on load
+(function() {
+  try {
+    const draft = localStorage.getItem(_NOTE_DRAFT_KEY);
+    const inp = document.getElementById('noteInput');
+    if (draft && inp) { inp.value = draft; }
+  } catch(e) {}
+})();
+
 function addNote() {
   const noteInput = document.getElementById('noteInput');
   const content = noteInput.value.trim();
   if (!content) return;
+  try { localStorage.removeItem(_NOTE_DRAFT_KEY); } catch(e) {}
   fetch(`/api/session/${SESSION_ID}/note/`, {
     method: 'POST',
     headers: {'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
@@ -2612,7 +2645,12 @@ function archiveAI(question, answer) {
   const wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
   const readSec = Math.ceil(wordCount / 3.5);
   const readLabel = readSec >= 60 ? `${Math.floor(readSec/60)}m ${readSec%60}s` : `${readSec}s`;
-  item.insertAdjacentHTML('beforeend', `<div class="ai-item-actions"><span style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-right:4px">${wordCount}w · ${readLabel} read</span><button class="btn btn-ghost btn-xs" onclick="toggleBookmarkAI(this)">🔖</button><button class="btn btn-ghost btn-xs" onclick="copyQA(this.closest('.ai-item'))" title="Copy Q+A pair">📋 Q+A</button><button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">📋 Copy</button><button class="btn btn-ghost btn-xs" onclick="speakAI(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,this)">🔊 Speak</button></div>`);
+  // Confidence score: based on answer length and hedging language
+  const hedgeWords = (answer.match(/\b(maybe|perhaps|possibly|might|could|unclear|not sure|depends|varies|uncertain|I think|I believe|probably)\b/gi) || []).length;
+  const confScore = Math.max(0, Math.min(100, wordCount >= 80 ? 85 - hedgeWords * 5 : wordCount >= 40 ? 65 - hedgeWords * 5 : 40 - hedgeWords * 5));
+  const confColor = confScore >= 75 ? 'var(--green)' : confScore >= 50 ? 'var(--accent)' : 'var(--yellow)';
+  const confLabel = confScore >= 75 ? 'high' : confScore >= 50 ? 'med' : 'low';
+  item.insertAdjacentHTML('beforeend', `<div class="ai-item-actions"><span style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-right:4px">${wordCount}w · ${readLabel} read</span><span style="font-size:9px;font-family:var(--mono);color:${confColor};border:1px solid ${confColor};border-radius:3px;padding:1px 5px;opacity:0.8" title="Confidence estimate">${confLabel}</span><button class="btn btn-ghost btn-xs" onclick="toggleBookmarkAI(this)">🔖</button><button class="btn btn-ghost btn-xs" onclick="copyQA(this.closest('.ai-item'))" title="Copy Q+A pair">📋 Q+A</button><button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">📋 Copy</button><button class="btn btn-ghost btn-xs" onclick="speakAI(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,this)">🔊 Speak</button></div>`);
   // Toggle minimized on click of the question line
   item.querySelector('.ai-item-q').addEventListener('click', () => item.classList.toggle('minimized'));
   hist.prepend(item);
@@ -2778,8 +2816,35 @@ function endSession() {
   if (!confirm('End this session?')) return;
   clearInterval(timerInterval);
   stopMic();
-  fetch(`/api/session/${SESSION_ID}/end/`, { method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken')} })
-    .then(() => window.location.href = `/session/${SESSION_ID}/detail/`);
+  _launchConfetti();
+  setTimeout(() => {
+    fetch(`/api/session/${SESSION_ID}/end/`, { method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken')} })
+      .then(() => window.location.href = `/session/${SESSION_ID}/detail/`);
+  }, 1200);
+}
+
+function _launchConfetti() {
+  const colors = ['#00c8ff','#34d399','#ffd700','#f472b6','#a78bfa'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    const size = 6 + Math.random() * 8;
+    Object.assign(el.style, {
+      position: 'fixed', pointerEvents: 'none', zIndex: '99999',
+      width: size + 'px', height: size + 'px',
+      borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+      background: colors[Math.floor(Math.random() * colors.length)],
+      left: Math.random() * 100 + 'vw',
+      top: '-10px',
+      opacity: '1',
+      transition: `transform ${0.8 + Math.random() * 0.8}s ease-out, opacity 0.4s ease ${0.7 + Math.random() * 0.5}s`,
+    });
+    document.body.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.transform = `translateY(${60 + Math.random() * 60}vh) rotate(${Math.random() * 360}deg)`;
+      el.style.opacity = '0';
+    }));
+    setTimeout(() => el.remove(), 1600);
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
