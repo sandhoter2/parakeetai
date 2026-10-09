@@ -978,6 +978,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <button class="float-ctrl-btn" id="regenBtn" onclick="regenAI()" style="display:none" title="Regenerate">🔄</button>
       <button class="float-ctrl-btn" id="copyAIBtn" onclick="copyCurrentAI()" style="display:none" title="Copy">📋</button>
       <button class="float-ctrl-btn" id="speakAIBtn" onclick="speakCurrentAI()" style="display:none" title="Read aloud (TTS)">🔊</button>
+      <button class="float-ctrl-btn" onclick="copyAllQA()" id="copyAllQABtn" style="display:none" title="Copy all Q&amp;A pairs">⊟</button>
       <button class="float-ctrl-btn" onclick="clearAI()" id="clearAIBtn" style="display:none" title="Clear">🗑</button>
       <button class="float-ctrl-btn" id="popOutBtn" onclick="event.stopPropagation();popOutAI()" title="Pop out as floating window">⧉</button>
       <button class="float-ctrl-btn" id="collapseBtn" onclick="event.stopPropagation();toggleAiPanel()" title="Collapse to bubble">✕</button>
@@ -2197,6 +2198,22 @@ function toggleFocusMode() {
   if (_focusMode) toast('Focus mode on — press F to exit', 'info', 2500);
 }
 
+// ── Copy All Q+A ─────────────────────────────────────────────────────────────
+function copyAllQA() {
+  const items = document.querySelectorAll('#aiHistory .ai-item');
+  if (!items.length) { toast('No AI answers to copy', 'warn'); return; }
+  const lines = [];
+  // Items are prepended, so reverse to get chronological order
+  Array.from(items).reverse().forEach((item, i) => {
+    const q = item.querySelector('.ai-item-q')?.textContent.replace(/^Q:\s*/,'').trim();
+    const a = (item.querySelector('.ai-item-a')?.dataset.plain) || item.querySelector('.ai-item-a')?.textContent.trim() || '';
+    if (q) lines.push(`Q${i+1}: ${q}`);
+    if (a) { lines.push(''); lines.push(`A: ${a}`); }
+    lines.push('');
+  });
+  copyText(lines.join('\n').trim(), 'All Q+A pairs');
+}
+
 // ── Ask AI About Entry ────────────────────────────────────────────────────────
 function sendEntryToAI(btn) {
   const entry = btn.closest('.transcript-entry');
@@ -2533,6 +2550,8 @@ function archiveAI(question, answer) {
   item.querySelector('.ai-item-q').addEventListener('click', () => item.classList.toggle('minimized'));
   hist.prepend(item);
   hist.style.display = 'flex';
+  const _cqa = _doc().getElementById('copyAllQABtn');
+  if (_cqa) _cqa.style.display = 'flex';
   // Keep only latest 2 expanded; minimize the rest
   const items = hist.querySelectorAll('.ai-item');
   items.forEach((el, i) => { if (i >= 2) el.classList.add('minimized'); else el.classList.remove('minimized'); });
@@ -2548,6 +2567,8 @@ function clearAI() {
   _dc.getElementById('copyAIBtn').style.display = 'none';
   _dc.getElementById('regenBtn').style.display = 'none';
   _dc.getElementById('speakAIBtn').style.display = 'none';
+  const _cqaC = _dc.getElementById('copyAllQABtn');
+  if (_cqaC) _cqaC.style.display = 'none';
   stopSpeak();
   // keep bionic-on class so toggle state is preserved
 }
