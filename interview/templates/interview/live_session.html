@@ -817,7 +817,6 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <div class="ai-float-input-row" id="aiFloatInputRow">
     <button class="fmic-btn" id="fMicBtn" onclick="toggleMic()" title="Mic (your voice)">🎤</button>
     <button class="fmic-btn" id="fTcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
-    <button class="fmic-btn" id="fTcSendBtn" onclick="transcribeNow()" title="Send audio now">⏩</button>
     <button class="fmic-btn" id="fMhBtn" onclick="toggleMHPanel()" title="Meeting helper — role-based question suggestions">💡</button>
     <input type="text" class="fq-input" id="fQuestionInput"
            placeholder="Type question or speak…"
@@ -945,7 +944,6 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <!-- Transcribe config button + popover -->
   <div style="position:relative;display:flex;align-items:center;gap:4px">
     <button class="tc-config-btn" id="tcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
-    <button class="tc-config-btn" id="tcSendBtn" onclick="transcribeNow()" title="Send now" style="display:none">⏩</button>
     <div class="transcribe-config-panel" id="tcPanel">
       <div class="tc-row">
         <span style="font-weight:600">Transcribe</span>
@@ -1340,21 +1338,8 @@ function setTranscribeMode(mode) {
   const dynamicInfo = document.getElementById('tcDynamicInfo');
   if (manualInfo)  manualInfo.style.display  = mode === 'manual'  ? 'flex' : 'none';
   if (dynamicInfo) dynamicInfo.style.display = mode === 'dynamic' ? 'flex' : 'none';
-
-  // Show ⏩ send button only in manual mode while recording
-  updateSendBtn();
 }
 
-function updateSendBtn() {
-  const btn = document.getElementById('tcSendBtn');
-  if (btn) btn.style.display = (transcribeMode === 'manual' && micActive) ? 'flex' : 'none';
-}
-
-let stopChunkEarlyFn = null;
-
-function transcribeNow() {
-  if (micActive && stopChunkEarlyFn) stopChunkEarlyFn();
-}
 
 // Initialize TC panel UI from stored prefs
 (function initTCPanel() {
@@ -1640,22 +1625,6 @@ async function startMic() {
   startWaveform(micStream);
 
   micRecognition = makeMicRecognition();
-
-  // ⏩ in manual mode = submit whatever is typed in the input
-  stopChunkEarlyFn = () => {
-    const text = (micManualAccum || getMicInputText()).trim();
-    if (text) {
-      saveMicToServer(text);
-      addTranscriptEntryUI(text, 'microphone');
-      micManualAccum = '';
-      setMicInputText('');
-      interimEntry.style.display = 'none';
-      interimText.textContent = 'Transcribing…';
-      triggerAI(text, true);
-    }
-  };
-  updateSendBtn();
-
   micRecognition.start();
 }
 
@@ -1670,7 +1639,6 @@ function saveMicToServer(text) {
 function stopMic() {
   micActive = false;
   micStream = null;
-  stopChunkEarlyFn = null;
   if (micRecognition) { micRecognition.onend = null; micRecognition.stop(); micRecognition = null; }
   interimEntry.style.display = 'none';
   interimText.textContent = 'Transcribing…';
@@ -1681,7 +1649,6 @@ function stopMic() {
   if (_fmOff) { _fmOff.classList.remove('active'); _fmOff.textContent = '🎤'; }
   recDot.classList.remove('active');
   setStatus('Mic off');
-  updateSendBtn();
   stopWaveform();
 }
 
@@ -1812,15 +1779,26 @@ function saveAndClearInput() {
 }
 
 // ── AI HELP ───────────────────────────────────────────────────────────────────
-// fromVoice=true means caller already saved via saveMicToServer — skip duplicate save
 function triggerAI(question, fromVoice) {
   if (isStreaming) return;
-  // Debug: log call origin so we can identify auto-submit in manual mode
-  console.log('[triggerAI] transcribeMode=' + transcribeMode + ' autoAI=' + autoAI, new Error().stack.split('\n').slice(1,4).join(' | '));
-  showAiPanel(); // ensure panel is visible when AI is triggered
+  showAiPanel();
 
   const fInput = _doc().getElementById('fQuestionInput');
-  const wasTyped = !question; // came from input field, not passed by voice/mic
+
+  // In manual mode, flush accumulated mic speech first
+  if (transcribeMode === 'manual' && micManualAccum && !question) {
+    const accum = micManualAccum.trim();
+    micManualAccum = '';
+    micLastCommitted = '';
+    saveMicToServer(accum);
+    addTranscriptEntryUI(accum, 'microphone');
+    interimEntry.style.display = 'none';
+    interimText.textContent = 'Transcribing…';
+    question = accum;
+    fromVoice = true; // already saved above
+  }
+
+  const wasTyped = !question;
   question = question || questionInput.value.trim() || (fInput && fInput.value.trim());
   if (!question) {
     const entries = transcriptPanel.querySelectorAll('.transcript-entry .text');
@@ -1828,7 +1806,7 @@ function triggerAI(question, fromVoice) {
   }
   if (!question) { setStatus('Nothing to send'); return; }
 
-  // Always persist typed text to DB before clearing — voice paths already called saveMicToServer
+  // Persist typed text — voice/manual-flush paths already called saveMicToServer
   if (wasTyped && !fromVoice) saveMicToServer(question);
 
   lastQuestion = question;
@@ -2337,7 +2315,7 @@ async function popOutAI() {
         const _pipFns = ['popOutAI','toggleAiPanel','toggleBionic','adjustAIFontSize',
           'regenAI','copyCurrentAI','clearAI','triggerAI','toggleMic',
           'restoreTranscript','copyText','setFloatOpacity','openModal','adjustFontSize',
-          'toggleTCPanel','transcribeNow','clearInput','saveAndClearInput'];
+          'toggleTCPanel','clearInput','saveAndClearInput'];
         _pipFns.forEach(fn => {
           window[fn] = function() { return window.opener[fn].apply(window.opener, arguments); };
         });
