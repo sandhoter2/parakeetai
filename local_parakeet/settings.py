@@ -37,7 +37,6 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 INSTALLED_APPS = [
-    "django_mongodb_backend",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -78,39 +77,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "local_parakeet.wsgi.application"
 
-_mongodb_uri = os.environ.get("MONGODB_URI")
-_using_mongo = bool(_mongodb_uri)
-
-if _using_mongo:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django_mongodb_backend",
-            "HOST": _mongodb_uri,
-            "NAME": os.environ.get("MONGODB_DB_NAME", "parakeetai"),
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+}
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-DEFAULT_AUTO_FIELD = (
-    "django_mongodb_backend.fields.ObjectIdAutoField" if _using_mongo
-    else "django.db.models.BigAutoField"
-)
-
-# Django's built-in apps (auth, admin, contenttypes) use AutoField in their
-# existing migrations. MongoDB requires ObjectIdAutoField, but the backend
-# handles the actual type coercion — suppressing this check allows migrate
-# to run successfully.
-if _using_mongo:
-    SILENCED_SYSTEM_CHECKS = ["mongodb.E001"]
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
