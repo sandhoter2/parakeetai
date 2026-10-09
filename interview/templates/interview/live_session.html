@@ -2919,22 +2919,24 @@ if (SESSION_TYPE === 'meeting') {
   }
 
   // Override saveMicToServer to include active speaker when set
+  // Use variable assignment (not function declaration) to avoid V8 block-function hoisting
   const _origSaveMicToServer = saveMicToServer;
-  function saveMicToServer(text) {
+  saveMicToServer = function(text) {
     const speakerName = getActiveSpeakerName();
     fetch(`/api/session/${SESSION_ID}/transcript/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
       body: JSON.stringify({ transcripts: [{ content: text, type: 'microphone', speaker_name: speakerName }] }),
     }).catch(() => {});
-  }
+  };
 
   // Also patch addTranscriptEntryUI to show speaker color when active
+  // Use variable assignment (not function declaration) to avoid V8 block-function hoisting
   const _origAddTranscriptEntryUI = addTranscriptEntryUI;
-  function addTranscriptEntryUI(text, type, speakerName) {
+  addTranscriptEntryUI = function(text, type, speakerName) {
     speakerName = speakerName || getActiveSpeakerName();
     _origAddTranscriptEntryUI(text, type, speakerName);
-  }
+  };
 
   // ── Zoom / expand panel ───────────────────────────────────────────────────
   let teamsZoomed = false;
