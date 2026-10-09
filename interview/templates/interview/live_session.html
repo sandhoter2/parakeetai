@@ -794,9 +794,10 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
   position:absolute; bottom:calc(100% + 6px); right:0; min-width:230px;
   background:var(--bg2); border:1px solid var(--accent); border-radius:6px;
   box-shadow:0 8px 32px rgba(0,0,0,0.6); z-index:9999; overflow:hidden;
-  display:none;
+  display:none; max-height:320px;
 }
-.ai-tpl-dropdown.open { display:block; }
+.ai-tpl-dropdown.open { display:flex; flex-direction:column; }
+#aiTplList, #meetingAITplList { overflow-y:auto; flex:1; }
 .ai-tpl-header {
   padding:8px 12px; font-size:9px; font-family:var(--mono); color:var(--text3);
   text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border);
@@ -1380,7 +1381,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <div id="meetingAISplitWrap" class="ai-split-wrap" style="position:relative;display:inline-flex">
         <button class="ai-help-btn" style="background:var(--bg3);color:var(--text2);cursor:default;border-color:var(--border2)" title="Meeting AI Templates">🤖 Meeting AI</button>
         <button class="ai-tpl-arrow" id="meetingAIArrow" onclick="toggleMeetingAIDropdown(event)" title="Select meeting AI template">▾</button>
-        <div class="ai-tpl-dropdown" id="meetingAIDropdown" style="min-width:260px;max-height:300px;overflow-y:auto">
+        <div class="ai-tpl-dropdown" id="meetingAIDropdown" style="min-width:260px;max-height:300px">
           <div class="ai-tpl-header"><span>Meeting AI Templates</span></div>
           <div id="meetingAITplList"><!-- populated by JS --></div>
         </div>
@@ -3316,11 +3317,19 @@ function _renderMeetingAIList() {
 function toggleMeetingAIDropdown(e) {
   e.stopPropagation();
   const dd = document.getElementById('meetingAIDropdown');
-  if (!dd) return;
+  const btn = document.getElementById('meetingAIArrow');
+  if (!dd || !btn) return;
   const isOpen = dd.classList.contains('open');
   if (!isOpen) {
     if (!_meetingAILoaded) _loadMeetingAITemplates();
     else _renderMeetingAIList();
+    // Use fixed positioning to escape overflow-y:auto scroll context
+    const rect = btn.getBoundingClientRect();
+    dd.style.position = 'fixed';
+    dd.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+    dd.style.right = (window.innerWidth - rect.right) + 'px';
+    dd.style.top = 'auto';
+    dd.style.left = 'auto';
     dd.classList.add('open');
   } else dd.classList.remove('open');
 }
