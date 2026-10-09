@@ -419,11 +419,17 @@ body.pip-active .note-input-wrap { display: flex !important; }
 .transcript-entry .speaker {
   font-size: 10px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 1px; margin-bottom: 3px;
-  font-family: var(--mono);
+  font-family: var(--mono); display: flex; align-items: center; justify-content: space-between;
 }
+.transcript-entry .speaker::before { content: '// '; opacity: 0.4; }
 .transcript-entry.microphone .speaker { color: var(--accent); }
 .transcript-entry.system .speaker { color: var(--yellow); }
 .transcript-entry .text { font-size: 13px; line-height: 1.55; }
+.transcript-entry .entry-ts {
+  font-size: 9px; font-family: var(--mono); color: var(--text3);
+  opacity: 0; transition: opacity 0.15s; flex-shrink: 0;
+}
+.transcript-entry:hover .entry-ts { opacity: 1; }
 
 .interim-entry {
   padding: 8px 12px; border-radius: 4px;
@@ -2054,7 +2060,9 @@ function addTranscriptEntryUI(text, type, speakerName) {
   const div = document.createElement('div');
   div.className = `transcript-entry ${type}`;
   const label = speakerLabel(type, speakerName);
-  div.innerHTML = `<div class="speaker">${escHtml(label)}</div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div>`;
+  const now = new Date();
+  const ts = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  div.innerHTML = `<div class="speaker"><span>${escHtml(label)}</span><span class="entry-ts">${ts}</span></div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div>`;
   div.addEventListener('click', () => populateInputFromTranscript(div.querySelector('.text').textContent));
   transcriptPanel.insertBefore(div, interimEntry);
   transcriptCount++;
@@ -2154,6 +2162,14 @@ function toggleFocusMode() {
     btn.title = _focusMode ? 'Exit focus mode (F)' : 'Focus mode — hide UI chrome (F)';
   }
   if (_focusMode) toast('Focus mode on — press F to exit', 'info', 2500);
+}
+
+// ── Copy Q+A Pair ─────────────────────────────────────────────────────────────
+function copyQA(item) {
+  const q = item.querySelector('.ai-item-q')?.textContent.replace(/^Q:\s*/,'').trim() || '';
+  const a = (item.querySelector('.ai-item-a')?.dataset.plain) || item.querySelector('.ai-item-a')?.textContent.trim() || '';
+  const text = q ? `Q: ${q}\n\nA: ${a}` : a;
+  copyText(text, 'Q+A pair');
 }
 
 // ── Bookmark AI Answer ────────────────────────────────────────────────────────
@@ -2467,7 +2483,7 @@ function archiveAI(question, answer) {
   const wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
   const readSec = Math.ceil(wordCount / 3.5);
   const readLabel = readSec >= 60 ? `${Math.floor(readSec/60)}m ${readSec%60}s` : `${readSec}s`;
-  item.insertAdjacentHTML('beforeend', `<div class="ai-item-actions"><span style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-right:4px">${wordCount}w · ${readLabel} read</span><button class="btn btn-ghost btn-xs" onclick="toggleBookmarkAI(this)">🔖</button><button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">📋 Copy</button><button class="btn btn-ghost btn-xs" onclick="speakAI(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,this)">🔊 Speak</button></div>`);
+  item.insertAdjacentHTML('beforeend', `<div class="ai-item-actions"><span style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-right:4px">${wordCount}w · ${readLabel} read</span><button class="btn btn-ghost btn-xs" onclick="toggleBookmarkAI(this)">🔖</button><button class="btn btn-ghost btn-xs" onclick="copyQA(this.closest('.ai-item'))" title="Copy Q+A pair">📋 Q+A</button><button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">📋 Copy</button><button class="btn btn-ghost btn-xs" onclick="speakAI(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,this)">🔊 Speak</button></div>`);
   // Toggle minimized on click of the question line
   item.querySelector('.ai-item-q').addEventListener('click', () => item.classList.toggle('minimized'));
   hist.prepend(item);
