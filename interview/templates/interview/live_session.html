@@ -1269,7 +1269,9 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <tr><td>Search transcript</td><td><kbd>Ctrl F</kbd></td></tr>
       <tr><td>Toggle focus mode</td><td><kbd>F</kbd></td></tr>
       <tr><td>Export session as Markdown</td><td><kbd>X</kbd></td></tr>
+      <tr><td>Pop-out AI panel</td><td><kbd>P</kbd></td></tr>
       <tr><td>End session</td><td><kbd>Shift E</kbd></td></tr>
+      <tr><td>Keyboard shortcuts</td><td><kbd>?</kbd></td></tr>
     </table>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('shortcutsModal')">Close</button>
@@ -1409,6 +1411,15 @@ const waveformWrap = document.getElementById('waveformWrap');
 const waveformCanvas = document.getElementById('waveformCanvas');
 const waveCtx = waveformCanvas.getContext('2d');
 
+// Smart paste: when user pastes 40+ chars into question input, nudge them to trigger AI
+questionInput.addEventListener('paste', () => {
+  setTimeout(() => {
+    if (questionInput.value.trim().length >= 40) {
+      toast('// Tip: press ⌘ Enter to ask AI', 'info', 3000);
+    }
+  }, 50);
+});
+
 // ── AI panel scroll-lock listener ────────────────────────────────────────────
 aiPanel.addEventListener('scroll', () => {
   const atBottom = aiPanel.scrollHeight - aiPanel.scrollTop - aiPanel.clientHeight < 40;
@@ -1446,7 +1457,7 @@ function startTimer() {
     const pad = n => String(n).padStart(2,'0');
     document.getElementById('elapsedTimer').textContent =
       h > 0 ? `${pad(h)}:${pad(m%60)}:${pad(s%60)}` : `${pad(m)}:${pad(s%60)}`;
-    // Update progress bar
+    // Update progress bar + milestone toasts
     const pct = Math.min(100, (s / SESSION_TARGET_SECS) * 100);
     const fill = document.getElementById('sessionProgressFill');
     if (fill) {
@@ -1455,14 +1466,34 @@ function startTimer() {
       else if (pct >= 75) fill.style.background = 'var(--yellow)';
       else fill.style.background = 'var(--accent)';
     }
+    // One-shot milestone warnings
+    if (pct >= 90 && !_timer90Toasted) {
+      _timer90Toasted = true;
+      toast('⚠ 90% of session time elapsed', 'warn', 5000);
+    } else if (pct >= 75 && !_timer75Toasted) {
+      _timer75Toasted = true;
+      toast('// 75% of session time elapsed', 'info', 4000);
+    }
   }, 1000);
 }
+let _timer75Toasted = false;
+let _timer90Toasted = false;
 startTimer();
 
 function toggleAuto() {
   autoAI = !autoAI;
   autoToggle.classList.toggle('on', autoAI);
 }
+
+// ── Network status ────────────────────────────────────────────────────────────
+window.addEventListener('offline', () => {
+  toast('⚠ No internet — AI and mic save features offline', 'error', 0);
+  setStatus('Offline');
+});
+window.addEventListener('online', () => {
+  toast('// Back online', 'success', 3000);
+  setStatus('');
+});
 
 // Activate session
 fetch(`/api/session/${SESSION_ID}/activate/`, {
@@ -1916,15 +1947,15 @@ function makeMicRecognition() {
 async function startMic() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert('Your browser does not support the Web Speech API.\nPlease use Chrome or Edge.');
+    toast('// Web Speech API not supported — use Chrome or Edge', 'error', 6000);
     return;
   }
 
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
   } catch(err) {
-    setStatus('Mic blocked: ' + err.message);
-    alert('Microphone access denied.\n\nPlease allow microphone in your browser and try again.');
+    setStatus('Mic blocked');
+    toast('// Mic denied: ' + err.message + ' — check browser permissions', 'error', 7000);
     return;
   }
 
@@ -3202,6 +3233,8 @@ document.addEventListener('keydown', e => {
   if (e.shiftKey && (e.key === 'E' || e.key === 'e')) { e.preventDefault(); endSession(); }
   if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFocusMode(); }
   if (e.key === 'x' || e.key === 'X') { e.preventDefault(); exportSession(); }
+  if (e.key === '?') { e.preventDefault(); openModal('shortcutsModal'); }
+  if (e.key === 'p' || e.key === 'P') { e.preventDefault(); popOutAI(); }
 });
 
 // ── Teams Recorder ────────────────────────────────────────────────────────────
