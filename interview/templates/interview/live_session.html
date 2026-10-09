@@ -501,6 +501,16 @@ body.pip-active .note-input-wrap { display: flex !important; }
 .bionic-toggle-btn.on .bionic-dot { background:var(--accent); box-shadow:0 0 6px var(--accent); }
 
 /* Bottom bar — robot command bar */
+.qq-chip {
+  display: inline-block;
+  padding: 3px 10px; margin-right: 5px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 3px; font-size: 10px; font-family: var(--mono);
+  color: var(--text2); cursor: pointer; white-space: nowrap;
+  transition: all 0.15s; letter-spacing: 0.3px;
+}
+.qq-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
 .bottom-bar {
   display: flex; align-items: center; padding: 8px 14px;
   background: var(--bg2); border-top: 1px solid var(--border); gap: 8px; flex-wrap: nowrap;
@@ -813,6 +823,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     <span class="elapsed-timer" id="elapsedTimer">00:00</span>
   </div>
   <div class="session-controls">
+    <button class="btn btn-ghost btn-sm" onclick="toggleQuickQ()" id="quickQBtn" title="Quick question presets">⚡ Quick</button>
     <button class="btn btn-ghost btn-sm" onclick="openModal('shortcutsModal')" title="Keyboard shortcuts">⌨️</button>
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer">
       <div class="toggle on" id="autoToggle" onclick="toggleAuto()"></div><span class="auto-ai-label"> Auto AI</span>
@@ -852,6 +863,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
           <button class="font-btn" onclick="adjustFontSize(1)" title="Increase font">A+</button>
         </div>
         <button class="btn btn-ghost btn-xs" onclick="copyTranscriptLive()" title="Copy all">📋</button>
+        <button class="btn btn-ghost btn-xs" onclick="exportSession()" title="Export session as Markdown">⬇ Export</button>
         <button class="btn btn-ghost btn-xs" onclick="clearTranscript()" title="Clear transcript">🗑</button>
         <span id="transcriptCount" style="font-size:10px;color:var(--text3);font-family:var(--mono)">{{ transcripts.count }}</span>
         <button class="btn btn-ghost btn-xs" id="transcriptMinBtn" onclick="minimizeTranscript()" title="Minimize transcript">⊟</button>
@@ -941,6 +953,15 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       {% endfor %}
     </div>
     {% endif %}
+    <div id="aiScrollBadge"
+         onclick="_aiScrollLocked=false;_aiNewCount=0;this.style.display='none';aiPanel.scrollTop=aiPanel.scrollHeight"
+         style="display:none;position:sticky;bottom:8px;left:50%;transform:translateX(-50%);
+                background:var(--accent);color:var(--bg);border-radius:16px;
+                padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer;
+                font-family:var(--mono);letter-spacing:0.5px;white-space:nowrap;
+                box-shadow:0 2px 12px rgba(0,200,255,0.4);z-index:10;
+                display:none;align-items:center;gap:6px">
+    </div>
     <div id="aiLive" style="display:none">
       <div class="ai-trigger-text" id="aiTriggerText"></div>
       <div class="ai-answer" id="aiAnswerText"></div><span class="ai-cursor" id="aiCursor"></span>
@@ -1107,6 +1128,19 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 </div>
 
 <!-- Bottom bar -->
+<!-- Quick Questions strip -->
+<div id="quickQStrip" style="display:none;padding:6px 12px;background:var(--bg2);border-top:1px solid var(--border);overflow-x:auto;white-space:nowrap;scrollbar-width:none">
+  <span style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-right:8px">// quick:</span>
+  <button class="qq-chip" onclick="quickQ('Explain this concept simply')">explain simply</button>
+  <button class="qq-chip" onclick="quickQ('What are the pros and cons?')">pros &amp; cons</button>
+  <button class="qq-chip" onclick="quickQ('Give me a real-world example')">example</button>
+  <button class="qq-chip" onclick="quickQ('How would you solve this problem step by step?')">step by step</button>
+  <button class="qq-chip" onclick="quickQ('What questions should I ask next?')">follow-ups</button>
+  <button class="qq-chip" onclick="quickQ('Summarize what was just said')">summarize</button>
+  <button class="qq-chip" onclick="quickQ('What are common mistakes to avoid?')">avoid mistakes</button>
+  <button class="qq-chip" onclick="quickQ('What is the best practice here?')">best practice</button>
+</div>
+
 <div class="bottom-bar">
   <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Start/stop mic (your voice)">🎤</button>
   <span id="micModeBadge" onclick="toggleTCPanel()" title="Transcribe mode — click to change" style="font-size:10px;font-family:var(--mono);color:var(--text3);padding:2px 7px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);cursor:pointer;white-space:nowrap;line-height:1.8;transition:color .2s,border-color .2s">30s</span>
@@ -1313,6 +1347,19 @@ const autoToggle = document.getElementById('autoToggle');
 const waveformWrap = document.getElementById('waveformWrap');
 const waveformCanvas = document.getElementById('waveformCanvas');
 const waveCtx = waveformCanvas.getContext('2d');
+
+// ── AI panel scroll-lock listener ────────────────────────────────────────────
+aiPanel.addEventListener('scroll', () => {
+  const atBottom = aiPanel.scrollHeight - aiPanel.scrollTop - aiPanel.clientHeight < 40;
+  if (atBottom) {
+    _aiScrollLocked = false;
+    _aiNewCount = 0;
+    const badge = document.getElementById('aiScrollBadge');
+    if (badge) badge.style.display = 'none';
+  } else {
+    _aiScrollLocked = true;
+  }
+});
 
 // ── Transcript scroll-lock listener ──────────────────────────────────────────
 transcriptPanel.addEventListener('scroll', () => {
@@ -2009,6 +2056,84 @@ function copyTranscriptLive() {
   copyText(lines.join('\n\n'), 'Transcript');
 }
 
+// ── Quick Questions ───────────────────────────────────────────────────────────
+function toggleQuickQ() {
+  const strip = document.getElementById('quickQStrip');
+  const btn = document.getElementById('quickQBtn');
+  const visible = strip.style.display !== 'none';
+  strip.style.display = visible ? 'none' : 'block';
+  btn.classList.toggle('active', !visible);
+}
+
+function quickQ(text) {
+  const qi = document.getElementById('questionInput');
+  const fqi = document.getElementById('fQuestionInput');
+  if (qi) { qi.value = text; qi.focus(); }
+  if (fqi) fqi.value = text;
+  triggerAI();
+}
+
+// ── Export Session ────────────────────────────────────────────────────────────
+function exportSession() {
+  const lines = [];
+  const sessionTitle = document.querySelector('.session-info h2')?.textContent.trim() || 'Session';
+  const now = new Date().toISOString().slice(0,16).replace('T',' ');
+
+  lines.push(`# ${sessionTitle}`);
+  lines.push(`_Exported: ${now}_`);
+  lines.push('');
+
+  // Transcript
+  const transcriptEntries = document.querySelectorAll('#transcriptPanel .transcript-entry');
+  if (transcriptEntries.length) {
+    lines.push('## // TRANSCRIPT');
+    lines.push('');
+    transcriptEntries.forEach(e => {
+      const label = e.querySelector('.speaker')?.textContent.trim() || 'SPEAKER';
+      const text = e.querySelector('.text')?.textContent.trim() || '';
+      if (text) lines.push(`**[${label.toUpperCase()}]** ${text}`);
+    });
+    lines.push('');
+  }
+
+  // AI answers from history
+  const aiItems = document.querySelectorAll('#aiHistory .ai-item');
+  if (aiItems.length) {
+    lines.push('## // AI ANSWERS');
+    lines.push('');
+    aiItems.forEach((item, i) => {
+      const q = item.querySelector('.ai-item-q')?.textContent.replace(/^Q:\s*/,'').trim();
+      const a = (item.querySelector('.ai-item-a')?.dataset.plain) || item.querySelector('.ai-item-a')?.textContent.trim() || '';
+      if (q) lines.push(`### Q${i+1}: ${q}`);
+      if (a) { lines.push(''); lines.push(a); }
+      lines.push('');
+    });
+  }
+
+  // Current live AI answer
+  const liveAnswer = (aiAnswerText?.dataset.plain) || aiAnswerText?.textContent.trim();
+  if (liveAnswer) {
+    const liveQ = document.getElementById('aiTriggerText')?.textContent.trim();
+    lines.push('## // CURRENT AI ANSWER');
+    lines.push('');
+    if (liveQ) lines.push(`### ${liveQ}`);
+    lines.push('');
+    lines.push(liveAnswer);
+    lines.push('');
+  }
+
+  const md = lines.join('\n');
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const slug = sessionTitle.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,40);
+  a.href = url;
+  a.download = `session-${slug}-${now.slice(0,10)}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Session exported as Markdown', 'success');
+}
+
 // ── Notes ─────────────────────────────────────────────────────────────────────
 function addNote() {
   const noteInput = document.getElementById('noteInput');
@@ -2384,7 +2509,18 @@ function scrollTranscript() {
   transcriptPanel.scrollTop = transcriptPanel.scrollHeight;
 }
 
-function scrollAI() { aiPanel.scrollTop = aiPanel.scrollHeight; }
+let _aiScrollLocked = false;
+let _aiNewCount = 0;
+
+function scrollAI() {
+  if (_aiScrollLocked) {
+    _aiNewCount++;
+    const badge = document.getElementById('aiScrollBadge');
+    if (badge) { badge.textContent = '↓ ' + _aiNewCount + ' new'; badge.style.display = 'flex'; }
+    return;
+  }
+  aiPanel.scrollTop = aiPanel.scrollHeight;
+}
 function setStatus(msg) { statusChip.textContent = msg; }
 function escHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
