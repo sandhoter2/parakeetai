@@ -3394,11 +3394,15 @@ function toggleConvInsightDropdown(e) {
   if (!isOpen) {
     _renderConvInsightList();
     const rect = btn.getBoundingClientRect();
+    const ddW = 230;
+    const ddH = 240;
     dd.style.position = 'fixed';
     dd.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
-    dd.style.right = (window.innerWidth - rect.right) + 'px';
     dd.style.top = 'auto';
-    dd.style.left = 'auto';
+    dd.style.right = 'auto';
+    dd.style.left = Math.max(4, Math.min(rect.left, window.innerWidth - ddW - 8)) + 'px';
+    dd.style.maxHeight = ddH + 'px';
+    dd.style.minWidth = ddW + 'px';
     dd.classList.add('open');
   } else dd.classList.remove('open');
 }
