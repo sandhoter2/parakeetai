@@ -1652,6 +1652,9 @@ function setTranscribeMode(mode) {
 }
 
 
+// PiP window reference — declared here (before any IIFE that calls _doc()) to avoid TDZ errors
+let _pipDocWindow = null;
+
 // Initialize TC panel UI from stored prefs
 (function initTCPanel() {
   const VALID_MODES = ['manual', '2', '5', '10', '30', '60', '120', 'dynamic'];
@@ -3063,8 +3066,6 @@ function showAiPanel() {
     }
   } catch(e) {}
 })();
-
-let _pipDocWindow = null;
 
 async function popOutAI() {
   const panel = _getPanel();
