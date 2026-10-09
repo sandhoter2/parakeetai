@@ -538,6 +538,24 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 }
 .entry-action-btn:hover { background: var(--accent); color: var(--bg); }
 
+/* Voice assignment chips on system entries */
+.voice-assign-row {
+  display: none; flex-wrap: wrap; gap: 4px; margin-top: 6px;
+}
+.transcript-entry:hover .voice-assign-row,
+.transcript-entry.unassigned-system .voice-assign-row { display: flex; }
+.voice-chip {
+  font-size: 10px; padding: 2px 8px; border-radius: 10px; cursor: pointer;
+  border: 1px solid; font-family: var(--mono); font-weight: 600; letter-spacing: 0.5px;
+  transition: all 0.12s; opacity: 0.75;
+}
+.voice-chip:hover { opacity: 1; filter: brightness(1.2); }
+.voice-chip.assigned { opacity: 1; }
+
+/* Speaker change pulse on speaker buttons */
+@keyframes speakerPulse { 0%,100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--accent-glow); } }
+.speaker-btn-pulse { animation: speakerPulse 0.8s ease-in-out 3; }
+
 .interim-entry {
   padding: 8px 12px; border-radius: 4px;
   background: rgba(0,200,255,0.04); border-left: 2px solid rgba(0,200,255,0.3);
@@ -1349,7 +1367,8 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 
     <!-- Center: Active speaker -->
     <div style="flex:1 1 160px;min-width:0;overflow:hidden">
-      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Active Speaker</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Who's Speaking?</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px">Tap to label incoming system audio</div>
       <div id="activeSpeakerDisplay" style="font-size:13px;color:var(--text2);margin-bottom:8px">None selected</div>
       <div id="speakerBtnList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
@@ -2442,6 +2461,11 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
   const formData = new FormData();
   formData.append('audio', blob, `audio.${ext}`);
   formData.append('speaker', speaker);
+  // Include active speaker name if set (for system audio) so DB entry is labelled at creation
+  if (speaker === 'system' && typeof getActiveSpeakerName === 'function') {
+    const asn = getActiveSpeakerName();
+    if (asn) formData.append('speaker_name', asn);
+  }
 
   try {
     const resp = await fetch(`/api/session/${SESSION_ID}/transcribe/`, {
@@ -2454,7 +2478,8 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
     if (data.error) { setStatus('Transcribe error: ' + data.error); return; }
     if (!data.text || !data.text.trim()) return;
 
-    addTranscriptEntryUI(data.text.trim(), data.speaker || speaker);
+    if (speaker === 'system') _checkSpeakerChange();
+    addTranscriptEntryUI(data.text.trim(), data.speaker || speaker, data.speaker_name || '');
     refreshMHSuggestions();
     setStatus('Transcribed ✓');
 
@@ -2591,6 +2616,81 @@ function _updateWordStats(text, type) {
   }
 }
 
+// ── Voice segregation ────────────────────────────────────────────────────────
+// Global participants list for voice chips — populated by Teams panel on load
+let _voiceParticipants = []; // [{id, name, color}, ...]
+let _lastSystemAudioTs = 0;  // timestamp of last system audio chunk
+const _SPEAKER_CHANGE_GAP_MS = 3000; // gap > 3s → likely new speaker
+
+function _renderVoiceChips(entryDiv, assignedName) {
+  const row = entryDiv.querySelector('.voice-assign-row');
+  if (!row || !_voiceParticipants.length) return;
+  row.innerHTML = '';
+  const label = document.createElement('span');
+  label.style.cssText = 'font-size:9px;color:var(--text3);font-family:var(--mono);align-self:center';
+  label.textContent = '👤';
+  row.appendChild(label);
+  _voiceParticipants.forEach(p => {
+    const chip = document.createElement('button');
+    chip.className = 'voice-chip' + (assignedName === p.name ? ' assigned' : '');
+    chip.style.cssText = `color:${p.color};border-color:${p.color};background:${assignedName === p.name ? p.color + '22' : 'transparent'}`;
+    chip.textContent = p.name;
+    chip.title = `Assign this entry to ${p.name}`;
+    chip.addEventListener('click', e => {
+      e.stopPropagation();
+      _assignVoiceToEntry(entryDiv, p);
+    });
+    row.appendChild(chip);
+  });
+}
+
+function _assignVoiceToEntry(entryDiv, participant) {
+  const nameSpan = entryDiv.querySelector('.speaker-name-editable');
+  if (nameSpan) nameSpan.textContent = participant.name.toUpperCase();
+  entryDiv.style.borderLeftColor = participant.color;
+  entryDiv.classList.remove('unassigned-system');
+  // Update all chips in this entry
+  entryDiv.querySelectorAll('.voice-chip').forEach(c => {
+    const isThis = c.textContent === participant.name;
+    c.classList.toggle('assigned', isThis);
+    c.style.background = isThis ? participant.color + '22' : 'transparent';
+  });
+  // Persist to backend if entry has an id
+  const entryId = entryDiv.dataset.entryId;
+  if (entryId) {
+    fetch(`/api/session/${SESSION_ID}/entry/${entryId}/speaker/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify({ speaker_name: participant.name }),
+    }).catch(() => {});
+  }
+  toast(`// → ${participant.name}`, 'success', 1500);
+}
+
+// Called when new system audio arrives to detect speaker changes
+function _checkSpeakerChange() {
+  const now = Date.now();
+  const gap = now - _lastSystemAudioTs;
+  _lastSystemAudioTs = now;
+  if (_lastSystemAudioTs && gap > _SPEAKER_CHANGE_GAP_MS && _voiceParticipants.length > 1) {
+    // Pulse the speaker buttons to prompt user to confirm who is speaking
+    const btns = document.querySelectorAll('#speakerBtnList button');
+    btns.forEach(b => { b.classList.remove('speaker-btn-pulse'); void b.offsetWidth; b.classList.add('speaker-btn-pulse'); });
+  }
+}
+
+// Refresh voice chips on all unassigned system entries (called after participants load)
+function _refreshAllVoiceChips() {
+  document.querySelectorAll('.transcript-entry.system').forEach(div => {
+    const nameSpan = div.querySelector('.speaker-name-editable');
+    const assigned = nameSpan ? nameSpan.textContent.trim() : '';
+    _renderVoiceChips(div, assigned);
+    if (!assigned || assigned === 'INTERVIEWER' || assigned === 'SYSTEM') {
+      div.classList.add('unassigned-system');
+    }
+  });
+}
+
 function addTranscriptEntryUI(text, type, speakerName) {
   const ph = document.getElementById('transcriptPlaceholder');
   if (ph) ph.remove();
@@ -2600,7 +2700,13 @@ function addTranscriptEntryUI(text, type, speakerName) {
   const now = new Date();
   const ts = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   const tone = _detectTone(text);
-  div.innerHTML = `<div class="entry-select-cb" title="Select for multi-send">✓</div><div class="speaker"><span class="speaker-name-editable" title="Click to rename this speaker">${escHtml(label.toUpperCase())}</span>${tone ? `<span class="speaker-tone" title="Tone">${tone}</span>` : ''}<span class="entry-ts">${ts}</span></div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div><div class="entry-actions"><button class="entry-action-btn" onclick="event.stopPropagation();sendEntryToAI(this)" title="Ask AI about this">✨ Ask AI</button><button class="entry-action-btn" onclick="event.stopPropagation();editTranscriptEntry(this)" title="Edit">✎ Edit</button><button class="entry-action-btn" style="color:var(--red);border-color:rgba(255,80,80,0.3)" onclick="event.stopPropagation();deleteTranscriptEntry(this)" title="Delete">✕</button></div>`;
+  const isSystem = type === 'system';
+  div.innerHTML = `<div class="entry-select-cb" title="Select for multi-send">✓</div><div class="speaker"><span class="speaker-name-editable" title="Click to rename this speaker">${escHtml(label.toUpperCase())}</span>${tone ? `<span class="speaker-tone" title="Tone">${tone}</span>` : ''}<span class="entry-ts">${ts}</span></div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div><div class="voice-assign-row"></div><div class="entry-actions"><button class="entry-action-btn" onclick="event.stopPropagation();sendEntryToAI(this)" title="Ask AI about this">✨ Ask AI</button><button class="entry-action-btn" onclick="event.stopPropagation();editTranscriptEntry(this)" title="Edit">✎ Edit</button><button class="entry-action-btn" style="color:var(--red);border-color:rgba(255,80,80,0.3)" onclick="event.stopPropagation();deleteTranscriptEntry(this)" title="Delete">✕</button></div>`;
+  // Populate voice-assign chips for system entries using current participants
+  if (isSystem) {
+    _renderVoiceChips(div, speakerName);
+    if (!speakerName) div.classList.add('unassigned-system');
+  }
   // Bind rename click on the speaker name span
   div.querySelector('.speaker-name-editable').addEventListener('click', e => { e.stopPropagation(); _startSpeakerRename(e.currentTarget, type); });
   div.querySelector('.entry-select-cb').addEventListener('click', e => { e.stopPropagation(); toggleEntrySelection(div); });
@@ -4035,6 +4141,9 @@ if (SESSION_TYPE === 'meeting') {
   }
 
   function renderParticipants() {
+    // Sync global voice participants so transcript chips stay up to date
+    _voiceParticipants = participants.map(p => ({ id: p.id, name: p.name, color: p.color }));
+    _refreshAllVoiceChips();
     const list = document.getElementById('participantsList');
     const speakerBtns = document.getElementById('speakerBtnList');
     list.innerHTML = '';
@@ -4214,8 +4323,15 @@ if (SESSION_TYPE === 'meeting') {
   // Use variable assignment (not function declaration) to avoid V8 block-function hoisting
   const _origAddTranscriptEntryUI = addTranscriptEntryUI;
   addTranscriptEntryUI = function(text, type, speakerName) {
-    speakerName = speakerName || getActiveSpeakerName();
+    const autoName = (type === 'system' && !speakerName) ? getActiveSpeakerName() : '';
+    if (autoName) speakerName = autoName;
     _origAddTranscriptEntryUI(text, type, speakerName);
+    // Apply active speaker border color on freshly created system entry
+    if (type === 'system' && activeSpeaker) {
+      const entries = transcriptPanel.querySelectorAll('.transcript-entry.system');
+      const last = entries[entries.length - 1];
+      if (last) last.style.borderLeftColor = activeSpeaker.color;
+    }
   };
 
   // ── Zoom / expand panel ───────────────────────────────────────────────────
