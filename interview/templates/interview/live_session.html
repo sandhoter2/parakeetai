@@ -3347,6 +3347,16 @@ function closeMeetingAIDropdown() {
   document.getElementById('meetingAIDropdown')?.classList.remove('open');
 }
 document.addEventListener('click', e => { if (!e.target.closest('#meetingAISplitWrap')) closeMeetingAIDropdown(); });
+document.addEventListener('click', e => {
+  if (!e.target.closest('#mhBtn') && !e.target.closest('#fMhBtn') && !e.target.closest('#mhPanel')) {
+    const panel = document.getElementById('mhPanel');
+    const btn   = document.getElementById('mhBtn');
+    const fBtn  = document.getElementById('fMhBtn');
+    if (panel) panel.classList.remove('open');
+    if (btn)   btn.classList.remove('active');
+    if (fBtn)  fBtn.classList.remove('active');
+  }
+});
 
 // ── CONVERSATION INSIGHTS DROPDOWN ───────────────────────────────────────────
 const CONV_INSIGHT_TYPES = [
