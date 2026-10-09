@@ -3,25 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up — HappyHelper</title>
+  <title>Sign Up — PARAKEETAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0f1117;
-      --bg2: #1a1d27;
-      --bg3: #252836;
-      --border: #2e3147;
-      --accent: #6c63ff;
-      --accent2: #a78bfa;
-      --green: #34d399;
-      --red: #f87171;
-      --text: #e2e8f0;
-      --text2: #94a3b8;
-      --text3: #64748b;
-      --radius: 12px;
+      --bg:     #040b10;
+      --bg2:    #0a141c;
+      --bg3:    #111d27;
+      --border: #1a2d3d;
+      --accent: #00c8ff;
+      --accent2:#6c63ff;
+      --green:  #00ff9d;
+      --red:    #ff4757;
+      --yellow: #ffd32a;
+      --text:   #e0f2ff;
+      --text2:  #7ab0cc;
+      --text3:  #3d6880;
+      --mono:   'JetBrains Mono', monospace;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -30,69 +33,133 @@
       justify-content: center;
       font-size: 14px;
       line-height: 1.6;
+      position: relative;
+      overflow: hidden;
     }
-    .wrap { width: 100%; max-width: 420px; padding: 24px; }
-    .brand { text-align: center; margin-bottom: 36px; }
-    .brand-logo { font-size: 48px; display: block; margin-bottom: 12px; filter: drop-shadow(0 0 20px rgba(108,99,255,0.5)); }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, rgba(0,200,255,0.055) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none; z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 55% 45% at 15% 15%, rgba(0,200,255,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 45% 55% at 85% 85%, rgba(108,99,255,0.06) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+    .wrap {
+      width: 100%; max-width: 420px; padding: 24px;
+      position: relative; z-index: 1;
+    }
+    .brand { text-align: center; margin-bottom: 32px; }
+    .brand-mark-wrap {
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .brand-mark {
+      width: 60px; height: 60px; border-radius: 4px;
+      background: rgba(0,200,255,0.08);
+      border: 1px solid rgba(0,200,255,0.35);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      box-shadow: 0 0 24px rgba(0,200,255,0.2), 0 0 48px rgba(0,200,255,0.08);
+    }
     .brand-name {
-      font-size: 26px; font-weight: 800;
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      font-size: 20px; font-weight: 700; letter-spacing: 2px;
+      font-family: var(--mono); color: var(--accent);
+      text-shadow: 0 0 16px rgba(0,200,255,0.5);
     }
-    .brand-sub { font-size: 13px; color: var(--text3); margin-top: 4px; }
+    .brand-sub {
+      font-size: 11px; color: var(--text3); margin-top: 5px;
+      font-family: var(--mono); letter-spacing: 0.5px;
+    }
     .card {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 32px;
-      box-shadow: 0 4px 40px rgba(0,0,0,0.4);
+      background: rgba(10,20,28,0.85);
+      border: 1px solid var(--border);
+      border-radius: 4px; padding: 32px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,200,255,0.04) inset;
+      backdrop-filter: blur(12px);
+      position: relative; overflow: hidden;
     }
-    .card-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-    .card-sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--green) 50%, transparent);
+    }
+    .card-title {
+      font-size: 16px; font-weight: 700; margin-bottom: 4px;
+      font-family: var(--mono); color: var(--accent);
+    }
+    .card-title::before { content: '// '; opacity: 0.5; }
+    .card-sub {
+      font-size: 12px; color: var(--text3); margin-bottom: 24px;
+      font-family: var(--mono);
+    }
     .form-group { margin-bottom: 18px; }
     .form-group label {
-      display: block; font-size: 12px; font-weight: 600; color: var(--text2);
-      margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+      display: block; font-size: 10px; font-weight: 600; color: var(--text3);
+      margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;
+      font-family: var(--mono);
     }
     .form-control {
-      width: 100%; background: var(--bg3); border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px;
-      outline: none; transition: border-color 0.15s, box-shadow 0.15s; font-family: inherit;
+      width: 100%; background: rgba(0,200,255,0.03);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 10px 14px; color: var(--text); font-size: 14px;
+      outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+      font-family: inherit;
     }
-    .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,99,255,0.15); }
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(0,200,255,0.12);
+    }
     .form-control::placeholder { color: var(--text3); }
+    .hint-text { font-size: 10px; color: var(--text3); margin-top: 5px; font-family: var(--mono); }
     .error-box {
-      background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
-      border-radius: 8px; padding: 10px 14px; color: var(--red);
-      font-size: 13px; margin-bottom: 18px; white-space: pre-line;
+      background: rgba(255,71,87,0.07); border: 1px solid rgba(255,71,87,0.25);
+      border-radius: 4px; padding: 10px 14px; color: var(--red);
+      font-size: 12px; margin-bottom: 18px; white-space: pre-line;
+      font-family: var(--mono);
     }
-    .hint-text { font-size: 11px; color: var(--text3); margin-top: 5px; }
     .btn-signup {
       width: 100%; padding: 12px;
-      background: linear-gradient(135deg, var(--green), #059669);
-      color: #fff; border: none; border-radius: 8px; font-size: 15px;
-      font-weight: 600; cursor: pointer; transition: all 0.15s; margin-top: 4px;
+      background: linear-gradient(135deg, rgba(0,255,157,0.15), rgba(0,200,255,0.1));
+      color: var(--green); border: 1px solid var(--green);
+      border-radius: 4px; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; margin-top: 4px;
+      letter-spacing: 1.5px; font-family: var(--mono); text-transform: uppercase;
+      box-shadow: 0 0 12px rgba(0,255,157,0.12);
     }
-    .btn-signup:hover { box-shadow: 0 4px 16px rgba(52,211,153,0.35); transform: translateY(-1px); }
-    .btn-signup:active { transform: translateY(0); }
+    .btn-signup:hover {
+      box-shadow: 0 0 24px rgba(0,255,157,0.25);
+      background: linear-gradient(135deg, rgba(0,255,157,0.22), rgba(0,200,255,0.15));
+    }
+    .btn-signup:active { transform: scale(0.99); }
     .divider { height: 1px; background: var(--border); margin: 24px 0; }
-    .hint { text-align: center; font-size: 12px; color: var(--text3); }
-    .hint a { color: var(--accent2); text-decoration: none; }
+    .hint { text-align: center; font-size: 12px; color: var(--text3); font-family: var(--mono); }
+    .hint a { color: var(--accent); font-weight: 600; text-decoration: none; }
     .hint a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="brand">
-      <span class="brand-logo">😊</span>
-      <div class="brand-name">HappyHelper</div>
-      <div class="brand-sub">Create your private workspace</div>
+      <div class="brand-mark-wrap">
+        <div class="brand-mark">🤖</div>
+      </div>
+      <div class="brand-name">PARAKEETAI</div>
+      <div class="brand-sub">// create your private workspace</div>
     </div>
 
     <div class="card">
-      <div class="card-title">Create account</div>
-      <div class="card-sub">Your sessions and data are private to you</div>
+      <div class="card-title">CREATE ACCOUNT</div>
+      <div class="card-sub">your sessions and data are private to you</div>
 
       {% if error %}
-      <div class="error-box">{{ error }}</div>
+      <div class="error-box"><span>⚠ </span>{{ error }}</div>
       {% endif %}
 
       <form method="post">
@@ -101,24 +168,24 @@
         <div class="form-group">
           <label for="id_username">Username</label>
           <input type="text" id="id_username" name="username" class="form-control"
-                 placeholder="Choose a username" autocomplete="username" autofocus
+                 placeholder="choose a username" autocomplete="username" autofocus
                  value="{{ form.data.username|default:'' }}">
         </div>
 
         <div class="form-group">
           <label for="id_password1">Password</label>
           <input type="password" id="id_password1" name="password1" class="form-control"
-                 placeholder="Create a strong password" autocomplete="new-password">
-          <div class="hint-text">Min 8 characters, not entirely numeric</div>
+                 placeholder="create a strong password" autocomplete="new-password">
+          <div class="hint-text">// min 8 chars, not entirely numeric</div>
         </div>
 
         <div class="form-group">
           <label for="id_password2">Confirm Password</label>
           <input type="password" id="id_password2" name="password2" class="form-control"
-                 placeholder="Repeat your password" autocomplete="new-password">
+                 placeholder="repeat your password" autocomplete="new-password">
         </div>
 
-        <button type="submit" class="btn-signup">Create Account</button>
+        <button type="submit" class="btn-signup">▶ Create Account</button>
       </form>
 
       <div class="divider"></div>

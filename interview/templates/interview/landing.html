@@ -3,263 +3,386 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ParakeetAI — AI Assistant for Interviews & Meetings</title>
+  <title>PARAKEETAI — AI Assistant for Interviews &amp; Meetings</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0d0f18;
-      --bg2: #1a1d27;
-      --bg3: #252836;
-      --border: #2e3147;
-      --accent: #6c63ff;
-      --accent2: #a78bfa;
-      --green: #34d399;
-      --red: #f87171;
-      --yellow: #fbbf24;
-      --text: #e2e8f0;
-      --text2: #94a3b8;
-      --text3: #64748b;
-      --radius: 12px;
+      --bg:    #040b10;
+      --bg2:   #0a141c;
+      --bg3:   #111d27;
+      --border:#1a2d3d;
+      --accent:#00c8ff;
+      --accent2:#6c63ff;
+      --green: #00ff9d;
+      --red:   #ff4757;
+      --yellow:#ffd32a;
+      --text:  #e0f2ff;
+      --text2: #7ab0cc;
+      --text3: #3d6880;
+      --mono:  'JetBrains Mono', monospace;
+      --radius:4px;
     }
     html { scroll-behavior: smooth; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
       font-size: 15px;
       line-height: 1.6;
       overflow-x: hidden;
+      position: relative;
     }
+    /* Robot dot grid */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, rgba(0,200,255,0.055) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    /* Cyan glow blobs */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 0%, rgba(0,200,255,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 80% 100%, rgba(108,99,255,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    * { position: relative; z-index: 1; }
 
     /* ── NAV ── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(15,17,23,0.85);
-      backdrop-filter: blur(12px);
+      background: rgba(4,11,16,0.88);
+      backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border);
       padding: 0 24px;
       height: 60px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; }
-    .nav-logo .logo-icon { font-size: 24px; }
+    nav::after {
+      content: ''; position: absolute; bottom: -1px; left: 0;
+      width: 120px; height: 1px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 16px;
+      font-family: var(--mono);
+      color: var(--accent);
+      text-shadow: 0 0 14px rgba(0,200,255,0.4);
+      letter-spacing: 1.5px;
+    }
+    .nav-logo .logo-icon {
+      width: 32px; height: 32px; border-radius: var(--radius);
+      background: rgba(0,200,255,0.1);
+      border: 1px solid rgba(0,200,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
     .nav-links { display: flex; align-items: center; gap: 8px; }
-    .nav-link { color: var(--text2); text-decoration: none; padding: 7px 14px; border-radius: 8px; font-size: 14px; transition: all 0.15s; }
-    .nav-link:hover { color: var(--text); background: var(--bg3); }
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.15s; border: none; }
-    .btn-primary { background: linear-gradient(135deg, var(--accent), #5a52e0); color: #fff; }
-    .btn-primary:hover { background: linear-gradient(135deg, #7b72ff, var(--accent)); box-shadow: 0 4px 20px rgba(108,99,255,0.35); transform: translateY(-1px); }
-    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
-    .btn-ghost:hover { border-color: var(--accent2); color: var(--text); }
+    .nav-link {
+      color: var(--text2); text-decoration: none;
+      padding: 7px 14px; border-radius: var(--radius);
+      font-size: 13px; font-family: var(--mono);
+      transition: color 0.15s;
+    }
+    .nav-link:hover { color: var(--accent); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 20px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      text-decoration: none; transition: all 0.15s;
+      font-family: var(--mono); letter-spacing: 0.5px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(0,200,255,0.18), rgba(108,99,255,0.18));
+      color: var(--accent); border: 1px solid var(--accent);
+      box-shadow: 0 0 12px rgba(0,200,255,0.15);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, rgba(0,200,255,0.28), rgba(108,99,255,0.22));
+      box-shadow: 0 0 24px rgba(0,200,255,0.3);
+    }
+    .btn-ghost {
+      background: transparent; color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
 
     /* ── SECTIONS ── */
     section { padding: 100px 24px; }
     .container { max-width: 1100px; margin: 0 auto; }
 
     /* ── HERO ── */
-    .hero { padding-top: 140px; padding-bottom: 100px; text-align: center; position: relative; overflow: hidden; }
-    .hero::before {
-      content: '';
-      position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
-      width: 800px; height: 800px;
-      background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%);
-      pointer-events: none;
-    }
+    .hero { padding-top: 140px; padding-bottom: 100px; text-align: center; }
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.3);
-      border-radius: 100px; padding: 6px 16px; font-size: 13px; color: var(--accent2);
-      margin-bottom: 28px;
+      background: rgba(0,200,255,0.08); border: 1px solid rgba(0,200,255,0.25);
+      border-radius: var(--radius); padding: 6px 16px;
+      font-size: 12px; color: var(--accent); margin-bottom: 28px;
+      font-family: var(--mono); letter-spacing: 0.5px;
     }
-    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    .hero-badge .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); animation: pulse 2s infinite;
+      box-shadow: 0 0 6px var(--green);
+    }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     .hero h1 {
       font-size: clamp(36px, 6vw, 68px);
-      font-weight: 900;
-      line-height: 1.1;
-      letter-spacing: -1.5px;
-      margin-bottom: 24px;
+      font-weight: 900; line-height: 1.1;
+      letter-spacing: -1.5px; margin-bottom: 24px;
     }
     .hero h1 .grad {
-      background: linear-gradient(135deg, #fff 30%, var(--accent2));
+      background: linear-gradient(135deg, #fff 30%, var(--accent));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
     .hero h1 .grad2 {
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    .hero-sub { font-size: 19px; color: var(--text2); max-width: 560px; margin: 0 auto 40px; line-height: 1.7; }
+    .hero-sub { font-size: 18px; color: var(--text2); max-width: 540px; margin: 0 auto 40px; line-height: 1.7; }
     .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
-    .btn-lg { padding: 14px 32px; font-size: 16px; border-radius: 10px; }
-    .hero-social { display: flex; align-items: center; justify-content: center; gap: 20px; color: var(--text3); font-size: 13px; }
+    .btn-lg { padding: 14px 32px; font-size: 14px; }
+    .hero-social { display: flex; align-items: center; justify-content: center; gap: 20px; color: var(--text3); font-size: 13px; font-family: var(--mono); }
     .hero-social span { display: flex; align-items: center; gap: 6px; }
     .avatar-stack { display: flex; }
-    .avatar-stack img, .avatar-stack .av { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bg); }
-    .avatar-stack .av { background: linear-gradient(135deg, var(--accent), var(--accent2)); font-size: 12px; font-weight: 700; color: #fff; display: flex; align-items: center; justify-content: center; }
-    .avatar-stack .av:not(:first-child) { margin-left: -8px; }
-
-    /* Product screenshot */
-    .hero-preview {
-      position: relative; max-width: 900px; margin: 0 auto;
+    .av {
+      width: 28px; height: 28px; border-radius: var(--radius);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff;
+      background: rgba(0,200,255,0.15);
     }
+    .av:not(:first-child) { margin-left: -6px; }
+
+    /* Product preview */
+    .hero-preview { position: relative; max-width: 860px; margin: 0 auto; }
     .preview-frame {
       background: var(--bg2);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: var(--radius);
       overflow: hidden;
-      box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(108,99,255,0.1);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,200,255,0.06);
     }
     .preview-bar {
       background: var(--bg3); border-bottom: 1px solid var(--border);
-      padding: 12px 16px; display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px; display: flex; align-items: center; gap: 8px;
     }
     .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
     .preview-url {
-      flex: 1; text-align: center; font-size: 12px; color: var(--text3);
-      background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+      flex: 1; text-align: center; font-size: 11px; color: var(--text3);
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
       padding: 3px 12px; max-width: 220px; margin: 0 auto;
+      font-family: var(--mono);
     }
-    .preview-body { padding: 28px 32px; min-height: 280px; position: relative; }
+    .preview-body { padding: 24px 28px; min-height: 260px; }
     .preview-chip {
       display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2);
-      border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--green);
-      margin-bottom: 16px;
+      background: rgba(0,255,157,0.08); border: 1px solid rgba(0,255,157,0.2);
+      border-radius: var(--radius); padding: 4px 10px;
+      font-size: 11px; color: var(--green); margin-bottom: 16px;
+      font-family: var(--mono);
     }
     .preview-transcript { display: flex; flex-direction: column; gap: 10px; }
     .t-line { display: flex; gap: 10px; }
-    .t-speaker { font-size: 11px; color: var(--accent2); font-weight: 600; min-width: 60px; padding-top: 3px; }
-    .t-text { font-size: 13px; color: var(--text2); background: var(--bg3); border-radius: 8px; padding: 8px 12px; flex: 1; }
-    .t-text.ai { background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.2); color: var(--text); }
-    .t-label { font-size: 10px; color: var(--accent2); margin-bottom: 3px; font-weight: 700; letter-spacing: 0.5px; }
+    .t-speaker { font-size: 11px; color: var(--accent); font-weight: 600; min-width: 70px; padding-top: 3px; font-family: var(--mono); }
+    .t-text { font-size: 13px; color: var(--text2); background: var(--bg3); border-radius: var(--radius); padding: 8px 12px; flex: 1; }
+    .t-text.ai {
+      background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.25);
+      color: var(--text); position: relative; overflow: hidden;
+    }
+    .t-text.ai::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, var(--accent2), transparent);
+    }
+    .t-label { font-size: 10px; color: var(--accent); margin-bottom: 4px; font-weight: 700; letter-spacing: 0.5px; font-family: var(--mono); }
+    .t-label::before { content: '// '; opacity: 0.5; }
 
     /* ── LOGOS STRIP ── */
-    .logos { padding: 40px 24px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .logos { padding: 36px 24px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
     .logos-inner { max-width: 900px; margin: 0 auto; text-align: center; }
-    .logos p { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+    .logos p { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; font-family: var(--mono); }
     .logos-row { display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; }
-    .logo-item { font-size: 14px; font-weight: 700; color: var(--text3); letter-spacing: 0.5px; opacity: 0.6; }
+    .logo-item { font-size: 13px; font-weight: 700; color: var(--text3); letter-spacing: 1px; font-family: var(--mono); opacity: 0.55; }
 
     /* ── HOW IT WORKS ── */
-    .section-tag { font-size: 12px; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-    .section-title { font-size: clamp(28px, 4vw, 42px); font-weight: 800; line-height: 1.2; margin-bottom: 16px; }
-    .section-sub { font-size: 17px; color: var(--text2); max-width: 500px; margin-bottom: 60px; line-height: 1.7; }
-    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    .section-tag {
+      font-size: 11px; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;
+      font-family: var(--mono);
+    }
+    .section-tag::before { content: '// '; opacity: 0.5; }
+    .section-title { font-size: clamp(26px, 4vw, 40px); font-weight: 800; line-height: 1.2; margin-bottom: 14px; }
+    .section-sub { font-size: 16px; color: var(--text2); max-width: 500px; margin-bottom: 56px; line-height: 1.7; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
     .step {
       background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 32px; position: relative; transition: border-color 0.2s, transform 0.2s;
+      padding: 28px; position: relative; transition: border-color 0.2s;
+      overflow: hidden;
     }
-    .step:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .step::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .step:hover { border-color: rgba(0,200,255,0.35); }
+    .step:hover::before { opacity: 1; }
     .step-num {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent), #5a52e0);
-      color: #fff; font-weight: 800; font-size: 14px;
+      width: 34px; height: 34px; border-radius: var(--radius);
+      background: rgba(0,200,255,0.1); border: 1px solid rgba(0,200,255,0.3);
+      color: var(--accent); font-weight: 800; font-size: 14px;
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 18px;
+      margin-bottom: 16px; font-family: var(--mono);
     }
-    .step h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .step h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; font-family: var(--mono); }
     .step p { color: var(--text2); font-size: 14px; line-height: 1.7; }
-    .step-connector {
-      position: absolute; top: 50px; right: -28px;
-      color: var(--border); font-size: 24px; z-index: 1;
-    }
 
     /* ── FEATURES ── */
-    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
     .feat {
       background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 28px; transition: all 0.2s;
+      padding: 26px; transition: border-color 0.2s; position: relative; overflow: hidden;
     }
-    .feat:hover { border-color: rgba(108,99,255,0.4); box-shadow: 0 4px 24px rgba(108,99,255,0.08); }
-    .feat-icon { font-size: 32px; margin-bottom: 16px; }
-    .feat h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
-    .feat p { color: var(--text2); font-size: 14px; line-height: 1.7; }
-    .feat-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-top: 12px; }
-    .badge-new { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
-    .badge-pro { background: rgba(167,139,250,0.1); color: var(--accent2); border: 1px solid rgba(167,139,250,0.2); }
+    .feat::after {
+      content: ''; position: absolute; bottom: 0; left: 0; width: 50px; height: 1px;
+      background: var(--accent); opacity: 0; transition: opacity 0.2s;
+    }
+    .feat:hover { border-color: rgba(0,200,255,0.3); }
+    .feat:hover::after { opacity: 1; }
+    .feat-icon { font-size: 28px; margin-bottom: 14px; }
+    .feat h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; font-family: var(--mono); }
+    .feat p { color: var(--text2); font-size: 13px; line-height: 1.7; }
+    .feat-badge {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: var(--radius); margin-top: 12px;
+      font-family: var(--mono); letter-spacing: 0.5px;
+    }
+    .badge-new { background: rgba(0,255,157,0.08); color: var(--green); border: 1px solid rgba(0,255,157,0.2); }
+    .badge-pro { background: rgba(108,99,255,0.1); color: var(--accent2); border: 1px solid rgba(108,99,255,0.2); }
 
     /* ── TESTIMONIALS ── */
-    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
     .testi {
-      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 26px; position: relative; overflow: hidden;
     }
-    .testi-stars { color: var(--yellow); font-size: 14px; margin-bottom: 14px; letter-spacing: 2px; }
-    .testi-text { color: var(--text2); font-size: 14px; line-height: 1.8; margin-bottom: 20px; font-style: italic; }
+    .testi::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border) 50%, transparent);
+    }
+    .testi-stars { color: var(--yellow); font-size: 13px; margin-bottom: 12px; letter-spacing: 2px; }
+    .testi-text { color: var(--text2); font-size: 13px; line-height: 1.8; margin-bottom: 18px; }
+    .testi-text::before { content: '"'; color: var(--accent); opacity: 0.4; font-size: 18px; }
     .testi-author { display: flex; align-items: center; gap: 12px; }
-    .testi-av { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 16px; }
-    .testi-name { font-weight: 700; font-size: 14px; }
-    .testi-role { font-size: 12px; color: var(--text3); }
+    .testi-av {
+      width: 36px; height: 36px; border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: #fff; font-size: 14px;
+      font-family: var(--mono); border: 1px solid var(--border);
+    }
+    .testi-name { font-weight: 700; font-size: 13px; font-family: var(--mono); color: var(--text); }
+    .testi-role { font-size: 11px; color: var(--text3); font-family: var(--mono); }
 
-    /* ── PRICING (inline) ── */
-    .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; }
+    /* ── PRICING ── */
+    .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; max-width: 920px; margin: 0 auto; }
     .plan {
       background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 32px; position: relative;
+      padding: 30px; position: relative; overflow: hidden;
     }
-    .plan.popular {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent), 0 8px 40px rgba(108,99,255,0.2);
+    .plan::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border) 50%, transparent);
     }
+    .plan.popular { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(0,200,255,0.15), 0 0 40px rgba(0,200,255,0.06); }
+    .plan.popular::before { background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent); }
     .plan-badge {
       position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-      background: linear-gradient(135deg, var(--accent), #5a52e0);
-      color: #fff; font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 100px;
-      white-space: nowrap;
+      background: var(--accent); color: var(--bg);
+      font-size: 10px; font-weight: 700; padding: 3px 14px; border-radius: var(--radius);
+      white-space: nowrap; font-family: var(--mono); letter-spacing: 1px;
     }
-    .plan-name { font-size: 14px; font-weight: 700; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .plan-name { font-size: 12px; font-weight: 700; color: var(--text3); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono); }
     .plan-price { display: flex; align-items: flex-end; gap: 4px; margin-bottom: 8px; }
-    .plan-amount { font-size: 48px; font-weight: 900; color: var(--text); line-height: 1; }
-    .plan-period { font-size: 14px; color: var(--text3); padding-bottom: 8px; }
-    .plan-desc { font-size: 13px; color: var(--text3); margin-bottom: 24px; }
-    .plan-features { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
-    .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text2); }
-    .plan-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .plan-amount { font-size: 44px; font-weight: 900; color: var(--text); line-height: 1; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    .plan-period { font-size: 13px; color: var(--text3); padding-bottom: 8px; font-family: var(--mono); }
+    .plan-desc { font-size: 12px; color: var(--text3); margin-bottom: 22px; font-family: var(--mono); }
+    .plan-features { list-style: none; margin-bottom: 26px; display: flex; flex-direction: column; gap: 9px; }
+    .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text2); }
+    .plan-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; font-family: var(--mono); }
     .plan-features li.off { color: var(--text3); }
     .plan-features li.off::before { content: '×'; color: var(--text3); }
-    .plan-cta { display: block; width: 100%; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 15px; text-decoration: none; transition: all 0.15s; }
-    .plan-cta-primary { background: linear-gradient(135deg, var(--accent), #5a52e0); color: #fff; border: none; cursor: pointer; }
-    .plan-cta-primary:hover { box-shadow: 0 4px 20px rgba(108,99,255,0.4); transform: translateY(-1px); }
+    .plan-cta {
+      display: block; width: 100%; padding: 11px; border-radius: var(--radius);
+      text-align: center; font-weight: 700; font-size: 13px;
+      text-decoration: none; transition: all 0.15s;
+      font-family: var(--mono); letter-spacing: 0.5px;
+    }
+    .plan-cta-primary {
+      background: linear-gradient(135deg, rgba(0,200,255,0.18), rgba(108,99,255,0.18));
+      color: var(--accent); border: 1px solid var(--accent);
+      box-shadow: 0 0 16px rgba(0,200,255,0.18);
+    }
+    .plan-cta-primary:hover { box-shadow: 0 0 28px rgba(0,200,255,0.3); }
     .plan-cta-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); cursor: pointer; }
-    .plan-cta-ghost:hover { border-color: var(--accent2); color: var(--text); }
+    .plan-cta-ghost:hover { border-color: var(--accent); color: var(--text); }
 
     /* ── CTA BAND ── */
     .cta-band {
-      background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(167,139,250,0.1));
-      border: 1px solid rgba(108,99,255,0.2);
-      border-radius: 20px; padding: 64px; text-align: center; margin: 0 24px;
+      background: linear-gradient(135deg, rgba(0,200,255,0.06), rgba(108,99,255,0.06));
+      border: 1px solid rgba(0,200,255,0.18);
+      border-radius: var(--radius); padding: 64px; text-align: center; margin: 0 24px;
       position: relative; overflow: hidden;
     }
     .cta-band::before {
-      content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
-      width: 600px; height: 400px;
-      background: radial-gradient(circle, rgba(108,99,255,0.2) 0%, transparent 70%);
-      pointer-events: none;
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
     }
-    .cta-band h2 { font-size: clamp(26px, 4vw, 42px); font-weight: 800; margin-bottom: 16px; }
-    .cta-band p { font-size: 17px; color: var(--text2); margin-bottom: 36px; }
+    .cta-band h2 { font-size: clamp(24px, 4vw, 38px); font-weight: 800; margin-bottom: 14px; font-family: var(--mono); }
+    .cta-band h2::before { content: '// '; color: var(--accent); opacity: 0.5; }
+    .cta-band p { font-size: 16px; color: var(--text2); margin-bottom: 34px; }
     .cta-band .btn-pair { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 
     /* ── FOOTER ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 48px 24px; margin-top: 80px;
-    }
+    footer { border-top: 1px solid var(--border); padding: 48px 24px; margin-top: 80px; }
     .footer-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; }
-    .footer-brand { }
-    .footer-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; margin-bottom: 12px; }
-    .footer-desc { font-size: 13px; color: var(--text3); line-height: 1.7; max-width: 240px; }
-    .footer-col h4 { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .footer-col a { display: block; font-size: 13px; color: var(--text3); text-decoration: none; margin-bottom: 8px; transition: color 0.15s; }
-    .footer-col a:hover { color: var(--text); }
-    .footer-bottom { max-width: 1100px; margin: 32px auto 0; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text3); }
+    .footer-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 15px; margin-bottom: 12px;
+      font-family: var(--mono); color: var(--accent); letter-spacing: 1px;
+    }
+    .footer-logo .logo-icon {
+      width: 28px; height: 28px; border-radius: var(--radius);
+      background: rgba(0,200,255,0.1); border: 1px solid rgba(0,200,255,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .footer-desc { font-size: 12px; color: var(--text3); line-height: 1.7; max-width: 220px; font-family: var(--mono); }
+    .footer-col h4 {
+      font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 14px;
+      text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono);
+    }
+    .footer-col h4::before { content: '// '; opacity: 0.4; }
+    .footer-col a { display: block; font-size: 12px; color: var(--text3); text-decoration: none; margin-bottom: 8px; font-family: var(--mono); transition: color 0.15s; }
+    .footer-col a:hover { color: var(--accent); }
+    .footer-bottom {
+      max-width: 1100px; margin: 32px auto 0; padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; color: var(--text3); font-family: var(--mono);
+    }
 
     @media (max-width: 768px) {
       .footer-inner { grid-template-columns: 1fr 1fr; }
       .nav-links .nav-link { display: none; }
       .hero h1 { letter-spacing: -0.5px; }
-      .cta-band { padding: 40px 24px; margin: 0; border-radius: 0; border-left: none; border-right: none; }
+      .cta-band { padding: 40px 20px; margin: 0; border-left: none; border-right: none; border-radius: 0; }
     }
   </style>
 </head>
@@ -268,15 +391,15 @@
 <!-- NAV -->
 <nav>
   <div class="nav-logo">
-    <span class="logo-icon">😊</span>
-    <span>HappyHelper</span>
+    <span class="logo-icon">🤖</span>
+    PARAKEETAI
   </div>
   <div class="nav-links">
-    <a href="#how-it-works" class="nav-link">How it works</a>
-    <a href="#features" class="nav-link">Features</a>
-    <a href="/pricing/" class="nav-link">Pricing</a>
+    <a href="#how-it-works" class="nav-link">// how it works</a>
+    <a href="#features" class="nav-link">// features</a>
+    <a href="/pricing/" class="nav-link">// pricing</a>
     <a href="/login/" class="btn btn-ghost" style="margin-left:8px">Sign in</a>
-    <a href="/signup/" class="btn btn-primary">Get started free</a>
+    <a href="/signup/" class="btn btn-primary">▶ Get started</a>
   </div>
 </nav>
 
@@ -285,25 +408,25 @@
   <div class="container">
     <div class="hero-badge">
       <span class="dot"></span>
-      Now with real-time AI coaching
+      Real-time AI coaching — live in session
     </div>
     <h1>
       <span class="grad">Ace every interview</span><br>
       <span class="grad2">&amp; meeting with AI</span>
     </h1>
     <p class="hero-sub">
-      HappyHelper listens, transcribes, and whispers smart answers in real time — so you always sound sharp, prepared, and confident.
+      PARAKEETAI listens, transcribes, and delivers smart answers in real time — so you always sound sharp, prepared, and confident.
     </p>
     <div class="hero-ctas">
-      <a href="/signup/" class="btn btn-primary btn-lg">Start for free — no card needed</a>
+      <a href="/signup/" class="btn btn-primary btn-lg">▶ Start free — no card needed</a>
       <a href="#how-it-works" class="btn btn-ghost btn-lg">See how it works</a>
     </div>
     <div class="hero-social">
       <div class="avatar-stack">
         <div class="av">S</div>
-        <div class="av" style="background:linear-gradient(135deg,#34d399,#059669)">J</div>
-        <div class="av" style="background:linear-gradient(135deg,#f87171,#dc2626)">M</div>
-        <div class="av" style="background:linear-gradient(135deg,#fbbf24,#d97706)">K</div>
+        <div class="av" style="background:rgba(0,255,157,0.15);border-color:rgba(0,255,157,0.25)">J</div>
+        <div class="av" style="background:rgba(255,71,87,0.15);border-color:rgba(255,71,87,0.25)">M</div>
+        <div class="av" style="background:rgba(255,211,42,0.15);border-color:rgba(255,211,42,0.25)">K</div>
       </div>
       <span>★ 4.9 / 5 · Trusted by 2,000+ professionals</span>
     </div>
@@ -315,26 +438,26 @@
           <div class="preview-dot" style="background:#ff5f57"></div>
           <div class="preview-dot" style="background:#febc2e"></div>
           <div class="preview-dot" style="background:#28c840"></div>
-          <div class="preview-url">app.happyhelper.ai</div>
+          <div class="preview-url">app.parakeetai.com/session/live</div>
         </div>
         <div class="preview-body">
           <div class="preview-chip">
-            <span>●</span> Live session — 12:34
+            <span>●</span> LIVE SESSION — 12:34
           </div>
           <div class="preview-transcript">
             <div class="t-line">
-              <div class="t-speaker">Interviewer</div>
+              <div class="t-speaker">INTERVIEW</div>
               <div class="t-text">Tell me about a time you led a cross-functional team under tight deadlines.</div>
             </div>
             <div class="t-line">
-              <div class="t-speaker" style="color:var(--text2)">You</div>
+              <div class="t-speaker" style="color:var(--text2)">YOU</div>
               <div class="t-text">Sure, at my last role we had a product launch…</div>
             </div>
             <div class="t-line">
-              <div class="t-speaker" style="color:var(--green)">AI ✦</div>
+              <div class="t-speaker" style="color:var(--accent2)">AI ✦</div>
               <div class="t-text ai">
                 <div class="t-label">SUGGESTED ANSWER</div>
-                Use the STAR framework — highlight the cross-team dependency and your specific decision that unblocked the timeline. Mention measurable outcome (shipped 3 days early, 98% uptime).
+                Use STAR framework — highlight cross-team dependency and your specific decision that unblocked the timeline. Mention measurable outcome (shipped 3 days early, 98% uptime).
               </div>
             </div>
           </div>
@@ -347,14 +470,14 @@
 <!-- LOGOS -->
 <div class="logos">
   <div class="logos-inner">
-    <p>Used by professionals at</p>
+    <p>// used by professionals at</p>
     <div class="logos-row">
-      <span class="logo-item">Google</span>
-      <span class="logo-item">Amazon</span>
-      <span class="logo-item">Stripe</span>
-      <span class="logo-item">Shopify</span>
-      <span class="logo-item">Notion</span>
-      <span class="logo-item">Figma</span>
+      <span class="logo-item">GOOGLE</span>
+      <span class="logo-item">AMAZON</span>
+      <span class="logo-item">STRIPE</span>
+      <span class="logo-item">SHOPIFY</span>
+      <span class="logo-item">NOTION</span>
+      <span class="logo-item">FIGMA</span>
     </div>
   </div>
 </div>
@@ -362,24 +485,24 @@
 <!-- HOW IT WORKS -->
 <section id="how-it-works">
   <div class="container">
-    <div class="section-tag">How it works</div>
+    <div class="section-tag">HOW IT WORKS</div>
     <h2 class="section-title">Live AI coaching in 3 steps</h2>
-    <p class="section-sub">No complex setup. Open HappyHelper, start a session, and get real-time suggestions as the conversation flows.</p>
+    <p class="section-sub">No complex setup. Open PARAKEETAI, start a session, and get real-time suggestions as the conversation flows.</p>
     <div class="steps">
       <div class="step">
-        <div class="step-num">1</div>
-        <h3>Set your session context</h3>
-        <p>Tell HappyHelper the role, company, and your background. It primes the AI with your goals so suggestions are specific and relevant — not generic.</p>
+        <div class="step-num">01</div>
+        <h3>Init session context</h3>
+        <p>Tell PARAKEETAI the role, company, and your background. It primes the AI with your goals so suggestions are specific and relevant — not generic.</p>
       </div>
       <div class="step">
-        <div class="step-num">2</div>
+        <div class="step-num">02</div>
         <h3>Speak naturally</h3>
-        <p>The built-in Whisper transcription picks up everything in real time. You see a live transcript with speaker labels — no manual note-taking.</p>
+        <p>Built-in Whisper transcription picks up everything in real time. See a live transcript with speaker labels — no manual note-taking required.</p>
       </div>
       <div class="step">
-        <div class="step-num">3</div>
-        <h3>Get instant AI answers</h3>
-        <p>The moment a question is detected, HappyHelper generates a tailored answer using your background context. One click sends it to the browser extension overlay only you can see.</p>
+        <div class="step-num">03</div>
+        <h3>Receive AI answers</h3>
+        <p>The moment a question is detected, PARAKEETAI generates a tailored answer using your background context. One keystroke (Ctrl+Enter) triggers it.</p>
       </div>
     </div>
   </div>
@@ -388,7 +511,7 @@
 <!-- FEATURES -->
 <section id="features" style="padding-top:60px">
   <div class="container">
-    <div class="section-tag">Features</div>
+    <div class="section-tag">FEATURES</div>
     <h2 class="section-title">Everything you need to perform at your best</h2>
     <p class="section-sub">Built for interviews, consulting calls, discovery calls, and any high-stakes conversation.</p>
     <div class="features-grid">
@@ -400,7 +523,7 @@
       <div class="feat">
         <div class="feat-icon">🤖</div>
         <h3>Contextual AI answers</h3>
-        <p>HappyHelper knows your resume, the job description, and the company. Answers are grounded in your actual experience — not hallucinated fluff.</p>
+        <p>PARAKEETAI knows your resume, the job description, and the company. Answers are grounded in your actual experience — not hallucinated fluff.</p>
         <span class="feat-badge badge-new">Most popular</span>
       </div>
       <div class="feat">
@@ -411,13 +534,13 @@
       <div class="feat">
         <div class="feat-icon">👥</div>
         <h3>Meeting mode</h3>
-        <p>Multi-speaker diarization tracks who said what. Perfect for client calls, 1:1s, and team standups. Export full meeting summaries in one click.</p>
+        <p>Multi-speaker tracking records who said what. Perfect for client calls, 1:1s, and team standups. Export full meeting summaries in one click.</p>
         <span class="feat-badge badge-pro">Pro</span>
       </div>
       <div class="feat">
         <div class="feat-icon">🔒</div>
         <h3>Private by design</h3>
-        <p>Your audio never leaves your device unencrypted. Sessions and transcripts are stored only in your own database — we see nothing.</p>
+        <p>Your audio never leaves your device unencrypted. Sessions and transcripts live only in your own database — we see nothing.</p>
       </div>
       <div class="feat">
         <div class="feat-icon">🧩</div>
@@ -431,14 +554,14 @@
 <!-- TESTIMONIALS -->
 <section style="padding-top:80px">
   <div class="container">
-    <div class="section-tag">Testimonials</div>
+    <div class="section-tag">TESTIMONIALS</div>
     <h2 class="section-title">What our users say</h2>
     <div class="testimonials-grid" style="margin-top:40px">
       <div class="testi">
         <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"I landed a senior engineer role at a FAANG after two rounds with HappyHelper. The STAR framework suggestions came exactly when I blanked. Game changer."</p>
+        <p class="testi-text">I landed a senior engineer role at a FAANG after two rounds with PARAKEETAI. The STAR framework suggestions came exactly when I blanked. Game changer.</p>
         <div class="testi-author">
-          <div class="testi-av" style="background:linear-gradient(135deg,var(--accent),#5a52e0)">S</div>
+          <div class="testi-av" style="background:rgba(0,200,255,0.12);border-color:rgba(0,200,255,0.25);color:var(--accent)">S</div>
           <div>
             <div class="testi-name">Sarah K.</div>
             <div class="testi-role">Senior Software Engineer</div>
@@ -447,9 +570,9 @@
       </div>
       <div class="testi">
         <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"I use it for every discovery call now. Having the conversation blueprint ready + live AI suggestions means I never miss a follow-up question."</p>
+        <p class="testi-text">I use it for every discovery call now. Having the conversation blueprint ready + live AI suggestions means I never miss a follow-up question.</p>
         <div class="testi-author">
-          <div class="testi-av" style="background:linear-gradient(135deg,#34d399,#059669)">J</div>
+          <div class="testi-av" style="background:rgba(0,255,157,0.1);border-color:rgba(0,255,157,0.2);color:var(--green)">J</div>
           <div>
             <div class="testi-name">James R.</div>
             <div class="testi-role">Account Executive, SaaS</div>
@@ -458,9 +581,9 @@
       </div>
       <div class="testi">
         <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"The meeting summary export alone saves me 45 minutes per client call. My notes used to be a mess — now they're structured and searchable."</p>
+        <p class="testi-text">The meeting summary export alone saves me 45 minutes per client call. My notes used to be a mess — now they're structured and searchable.</p>
         <div class="testi-author">
-          <div class="testi-av" style="background:linear-gradient(135deg,#fbbf24,#d97706)">M</div>
+          <div class="testi-av" style="background:rgba(255,211,42,0.1);border-color:rgba(255,211,42,0.2);color:var(--yellow)">M</div>
           <div>
             <div class="testi-name">Maya T.</div>
             <div class="testi-role">Product Manager</div>
@@ -474,14 +597,14 @@
 <!-- PRICING TEASER -->
 <section id="pricing" style="padding-top:80px">
   <div class="container" style="text-align:center">
-    <div class="section-tag">Pricing</div>
+    <div class="section-tag">PRICING</div>
     <h2 class="section-title">Start free, upgrade when you're ready</h2>
     <p class="section-sub" style="margin:0 auto 48px">No credit card required. Free plan never expires.</p>
     <div class="plans">
       <div class="plan">
-        <div class="plan-name">Free</div>
+        <div class="plan-name">FREE</div>
         <div class="plan-price"><span class="plan-amount">$0</span><span class="plan-period">/mo</span></div>
-        <div class="plan-desc">Perfect for occasional interview prep</div>
+        <div class="plan-desc">// perfect for occasional interview prep</div>
         <ul class="plan-features">
           <li>5 sessions / month</li>
           <li>Live transcription</li>
@@ -489,15 +612,15 @@
           <li>Session history (7 days)</li>
           <li class="off">Meeting mode</li>
           <li class="off">Conversation blueprint</li>
-          <li class="off">Export & summaries</li>
+          <li class="off">Export &amp; summaries</li>
         </ul>
         <a href="/signup/" class="plan-cta plan-cta-ghost">Get started free</a>
       </div>
       <div class="plan popular">
-        <div class="plan-badge">Most popular</div>
-        <div class="plan-name">Pro</div>
+        <div class="plan-badge">MOST POPULAR</div>
+        <div class="plan-name">PRO</div>
         <div class="plan-price"><span class="plan-amount">$19</span><span class="plan-period">/mo</span></div>
-        <div class="plan-desc">For active job seekers & sales professionals</div>
+        <div class="plan-desc">// for active job seekers &amp; sales pros</div>
         <ul class="plan-features">
           <li>Unlimited sessions</li>
           <li>Live transcription</li>
@@ -505,14 +628,14 @@
           <li>Unlimited history</li>
           <li>Meeting mode + diarization</li>
           <li>Conversation blueprint</li>
-          <li>Export & summaries</li>
+          <li>Export &amp; summaries</li>
         </ul>
-        <a href="/signup/" class="plan-cta plan-cta-primary">Start Pro free for 14 days</a>
+        <a href="/signup/" class="plan-cta plan-cta-primary">▶ Start Pro free for 14 days</a>
       </div>
       <div class="plan">
-        <div class="plan-name">Team</div>
+        <div class="plan-name">TEAM</div>
         <div class="plan-price"><span class="plan-amount">$49</span><span class="plan-period">/mo</span></div>
-        <div class="plan-desc">For recruiting teams & consulting firms</div>
+        <div class="plan-desc">// for recruiting teams &amp; consulting firms</div>
         <ul class="plan-features">
           <li>Everything in Pro</li>
           <li>Up to 10 seats</li>
@@ -525,9 +648,9 @@
         <a href="/signup/" class="plan-cta plan-cta-ghost">Contact sales</a>
       </div>
     </div>
-    <p style="margin-top:24px;font-size:13px;color:var(--text3)">
+    <p style="margin-top:24px;font-size:12px;color:var(--text3);font-family:var(--mono)">
       All plans include a <strong style="color:var(--text2)">14-day free trial</strong> of Pro features. Cancel anytime.
-      <a href="/pricing/" style="color:var(--accent2);text-decoration:none;margin-left:8px">See full comparison →</a>
+      <a href="/pricing/" style="color:var(--accent);text-decoration:none;margin-left:8px">// see full comparison →</a>
     </p>
   </div>
 </section>
@@ -536,9 +659,9 @@
 <section style="padding:60px 0">
   <div class="cta-band">
     <h2>Ready to walk in prepared?</h2>
-    <p>Join thousands of professionals who use HappyHelper to nail interviews and meetings.</p>
+    <p>Join thousands of professionals who use PARAKEETAI to nail interviews and meetings.</p>
     <div class="btn-pair">
-      <a href="/signup/" class="btn btn-primary btn-lg">Create your free account</a>
+      <a href="/signup/" class="btn btn-primary btn-lg">▶ Create your free account</a>
       <a href="/login/" class="btn btn-ghost btn-lg">Sign in</a>
     </div>
   </div>
@@ -548,8 +671,11 @@
 <footer>
   <div class="footer-inner">
     <div class="footer-brand">
-      <div class="footer-logo"><span>😊</span> HappyHelper</div>
-      <p class="footer-desc">AI-powered coaching for interviews, sales calls, and meetings. Always prepared, never caught off guard.</p>
+      <div class="footer-logo">
+        <span class="logo-icon">🤖</span>
+        PARAKEETAI
+      </div>
+      <p class="footer-desc">// AI-powered coaching for interviews, sales calls, and meetings. Always prepared, never caught off guard.</p>
     </div>
     <div class="footer-col">
       <h4>Product</h4>
@@ -572,8 +698,8 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 HappyHelper. All rights reserved.</span>
-    <span>Made with ☕ and AI</span>
+    <span>© 2026 PARAKEETAI. All rights reserved.</span>
+    <span>// built with ☕ and AI</span>
   </div>
 </footer>
 
