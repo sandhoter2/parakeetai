@@ -797,14 +797,14 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
   display:none; max-height:320px;
 }
 .ai-tpl-dropdown.open { display:flex; flex-direction:column; }
-#aiTplList, #meetingAITplList { overflow-y:auto; flex:1; }
+#aiTplList, #meetingAITplList, #convInsightList { overflow-y:auto; flex:1; }
 .ai-tpl-header {
   padding:8px 12px; font-size:9px; font-family:var(--mono); color:var(--text3);
   text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border);
   display:flex; align-items:center; justify-content:space-between;
 }
 .ai-tpl-item {
-  display:flex; align-items:flex-start; gap:10px; padding:9px 12px; cursor:pointer;
+  display:flex; align-items:flex-start; gap:8px; padding:6px 10px; cursor:pointer;
   transition:background 0.1s; border-bottom:1px solid rgba(255,255,255,0.03);
 }
 .ai-tpl-item:last-child { border-bottom:none; }
@@ -1441,7 +1441,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <div class="ai-split-wrap" id="convInsightWrap" style="position:relative;display:inline-flex;flex-shrink:0">
     <button class="tc-config-btn" id="convHelperBtn" onclick="triggerConvHelper()" title="Conversation insights — analyze the full session" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:#7c3aed;color:#fff;font-size:15px;border-radius:6px 0 0 6px;border-right:none;padding-right:4px">🧠</button>
     <button class="tc-config-btn" id="convInsightArrow" onclick="toggleConvInsightDropdown(event)" title="Choose insight type" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:#7c3aed;color:#fff;font-size:10px;padding:0 5px;border-radius:0 6px 6px 0;min-width:18px">▾</button>
-    <div class="ai-tpl-dropdown" id="convInsightDropdown" style="min-width:250px;max-height:320px">
+    <div class="ai-tpl-dropdown" id="convInsightDropdown" style="min-width:220px;max-height:240px">
       <div class="ai-tpl-header"><span>Insight Type</span></div>
       <div id="convInsightList"></div>
     </div>
