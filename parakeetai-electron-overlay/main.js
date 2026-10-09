@@ -250,6 +250,28 @@ ipcMain.handle('save-audio-chunk', async (_, { data, speakerType, timestamp }) =
   fs.writeFileSync(path.join(dir, `${speakerType}-${timestamp}.webm`), buf);
 });
 
+// Create a new session from the overlay
+ipcMain.handle('django-new-session', async (_, { baseUrl, token, title, company, role }) => {
+  const { net } = require('electron');
+  const url = `${baseUrl}/api/session/new/`;
+  return new Promise((resolve, reject) => {
+    const req = net.request({ method: 'POST', url });
+    req.setHeader('Content-Type', 'application/json');
+    req.setHeader('X-Ext-Token', token);
+    let body = '';
+    req.on('response', res => {
+      res.on('data', chunk => { body += chunk.toString(); });
+      res.on('end', () => {
+        try { resolve({ statusCode: res.statusCode, ...JSON.parse(body) }); }
+        catch { reject(new Error('Invalid JSON response')); }
+      });
+    });
+    req.on('error', reject);
+    req.write(JSON.stringify({ title, company, role }));
+    req.end();
+  });
+});
+
 // Fetch /api/config/ through main process — avoids renderer CORS restrictions
 ipcMain.handle('django-config', async (_, { baseUrl, token }) => {
   const { net } = require('electron');

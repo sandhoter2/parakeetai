@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('parakeet', {
   djangoTranscript:    (payload) => ipcRenderer.invoke('django-transcript', payload),
   djangoTranscribeAudio:(payload)=> ipcRenderer.invoke('django-transcribe-audio', payload),
   djangoLogin:         (payload) => ipcRenderer.invoke('django-login', payload),
+  djangoNewSession:    (payload) => ipcRenderer.invoke('django-new-session', payload),
   storeGet:            (key)     => ipcRenderer.invoke('store-get', key),
   storeSet:            (key, v)  => ipcRenderer.invoke('store-set', key, v),
   saveAudioChunk:      (payload) => ipcRenderer.invoke('save-audio-chunk', payload),

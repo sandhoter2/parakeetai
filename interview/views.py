@@ -185,9 +185,12 @@ def api_config(request):
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
 
     active_sessions = InterviewSession.objects.filter(
-        status=InterviewSession.STATUS_ACTIVE
+        status=InterviewSession.STATUS_ACTIVE,
+        owner=profile.user,
     ).order_by('-created_at')[:5]
-    latest_session = InterviewSession.objects.order_by('-created_at').first()
+    latest_session = InterviewSession.objects.filter(
+        owner=profile.user,
+    ).order_by('-created_at').first()
 
     return JsonResponse({
         "username": profile.user.username,
@@ -1168,4 +1171,44 @@ def api_login(request):
         "session_limit": profile.session_limit,
         "sessions_used": used,
         "username": user.username,
+    })
+
+
+@csrf_exempt
+@require_POST
+def api_new_session(request):
+    """Desktop overlay: create a new session. POST {title?, company?, role?} → {session_id}."""
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    if not profile:
+        return JsonResponse({"error": "invalid token"}, status=401)
+
+    ok, sessions_used, limit = _check_session_limit(profile.user)
+    if not ok:
+        return JsonResponse({
+            "error": "session_limit_reached",
+            "sessions_used": sessions_used,
+            "session_limit": limit,
+        }, status=403)
+
+    try:
+        data = json.loads(request.body) if request.body else {}
+    except json.JSONDecodeError:
+        data = {}
+
+    title = (data.get("title") or "").strip() or f"Session {sessions_used + 1}"
+    company = (data.get("company") or profile.company or "").strip()
+    session_type = data.get("session_type", InterviewSession.SESSION_TYPE_INTERVIEW)
+
+    session = InterviewSession.objects.create(
+        owner=profile.user,
+        title=title,
+        company=company,
+        session_type=session_type,
+        status=InterviewSession.STATUS_ACTIVE,
+    )
+    return JsonResponse({
+        "session_id": str(session.id),
+        "title": session.title,
+        "sessions_used": sessions_used + 1,
     })

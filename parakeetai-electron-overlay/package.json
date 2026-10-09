@@ -1,6 +1,6 @@
 {
   "name": "parakeetai-overlay",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "ParakeetAI transparent glass overlay for interviews",
   "author": "ParakeetAI",
   "main": "main.js",

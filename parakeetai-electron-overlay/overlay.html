@@ -329,10 +329,15 @@ html, body {
     <input type="text" id="cfgBaseUrl" placeholder="http://localhost:8000">
     <label>Extension Token <span style="color:#a89fff;font-size:9px">(from Django Profile page)</span></label>
     <input type="password" id="cfgToken" placeholder="paste token from Django profile">
-    <button class="save-cfg-btn" style="align-self:flex-start;padding:4px 12px;font-size:11px;background:rgba(108,99,255,0.45)" onclick="loadFromDjango()" id="loadBtn">
-      ↓ Load config from Django
-    </button>
-    <label>Session ID <span style="color:#a89fff;font-size:9px">(auto-filled by Load, or paste manually)</span></label>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <button class="save-cfg-btn" style="padding:4px 12px;font-size:11px;background:rgba(108,99,255,0.45)" onclick="loadFromDjango()" id="loadBtn">
+        ↓ Load config
+      </button>
+      <button class="save-cfg-btn" style="padding:4px 12px;font-size:11px;background:rgba(68,204,136,0.5)" onclick="newSession()" id="newSessionBtn">
+        + New Session
+      </button>
+    </div>
+    <label>Session ID <span style="color:#a89fff;font-size:9px">(auto-filled, or paste manually)</span></label>
     <input type="text" id="cfgSessionId" placeholder="uuid — auto-filled when you click Load">
     <label>Transcription chunk (seconds)</label>
     <select id="cfgChunk" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:5px 8px;color:#e0e0f0;font-size:12px;outline:none;width:100%">
@@ -418,6 +423,8 @@ async function doLogin() {
       document.getElementById('loginScreen').classList.add('hidden');
       showPlanBanner(result.username || username, result.plan || 'free',
                      result.sessions_used || 0, result.session_limit || 5);
+      // Auto-load latest session after login
+      autoLoadSession();
     } else {
       errEl.textContent = result.error || 'Login failed. Check credentials.';
     }
@@ -456,6 +463,52 @@ function showPlanBanner(username, plan, sessionsUsed, sessionLimit) {
 function openUpgrade() {
   const baseUrl = cfg.baseUrl || 'https://parakeetai.onrender.com';
   window.open(baseUrl + '/billing/checkout/pro/', '_blank');
+}
+
+async function autoLoadSession() {
+  if (!cfg.token) return;
+  try {
+    const data = await window.parakeet.djangoConfig({ baseUrl: cfg.baseUrl, token: cfg.token });
+    const sid = (data.active_sessions && data.active_sessions.length > 0)
+      ? data.active_sessions[0].id
+      : data.latest_session_id || '';
+    if (sid) {
+      cfg.sessionId = sid;
+      document.getElementById('cfgSessionId').value = sid;
+      localStorage.setItem('pkai_sessionId', sid);
+      updateSyncDot();
+    }
+  } catch(_) {}
+}
+
+async function newSession() {
+  if (!cfg.token) { alert('Sign in first.'); return; }
+  const title = prompt('Session name (optional):', 'My Interview') || '';
+  if (title === null) return; // cancelled
+  const btn = document.getElementById('newSessionBtn');
+  btn.disabled = true; btn.textContent = '⏳';
+  try {
+    const result = await window.parakeet.djangoNewSession({
+      baseUrl: cfg.baseUrl, token: cfg.token, title: title.trim() || 'Session',
+    });
+    if (result.statusCode === 200) {
+      cfg.sessionId = result.session_id;
+      document.getElementById('cfgSessionId').value = result.session_id;
+      localStorage.setItem('pkai_sessionId', result.session_id);
+      updateSyncDot();
+      btn.textContent = '✓ Created';
+      setTimeout(() => { btn.textContent = '+ New Session'; btn.disabled = false; }, 2000);
+    } else if (result.error === 'session_limit_reached') {
+      alert(`Session limit reached (${result.sessions_used}/${result.session_limit}). Upgrade for unlimited.`);
+      btn.disabled = false; btn.textContent = '+ New Session';
+    } else {
+      alert(result.error || 'Failed to create session.');
+      btn.disabled = false; btn.textContent = '+ New Session';
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+    btn.disabled = false; btn.textContent = '+ New Session';
+  }
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────

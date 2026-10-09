@@ -42,4 +42,5 @@ urlpatterns = [
     path("onboarding/", views.onboarding_view, name="onboarding"),
     # Desktop overlay auth
     path("api/login/", views.api_login, name="api_login"),
+    path("api/session/new/", views.api_new_session, name="api_new_session"),
 ]
