@@ -672,7 +672,7 @@ body.pip-active .note-input-wrap { display: flex !important; }
 .ai-help-btn {
   padding: 9px 18px; font-size: 11px; font-weight: 700;
   background: var(--accent-dim);
-  border: 1px solid var(--accent); border-radius: 4px;
+  border: 1px solid var(--accent); border-radius: 4px 0 0 4px;
   color: var(--accent); cursor: pointer;
   transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
   font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
@@ -682,6 +682,48 @@ body.pip-active .note-input-wrap { display: flex !important; }
   box-shadow: 0 0 20px var(--accent-glow);
 }
 .ai-help-btn:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
+/* Template split-button dropdown */
+.ai-split-wrap { display:flex; flex-shrink:0; position:relative; }
+.ai-tpl-arrow {
+  display:flex; align-items:center; padding:0 7px; cursor:pointer;
+  background: var(--accent-dim); border:1px solid var(--accent); border-left:none;
+  border-radius:0 4px 4px 0; color:var(--accent); font-size:11px; transition:all 0.15s;
+}
+.ai-tpl-arrow:hover { background:var(--accent); color:var(--bg); }
+.ai-tpl-dropdown {
+  position:absolute; bottom:calc(100% + 6px); right:0; min-width:230px;
+  background:var(--bg2); border:1px solid var(--accent); border-radius:6px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6); z-index:9999; overflow:hidden;
+  display:none;
+}
+.ai-tpl-dropdown.open { display:block; }
+.ai-tpl-header {
+  padding:8px 12px; font-size:9px; font-family:var(--mono); color:var(--text3);
+  text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.ai-tpl-item {
+  display:flex; align-items:flex-start; gap:10px; padding:9px 12px; cursor:pointer;
+  transition:background 0.1s; border-bottom:1px solid rgba(255,255,255,0.03);
+}
+.ai-tpl-item:last-child { border-bottom:none; }
+.ai-tpl-item:hover { background:rgba(0,200,255,0.07); }
+.ai-tpl-item.active { background:rgba(0,200,255,0.12); }
+.ai-tpl-item.active .ai-tpl-name { color:var(--accent); }
+.ai-tpl-icon { font-size:14px; flex-shrink:0; margin-top:1px; }
+.ai-tpl-name { font-size:11px; font-weight:700; font-family:var(--mono); color:var(--text); }
+.ai-tpl-desc { font-size:10px; color:var(--text3); margin-top:1px; }
+.ai-tpl-setdefault {
+  padding:6px 12px; font-size:9px; font-family:var(--mono); color:var(--text3);
+  background:var(--bg3); border-top:1px solid var(--border); text-align:center;
+  cursor:pointer; transition:color 0.15s;
+}
+.ai-tpl-setdefault:hover { color:var(--accent); }
+.ai-tpl-badge {
+  font-size:9px; font-family:var(--mono); color:var(--text3); margin-left:4px;
+  background:var(--bg3); border:1px solid var(--border); border-radius:3px;
+  padding:0 4px; vertical-align:middle;
+}
 
 .status-chip {
   font-size: 10px; color: var(--text3); flex-shrink: 1; min-width: 0; text-align: center;
@@ -1280,10 +1322,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Start/stop mic (your voice)">🎤</button>
   <span id="micModeBadge" onclick="toggleTCPanel()" title="Transcribe mode — click to change" style="font-size:10px;font-family:var(--mono);color:var(--text3);padding:2px 7px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);cursor:pointer;white-space:nowrap;line-height:1.8;transition:color .2s,border-color .2s">30s</span>
 
-  <!-- Transcribe config button (TC panel lives in float input row so it travels to PiP) -->
-  <button class="tc-config-btn" id="tcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
-
-  <!-- Conversation Helper -->
+  <!-- Conversation Helper (brain → dropdown template picker inside AI split button now) -->
   <button class="tc-config-btn" id="convHelperBtn" onclick="triggerConvHelper()" title="Conversation insights — label entries, extract tone and key facts" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:#7c3aed;color:#fff;font-size:15px">🧠</button>
 
   <!-- Meeting helper button + panel -->
@@ -1324,13 +1363,25 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
           transition:opacity 0.2s"></span>
   </div>
 
-  <div class="ai-btn-group" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
-    <button class="ai-help-btn" id="aiHelpBtn" onclick="triggerAI()">✨ AI Help</button>
-    <div style="display:flex;gap:4px">
-      <button class="ai-help-btn" style="font-size:10px;padding:2px 7px;background:var(--bg3);color:var(--text2)" onclick="clearInput()" title="Clear input">✕ Clear</button>
-      <button class="ai-help-btn" style="font-size:10px;padding:2px 7px;background:var(--bg3);color:var(--text2)" onclick="saveAndClearInput()" title="Save to transcript without sending to AI">💾 Save</button>
+  <div class="ai-btn-group" style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0">
+    <div class="ai-split-wrap">
+      <button class="ai-help-btn" id="aiHelpBtn" onclick="triggerAI()">✨ AI Help</button>
+      <button class="ai-tpl-arrow" id="aiTplArrow" onclick="toggleTplDropdown(event)" title="Output template">▾</button>
+      <!-- Template dropdown -->
+      <div class="ai-tpl-dropdown" id="aiTplDropdown">
+        <div class="ai-tpl-header">
+          <span>Output Template</span>
+          <span id="aiTplActiveName" style="color:var(--accent)">Default</span>
+        </div>
+        <div id="aiTplList"><!-- populated by JS --></div>
+        <div class="ai-tpl-setdefault" onclick="setDefaultTemplate()">☆ Set as profile default</div>
+      </div>
     </div>
-    <span style="font-size:10px;color:var(--text3)"><kbd style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-size:10px">⌘ Enter</kbd></span>
+    <div style="display:flex;gap:4px">
+      <button class="ai-help-btn" style="font-size:10px;padding:2px 7px;background:var(--bg3);color:var(--text2);border-radius:4px" onclick="clearInput()" title="Clear input">✕ Clear</button>
+      <button class="ai-help-btn" style="font-size:10px;padding:2px 7px;background:var(--bg3);color:var(--text2);border-radius:4px" onclick="saveAndClearInput()" title="Save to transcript">💾 Save</button>
+    </div>
+    <span id="aiTplCurrentBadge" style="font-size:9px;color:var(--text3);font-family:var(--mono);text-align:center"></span>
   </div>
 
   <div class="status-chip" id="statusChip"></div>
@@ -2810,6 +2861,115 @@ function saveAndClearInput() {
   setStatus('Saved to transcript ✓');
 }
 
+// ── AI OUTPUT TEMPLATES ───────────────────────────────────────────────────────
+const _TPL_KEY = 'aiTemplate_default';
+const AI_TEMPLATES = [
+  {
+    id: 'default', icon: '✨', name: 'Default',
+    desc: 'Clear, direct answer — no forced structure',
+    prompt: ''
+  },
+  {
+    id: 'bullets', icon: '•', name: 'Bullet Points',
+    desc: 'Key points as a concise bulleted list',
+    prompt: 'Respond with a clear heading then 4–7 concise bullet points. No long paragraphs.'
+  },
+  {
+    id: 'star', icon: '⭐', name: 'STAR Method',
+    desc: 'Situation · Task · Action · Result (interview format)',
+    prompt: 'Structure your answer using the STAR method with four labeled sections: **Situation**, **Task**, **Action**, **Result**. Keep each section concise.'
+  },
+  {
+    id: 'technical', icon: '⌨', name: 'Technical',
+    desc: 'Code examples + explanation + trade-offs',
+    prompt: 'Give a technical answer: include code examples where relevant, explain the mechanism, and list trade-offs or alternatives.'
+  },
+  {
+    id: 'summary', icon: '📋', name: 'Summary First',
+    desc: 'TL;DR headline, then detail',
+    prompt: 'Start with a bold one-sentence TL;DR summary. Then expand with detail in 2–3 short paragraphs.'
+  },
+  {
+    id: 'eli5', icon: '🧸', name: 'Simple / ELI5',
+    desc: 'Plain language, no jargon, analogy-driven',
+    prompt: 'Explain in simple, plain language as if to someone new to the topic. Use an analogy. Avoid jargon.'
+  },
+  {
+    id: 'compare', icon: '⚖', name: 'Comparison',
+    desc: 'Pros & cons table or two-column breakdown',
+    prompt: 'Present the answer as a comparison: use a markdown table or two clear sections (pros vs cons, A vs B) and end with a recommendation.'
+  },
+  {
+    id: 'stepbystep', icon: '🪜', name: 'Step by Step',
+    desc: 'Numbered sequential process',
+    prompt: 'Answer as a numbered step-by-step guide. Be specific and actionable at each step.'
+  },
+];
+
+let _activeTplId = (function() {
+  try { return localStorage.getItem(_TPL_KEY) || 'default'; } catch(e) { return 'default'; }
+})();
+
+function _getActiveTpl() {
+  return AI_TEMPLATES.find(t => t.id === _activeTplId) || AI_TEMPLATES[0];
+}
+
+function _renderTplList() {
+  const list = document.getElementById('aiTplList');
+  const nameEl = document.getElementById('aiTplActiveName');
+  const badgeEl = document.getElementById('aiTplCurrentBadge');
+  if (!list) return;
+  const tpl = _getActiveTpl();
+  if (nameEl) nameEl.textContent = tpl.name;
+  if (badgeEl) badgeEl.textContent = tpl.id === 'default' ? '' : tpl.icon + ' ' + tpl.name;
+  list.innerHTML = AI_TEMPLATES.map(t => `
+    <div class="ai-tpl-item${t.id === _activeTplId ? ' active' : ''}" onclick="selectTemplate('${t.id}')">
+      <span class="ai-tpl-icon">${t.icon}</span>
+      <div>
+        <div class="ai-tpl-name">${t.name}</div>
+        <div class="ai-tpl-desc">${t.desc}</div>
+      </div>
+    </div>`).join('');
+}
+
+function selectTemplate(id) {
+  _activeTplId = id;
+  _renderTplList();
+  closeTplDropdown();
+  const tpl = _getActiveTpl();
+  toast(`// Template: ${tpl.name}`, 'info', 1800);
+}
+
+function setDefaultTemplate() {
+  try { localStorage.setItem(_TPL_KEY, _activeTplId); } catch(e) {}
+  const tpl = _getActiveTpl();
+  toast(`// "${tpl.name}" set as profile default`, 'success', 2500);
+  closeTplDropdown();
+}
+
+function toggleTplDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('aiTplDropdown');
+  if (!dd) return;
+  const isOpen = dd.classList.contains('open');
+  if (!isOpen) { _renderTplList(); dd.classList.add('open'); }
+  else dd.classList.remove('open');
+}
+function closeTplDropdown() {
+  document.getElementById('aiTplDropdown')?.classList.remove('open');
+}
+document.addEventListener('click', e => { if (!e.target.closest('.ai-split-wrap')) closeTplDropdown(); });
+
+// Initialise badge on load
+_renderTplList();
+
+// Apply template prompt prefix to the question before sending
+function _applyTemplate(question) {
+  const tpl = _getActiveTpl();
+  if (!tpl.prompt) return question;
+  return `[INSTRUCTION: ${tpl.prompt}]\n\n${question}`;
+}
+
 // ── AI HELP ───────────────────────────────────────────────────────────────────
 function triggerAI(question, fromVoice) {
   if (isStreaming) return;
@@ -2875,7 +3035,7 @@ function triggerAI(question, fromVoice) {
   fetch(`/api/session/${SESSION_ID}/chat/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question: _applyTemplate(question) }),
   }).then(async (resp) => {
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
