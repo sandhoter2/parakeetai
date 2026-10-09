@@ -973,6 +973,9 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <!-- Transcribe config button (TC panel lives in float input row so it travels to PiP) -->
   <button class="tc-config-btn" id="tcConfigBtn" onclick="toggleTCPanel()" title="Transcribe settings">⚙</button>
 
+  <!-- Conversation Helper -->
+  <button class="tc-config-btn" id="convHelperBtn" onclick="triggerConvHelper()" title="Conversation insights — label entries, extract tone and key facts" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:#7c3aed;color:#fff;font-size:15px">🧠</button>
+
   <!-- Meeting helper button + panel -->
   <div style="position:relative;display:flex;align-items:center">
     <button class="meeting-helper-btn" id="mhBtn" onclick="toggleMHPanel()" title="Meeting helper — role-based question suggestions">
@@ -1009,7 +1012,6 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 
   <div class="ai-btn-group" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
     <button class="ai-help-btn" id="aiHelpBtn" onclick="triggerAI()">✨ AI Help</button>
-    <button class="ai-help-btn" id="convHelperBtn" onclick="triggerConvHelper()" title="Analyze conversation: label entries, extract tone and key facts" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);font-size:11px;padding:4px 10px">🧠 Insights</button>
     <div style="display:flex;gap:4px">
       <button class="ai-help-btn" style="font-size:10px;padding:2px 7px;background:var(--bg3);color:var(--text2)" onclick="clearInput()" title="Clear input">✕ Clear</button>
       <button class="ai-help-btn" style="font-size:10px;padding:2px 7px;background:var(--bg3);color:var(--text2)" onclick="saveAndClearInput()" title="Save to transcript without sending to AI">💾 Save</button>
