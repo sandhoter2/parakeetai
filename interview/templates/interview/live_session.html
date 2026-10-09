@@ -2027,22 +2027,27 @@ function triggerConvHelper() {
   isStreaming = true;
   const btn  = document.getElementById('convHelperBtn');
   const fBtn = _doc().getElementById('fConvHelperBtn');
-  if (btn)  { btn.disabled  = true; btn.textContent  = '⏳…'; }
+  if (btn)  { btn.disabled  = true; btn.textContent  = '⏳'; }
   if (fBtn) { fBtn.disabled = true; fBtn.textContent = '⏳'; }
 
+  // Show insights directly in aiLive — no archiving so subsequent AI Help works cleanly
   const _d = _doc();
-  const aiHistory = _d.getElementById('aiHistory');
   aiPlaceholder.style.display = 'none';
-  if (aiHistory) aiHistory.style.display = 'none';
+  const _hist = _d.getElementById('aiHistory');
+  if (_hist) _hist.style.display = 'none';
   aiLive.style.display = 'block';
   aiTriggerText.textContent = '🧠 Conversation Insights';
   aiAnswerText.textContent = '';
   aiAnswerText.style.fontSize = aiFontSize + 'px';
   aiCursor.style.display = 'inline-block';
-  _d.getElementById('aiLiveActions').style.display = 'none';
-  _d.getElementById('clearAIBtn').style.display = 'flex';
-  _d.getElementById('copyAIBtn').style.display = 'none';
-  _d.getElementById('regenBtn').style.display = 'none';
+  const _liveAct = _d.getElementById('aiLiveActions');
+  if (_liveAct) _liveAct.style.display = 'none';
+  const _clearBtn = _d.getElementById('clearAIBtn');
+  if (_clearBtn) _clearBtn.style.display = 'flex';
+  const _copyBtn  = _d.getElementById('copyAIBtn');
+  if (_copyBtn)  _copyBtn.style.display = 'none';
+  const _regenBtn = _d.getElementById('regenBtn');
+  if (_regenBtn) _regenBtn.style.display = 'none';
 
   fetch(`/api/session/${SESSION_ID}/conversation-helper/`, {
     method: 'POST',
@@ -2076,23 +2081,28 @@ function triggerConvHelper() {
     aiAnswerText.textContent = '❌ ' + err.message;
   }).finally(() => {
     isStreaming = false;
-    if (btn)  { btn.disabled  = false; btn.textContent  = '🧠 Insights'; }
+    if (btn)  { btn.disabled  = false; btn.textContent  = '🧠'; }
     if (fBtn) { fBtn.disabled = false; fBtn.textContent = '🧠'; }
     aiCursor.style.display = 'none';
     setStatus('Insights ready ✓');
     const _df = _doc();
-    _df.getElementById('aiLiveActions').style.display = 'flex';
-    _df.getElementById('copyAIBtn').style.display = 'flex';
-    _df.getElementById('regenBtn').style.display = 'none';
+    // Show copy button; keep result visible in aiLive until user runs AI Help or clears
+    const _la = _df.getElementById('aiLiveActions');
+    if (_la) _la.style.display = 'flex';
+    const _cb = _df.getElementById('copyAIBtn');
+    if (_cb) _cb.style.display = 'flex';
+    const _rb = _df.getElementById('regenBtn');
+    if (_rb) _rb.style.display = 'none';
+    // Render markdown on final text
     const finalAnswer = aiAnswerText.textContent;
     aiAnswerText.dataset.plain = finalAnswer;
-    if (bionicMode) {
-      aiAnswerText.innerHTML = toBionicHTML(finalAnswer);
-    } else {
-      renderMarkdown(aiAnswerText, finalAnswer);
+    if (finalAnswer.trim()) {
+      if (bionicMode) {
+        aiAnswerText.innerHTML = toBionicHTML(finalAnswer);
+      } else {
+        renderMarkdown(aiAnswerText, finalAnswer);
+      }
     }
-    archiveAI('Conversation Insights', finalAnswer);
-    aiLive.style.display = 'none';
   });
 }
 
