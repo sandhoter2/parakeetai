@@ -2360,8 +2360,9 @@ async function popOutAI() {
         }
         #aiFloatPanel .ai-float-bar { cursor:default; border-radius:0!important; }
         #aiFloatPanel .ai-float-foot { display:none!important; }
-        /* Show all control buttons in PiP window */
-        #fMicBtn, #fTcConfigBtn, #fTcSendBtn, #fAiHelpBtn, .fai-btn { display: inline-flex !important; }
+        /* Show input row and all control buttons in PiP window */
+        .ai-float-input-row { display: flex !important; }
+        #fMicBtn, #fTcConfigBtn, #fAiHelpBtn, .fai-btn { display: inline-flex !important; }
       `;
       pipWin.document.head.appendChild(bodyStyle);
 
