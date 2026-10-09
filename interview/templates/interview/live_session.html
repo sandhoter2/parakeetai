@@ -5,6 +5,16 @@
 html { overflow-x: hidden; }
 body { overflow: hidden; }
 
+/* Session progress bar — thin strip above session bar */
+#sessionProgressBar {
+  height: 2px; background: var(--border); position: relative; overflow: hidden;
+}
+#sessionProgressFill {
+  height: 100%; background: var(--accent); width: 0%;
+  transition: width 1s linear;
+  box-shadow: 0 0 6px var(--accent);
+}
+
 .session-bar {
   display: flex;
   align-items: center;
@@ -836,6 +846,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 
 {% block content %}
 
+<div id="sessionProgressBar"><div id="sessionProgressFill"></div></div>
 <div class="focus-hint">// focus mode — press F to exit</div>
 <div class="session-bar">
   <div class="session-info">
@@ -1413,6 +1424,8 @@ transcriptPanel.addEventListener('scroll', () => {
 });
 
 // ── Elapsed Timer ─────────────────────────────────────────────────────────────
+const SESSION_TARGET_SECS = {{ session.target_duration_mins|default:60 }} * 60;
+
 function startTimer() {
   timerInterval = setInterval(() => {
     const s = Math.floor((Date.now() - sessionStart) / 1000);
@@ -1421,6 +1434,15 @@ function startTimer() {
     const pad = n => String(n).padStart(2,'0');
     document.getElementById('elapsedTimer').textContent =
       h > 0 ? `${pad(h)}:${pad(m%60)}:${pad(s%60)}` : `${pad(m)}:${pad(s%60)}`;
+    // Update progress bar
+    const pct = Math.min(100, (s / SESSION_TARGET_SECS) * 100);
+    const fill = document.getElementById('sessionProgressFill');
+    if (fill) {
+      fill.style.width = pct + '%';
+      if (pct >= 90) fill.style.background = 'var(--red)';
+      else if (pct >= 75) fill.style.background = 'var(--yellow)';
+      else fill.style.background = 'var(--accent)';
+    }
   }, 1000);
 }
 startTimer();
