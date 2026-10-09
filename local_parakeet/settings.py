@@ -1,6 +1,5 @@
 from pathlib import Path
 import os
-import dj_database_url
 from dotenv import load_dotenv
 
 try:
@@ -38,6 +37,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 INSTALLED_APPS = [
+    "django_mongodb_backend",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -78,9 +78,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "local_parakeet.wsgi.application"
 
-_db_url = os.environ.get("DATABASE_URL")
-if _db_url:
-    DATABASES = {"default": dj_database_url.parse(_db_url, conn_max_age=600)}
+_mongodb_uri = os.environ.get("MONGODB_URI")
+_using_mongo = bool(_mongodb_uri)
+
+if _using_mongo:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django_mongodb_backend",
+            "HOST": _mongodb_uri,
+            "NAME": os.environ.get("MONGODB_DB_NAME", "parakeetai"),
+        }
+    }
 else:
     DATABASES = {
         "default": {
@@ -92,7 +100,10 @@ else:
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+DEFAULT_AUTO_FIELD = (
+    "django_mongodb_backend.fields.ObjectIdAutoField" if _using_mongo
+    else "django.db.models.BigAutoField"
+)
 
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"

@@ -6,7 +6,7 @@ python manage.py collectstatic --no-input
 
 FIXTURE="fixtures/db_backup.json"
 
-# ── 1. Check Postgres connection ─────────────────────────────────────────────
+# ── 1. Check database connection ─────────────────────────────────────────────
 echo ">>> Checking database connection ..."
 python - <<'PYCHECK'
 import os, sys, django
