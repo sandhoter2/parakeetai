@@ -1041,9 +1041,28 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   .status-chip { display: none !important; }
 
   /* Transcript panel: compact */
-  .panel-header { padding: 7px 12px; }
+  .panel-header { padding: 7px 10px; overflow: hidden; gap: 6px; }
+  .panel-title { flex-shrink: 0; }
+  /* Actions row: scrollable so all buttons are reachable by swipe, no layout overflow */
+  .panel-header-actions {
+    overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+    flex-shrink: 1; min-width: 0; gap: 4px; flex-wrap: nowrap;
+  }
+  .panel-header-actions::-webkit-scrollbar { display: none; }
   .panel-body { padding: 10px; }
   .transcript-entry { padding: 8px 10px; margin-bottom: 7px; }
+
+  /* Multi-select on mobile: hide header button (too cramped), show checkboxes at low opacity */
+  #tcSelectBtn { display: none !important; }
+  .entry-select-cb { opacity: 0.2 !important; }
+  body.tc-select-mode .entry-select-cb,
+  .transcript-entry.selected .entry-select-cb { opacity: 1 !important; }
+
+  /* Multi-bar: wrap to 2 rows on narrow screen */
+  #tcMultiBar { flex-wrap: wrap; gap: 6px; }
+  .tc-multi-input { min-width: 0; width: 100%; order: 3; }
+  .tc-multi-send { order: 2; }
+  .tc-multi-clear { order: 1; margin-left: auto; }
 
   /* Meeting helper panel: stay on screen */
   .meeting-helper-panel {
@@ -2817,6 +2836,13 @@ function toggleSelectMode() {
 }
 
 function toggleEntrySelection(entry) {
+  // On mobile the header button is hidden — auto-enter select mode on first tap
+  if (!_tcSelectMode && !_tcSelected.has(entry)) {
+    _tcSelectMode = true;
+    document.body.classList.add('tc-select-mode');
+    const btn = document.getElementById('tcSelectBtn');
+    if (btn) btn.textContent = '☑ Done';
+  }
   if (_tcSelected.has(entry)) {
     _tcSelected.delete(entry);
     entry.classList.remove('selected');
