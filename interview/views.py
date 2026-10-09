@@ -17,7 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from .forms import NewSessionForm, UserProfileForm
-from .models import AIMessage, InterviewSession, MeetingParticipant, TranscriptEntry, UserProfile
+from .models import AIMessage, InterviewSession, MeetingParticipant, TranscriptEntry, UserProfile, PromptTemplate
 
 
 def _check_session_limit(user):
@@ -770,22 +770,27 @@ def api_scan_participants(request, session_id):
                     {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
                     {"type": "text", "text": (
                         "This is a screenshot of a Teams, Zoom, or Google Meet meeting. "
-                        "List ONLY the participant/attendee names visible in the participants panel, "
-                        "video tiles, or attendee list. Return a JSON array of name strings only, "
-                        "like [\"Alice\", \"Bob\"]. If no participant names are clearly visible, return []."
+                        "Extract the following and return ONLY a JSON object (no markdown, no explanation):\n"
+                        "1. \"names\": array of all participant/attendee names visible in the participants panel, video tiles, or attendee list\n"
+                        "2. \"speakers\": array of names of people currently speaking or who have a speaking indicator\n"
+                        "3. \"title\": the meeting title/subject shown at the top of the screen, or empty string if not visible\n"
+                        "Example: {\"names\": [\"Alice\", \"Bob\"], \"speakers\": [\"Alice\"], \"title\": \"Sprint Planning\"}\n"
+                        "If no data is visible for a field, use an empty array or empty string."
                     )},
                 ],
             }],
-            max_tokens=500,
+            max_tokens=600,
         )
         content = resp.choices[0].message.content.strip()
-        match = re.search(r"\[.*?\]", content, re.DOTALL)
-        names = json.loads(match.group()) if match else []
-        names = [n for n in names if isinstance(n, str) and n.strip()]
+        match = re.search(r"\{.*\}", content, re.DOTALL)
+        parsed = json.loads(match.group()) if match else {}
+        names = [n for n in (parsed.get("names") or []) if isinstance(n, str) and n.strip()]
+        speakers = [n for n in (parsed.get("speakers") or []) if isinstance(n, str) and n.strip()]
+        title = str(parsed.get("title") or "").strip()
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-    return JsonResponse({"names": names})
+    return JsonResponse({"names": names, "speakers": speakers, "title": title})
 
 
 @csrf_exempt
@@ -1437,3 +1442,82 @@ def admin_db_sync_action(request):
     else:
         messages.error(request, "Unknown action")
     return redirect("admin_db_sync")
+
+
+# ── Templates ─────────────────────────────────────────────────────────────────
+
+@login_required
+def templates_page(request):
+    from .management.commands.seed_templates import AI_HELP_DEFAULTS, MEETING_AI_DEFAULTS
+    user = request.user
+    if not PromptTemplate.objects.filter(owner=user).exists():
+        for tpl in AI_HELP_DEFAULTS:
+            PromptTemplate.objects.create(owner=user, template_type="ai_help", **tpl)
+        for tpl in MEETING_AI_DEFAULTS:
+            PromptTemplate.objects.create(owner=user, template_type="meeting_ai", **tpl)
+    templates = PromptTemplate.objects.filter(owner=user)
+    return render(request, "interview/templates_page.html", {"templates": templates})
+
+
+@login_required
+def api_templates_list(request):
+    tpl_type = request.GET.get("type")
+    qs = PromptTemplate.objects.filter(owner=request.user, is_active=True)
+    if tpl_type:
+        qs = qs.filter(template_type=tpl_type)
+    data = [
+        {
+            "id": t.pk,
+            "name": t.name,
+            "description": t.description,
+            "prompt": t.prompt,
+            "icon": t.icon,
+            "template_type": t.template_type,
+            "order": t.order,
+        }
+        for t in qs
+    ]
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@require_POST
+def api_template_create(request):
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    t = PromptTemplate.objects.create(
+        owner=request.user,
+        name=body.get("name", "Untitled"),
+        description=body.get("description", ""),
+        prompt=body.get("prompt", ""),
+        icon=body.get("icon", "✨"),
+        template_type=body.get("template_type", "ai_help"),
+        order=body.get("order", 0),
+        is_active=body.get("is_active", True),
+    )
+    return JsonResponse({"id": t.pk, "status": "created"})
+
+
+@login_required
+@require_POST
+def api_template_update(request, template_id):
+    t = get_object_or_404(PromptTemplate, pk=template_id, owner=request.user)
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    for field in ("name", "description", "prompt", "icon", "template_type", "order", "is_active"):
+        if field in body:
+            setattr(t, field, body[field])
+    t.save()
+    return JsonResponse({"id": t.pk, "status": "updated"})
+
+
+@login_required
+@require_POST
+def api_template_delete(request, template_id):
+    t = get_object_or_404(PromptTemplate, pk=template_id, owner=request.user)
+    t.delete()
+    return JsonResponse({"status": "deleted"})

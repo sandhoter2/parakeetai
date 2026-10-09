@@ -199,3 +199,26 @@ class DbSyncLog(models.Model):
 
     def __str__(self):
         return f"{self.direction} {self.status} @ {self.started_at:%Y-%m-%d %H:%M}"
+
+
+class PromptTemplate(models.Model):
+    TYPE_AI_HELP = "ai_help"
+    TYPE_MEETING_AI = "meeting_ai"
+    TYPE_CHOICES = [("ai_help", "AI Help"), ("meeting_ai", "Meeting AI")]
+
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="prompt_templates")
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=255, blank=True)
+    prompt = models.TextField()
+    icon = models.CharField(max_length=10, default="✨")
+    template_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="ai_help")
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["order", "created_at"]
+
+    def __str__(self):
+        return f"{self.name} ({self.template_type})"

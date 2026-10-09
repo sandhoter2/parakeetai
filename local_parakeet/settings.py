@@ -88,8 +88,8 @@ DATABASES = {
 MYSQL_BACKUP_CONFIG = {
     "host": os.environ.get("MYSQL_HOST", ""),
     "port": int(os.environ.get("MYSQL_PORT", "3306")),
-    "database": os.environ.get("MYSQL_DB", "288315318_parakeetai"),
-    "user": os.environ.get("MYSQL_USER", "parakeetai"),
+    "database": os.environ.get("MYSQL_DB", "u288315318_parakeetai"),
+    "user": os.environ.get("MYSQL_USER", "u288315318_parakeetai"),
     "password": os.environ.get("MYSQL_PASSWORD", ""),
 }
 MYSQL_BACKUP_ENABLED = bool(os.environ.get("MYSQL_HOST", ""))

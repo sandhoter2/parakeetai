@@ -1146,16 +1146,6 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
              onkeydown="if(event.key==='Escape'){toggleTranscriptSearch();filterTranscript('')}">
       <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px" id="tcSearchCount"></div>
     </div>
-    <!-- Scroll-lock indicator — shown when user has scrolled up -->
-    <div id="transcriptScrollBadge"
-         onclick="_transcriptScrollLocked=false;_transcriptNewCount=0;this.style.display='none';transcriptPanel.scrollTop=transcriptPanel.scrollHeight"
-         style="display:none;position:sticky;bottom:8px;left:50%;transform:translateX(-50%);
-                background:var(--accent);color:var(--bg);border-radius:16px;
-                padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer;
-                font-family:var(--mono);letter-spacing:0.5px;white-space:nowrap;
-                box-shadow:0 2px 12px rgba(0,200,255,0.4);z-index:10;
-                align-items:center;gap:6px">
-    </div>
     <div class="panel-body" id="transcriptPanel">
       {% if not transcripts %}
       <div id="transcriptPlaceholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--text3);text-align:center;padding:32px">
@@ -1176,6 +1166,16 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
           <span id="interimLabel" style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--accent2);font-style:normal">YOU</span>
           <span id="interimText">Transcribing…</span>
         </div>
+      </div>
+      <!-- Scroll-lock indicator — after interimEntry so new entries inserted before it don't displace badge -->
+      <div id="transcriptScrollBadge"
+           onclick="_transcriptScrollLocked=false;_transcriptNewCount=0;this.style.display='none';document.getElementById('transcriptPanel').scrollTop=document.getElementById('transcriptPanel').scrollHeight"
+           style="display:none;position:sticky;bottom:8px;left:50%;transform:translateX(-50%);
+                  background:var(--accent);color:var(--bg);border-radius:16px;
+                  padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer;
+                  font-family:var(--mono);letter-spacing:0.5px;white-space:nowrap;
+                  box-shadow:0 2px 12px rgba(0,200,255,0.4);z-index:10;
+                  align-items:center;gap:6px">
       </div>
     </div>
     <!-- Multi-select action bar — appears when entries are selected -->
@@ -1377,14 +1377,13 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     <!-- Right: Smart prompt buttons -->
     <div style="flex:2 1 200px;min-width:0">
       <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Meeting AI</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('List action items from this meeting so far with owners and deadlines.')" style="border-color:var(--accent)">📌 Action Items</button>
-        <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('What are the key information gaps or unanswered questions in this meeting?')" style="border-color:var(--yellow)">❓ Info Gaps</button>
-        <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('What are the top 3 questions I should ask right now given the current discussion?')" style="border-color:var(--green)">💬 Questions to Ask</button>
-        <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('What key decisions have been made so far in this meeting?')" style="border-color:var(--accent2)">✅ Decisions</button>
-        <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('What is the current status of this meeting? What topics have been covered and what is remaining?')" style="border-color:var(--text3)">📊 Status Update</button>
-        <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('Summarize the key risks and concerns raised in this meeting.')" style="border-color:var(--red)">⚠️ Risks</button>
-        <button class="btn btn-ghost btn-xs" onclick="meetingAIPrompt('Draft a follow-up email based on this meeting discussion.')" style="border-color:var(--text3)">✉️ Follow-up Email</button>
+      <div id="meetingAISplitWrap" class="ai-split-wrap" style="position:relative;display:inline-flex">
+        <button class="ai-help-btn" style="background:var(--bg3);color:var(--text2);cursor:default;border-color:var(--border2)" title="Meeting AI Templates">🤖 Meeting AI</button>
+        <button class="ai-tpl-arrow" id="meetingAIArrow" onclick="toggleMeetingAIDropdown(event)" title="Select meeting AI template">▾</button>
+        <div class="ai-tpl-dropdown" id="meetingAIDropdown" style="min-width:260px;max-height:300px;overflow-y:auto">
+          <div class="ai-tpl-header"><span>Meeting AI Templates</span></div>
+          <div id="meetingAITplList"><!-- populated by JS --></div>
+        </div>
       </div>
       {% if session.company %}
       <div id="crossSessionCtx" style="margin-top:10px;font-size:11px;color:var(--text3)">
@@ -3196,55 +3195,32 @@ function saveAndClearInput() {
 
 // ── AI OUTPUT TEMPLATES ───────────────────────────────────────────────────────
 const _TPL_KEY = 'aiTemplate_default';
-const AI_TEMPLATES = [
-  {
-    id: 'default', icon: '✨', name: 'Default',
-    desc: 'Clear, direct answer — no forced structure',
-    prompt: ''
-  },
-  {
-    id: 'bullets', icon: '•', name: 'Bullet Points',
-    desc: 'Key points as a concise bulleted list',
-    prompt: 'Respond with a clear heading then 4–7 concise bullet points. No long paragraphs.'
-  },
-  {
-    id: 'star', icon: '⭐', name: 'STAR Method',
-    desc: 'Situation · Task · Action · Result (interview format)',
-    prompt: 'Structure your answer using the STAR method with four labeled sections: **Situation**, **Task**, **Action**, **Result**. Keep each section concise.'
-  },
-  {
-    id: 'technical', icon: '⌨', name: 'Technical',
-    desc: 'Code examples + explanation + trade-offs',
-    prompt: 'Give a technical answer: include code examples where relevant, explain the mechanism, and list trade-offs or alternatives.'
-  },
-  {
-    id: 'summary', icon: '📋', name: 'Summary First',
-    desc: 'TL;DR headline, then detail',
-    prompt: 'Start with a bold one-sentence TL;DR summary. Then expand with detail in 2–3 short paragraphs.'
-  },
-  {
-    id: 'eli5', icon: '🧸', name: 'Simple / ELI5',
-    desc: 'Plain language, no jargon, analogy-driven',
-    prompt: 'Explain in simple, plain language as if to someone new to the topic. Use an analogy. Avoid jargon.'
-  },
-  {
-    id: 'compare', icon: '⚖', name: 'Comparison',
-    desc: 'Pros & cons table or two-column breakdown',
-    prompt: 'Present the answer as a comparison: use a markdown table or two clear sections (pros vs cons, A vs B) and end with a recommendation.'
-  },
-  {
-    id: 'stepbystep', icon: '🪜', name: 'Step by Step',
-    desc: 'Numbered sequential process',
-    prompt: 'Answer as a numbered step-by-step guide. Be specific and actionable at each step.'
-  },
-];
+let AI_TEMPLATES = [];
+let _aiTemplatesLoaded = false;
 
 let _activeTplId = (function() {
-  try { return localStorage.getItem(_TPL_KEY) || 'default'; } catch(e) { return 'default'; }
+  try { return localStorage.getItem(_TPL_KEY) || ''; } catch(e) { return ''; }
 })();
 
+async function _loadAITemplates() {
+  try {
+    const res = await fetch('/api/templates/?type=ai_help');
+    if (res.ok) AI_TEMPLATES = await res.json();
+  } catch(e) {}
+  if (!AI_TEMPLATES.length) {
+    AI_TEMPLATES = [{pk: 0, icon: '✨', name: 'Default', description: 'Clear, direct answer — no forced structure', prompt: ''}];
+  }
+  // If stored id doesn't match any pk (e.g. old string id), reset to first
+  if (!AI_TEMPLATES.find(t => String(t.pk) === String(_activeTplId))) {
+    _activeTplId = String(AI_TEMPLATES[0].pk);
+    try { localStorage.setItem(_TPL_KEY, _activeTplId); } catch(e) {}
+  }
+  _aiTemplatesLoaded = true;
+  _renderTplList();
+}
+
 function _getActiveTpl() {
-  return AI_TEMPLATES.find(t => t.id === _activeTplId) || AI_TEMPLATES[0];
+  return AI_TEMPLATES.find(t => String(t.pk) === String(_activeTplId)) || AI_TEMPLATES[0];
 }
 
 function _renderTplList() {
@@ -3253,30 +3229,35 @@ function _renderTplList() {
   const badgeEl = document.getElementById('aiTplCurrentBadge');
   if (!list) return;
   const tpl = _getActiveTpl();
-  if (nameEl) nameEl.textContent = tpl.name;
-  if (badgeEl) badgeEl.textContent = tpl.id === 'default' ? '' : tpl.icon + ' ' + tpl.name;
+  if (nameEl) nameEl.textContent = tpl ? tpl.name : 'Default';
+  if (badgeEl) badgeEl.textContent = (!tpl || !tpl.prompt) ? '' : (tpl.icon + ' ' + tpl.name);
+  if (!AI_TEMPLATES.length) {
+    list.innerHTML = '<div style="padding:12px;color:var(--text3);font-size:12px">Loading templates…</div>';
+    return;
+  }
   list.innerHTML = AI_TEMPLATES.map(t => `
-    <div class="ai-tpl-item${t.id === _activeTplId ? ' active' : ''}" onclick="selectTemplate('${t.id}')">
+    <div class="ai-tpl-item${String(t.pk) === String(_activeTplId) ? ' active' : ''}" onclick="selectTemplate(${t.pk})">
       <span class="ai-tpl-icon">${t.icon}</span>
       <div>
         <div class="ai-tpl-name">${t.name}</div>
-        <div class="ai-tpl-desc">${t.desc}</div>
+        <div class="ai-tpl-desc">${t.description || ''}</div>
       </div>
     </div>`).join('');
 }
 
-function selectTemplate(id) {
-  _activeTplId = id;
+function selectTemplate(pk) {
+  _activeTplId = String(pk);
+  try { localStorage.setItem(_TPL_KEY, _activeTplId); } catch(e) {}
   _renderTplList();
   closeTplDropdown();
   const tpl = _getActiveTpl();
-  toast(`// Template: ${tpl.name}`, 'info', 1800);
+  toast(`// Template: ${tpl ? tpl.name : 'Default'}`, 'info', 1800);
 }
 
 function setDefaultTemplate() {
   try { localStorage.setItem(_TPL_KEY, _activeTplId); } catch(e) {}
   const tpl = _getActiveTpl();
-  toast(`// "${tpl.name}" set as profile default`, 'success', 2500);
+  toast(`// "${tpl ? tpl.name : 'Default'}" set as profile default`, 'success', 2500);
   closeTplDropdown();
 }
 
@@ -3285,16 +3266,71 @@ function toggleTplDropdown(e) {
   const dd = document.getElementById('aiTplDropdown');
   if (!dd) return;
   const isOpen = dd.classList.contains('open');
-  if (!isOpen) { _renderTplList(); dd.classList.add('open'); }
-  else dd.classList.remove('open');
+  if (!isOpen) {
+    if (!_aiTemplatesLoaded) _loadAITemplates();
+    else _renderTplList();
+    dd.classList.add('open');
+  } else dd.classList.remove('open');
 }
 function closeTplDropdown() {
   document.getElementById('aiTplDropdown')?.classList.remove('open');
 }
 document.addEventListener('click', e => { if (!e.target.closest('.ai-split-wrap')) closeTplDropdown(); });
 
-// Initialise badge on load
-_renderTplList();
+// ── MEETING AI TEMPLATES ─────────────────────────────────────────────────────
+let MEETING_AI_TEMPLATES = [];
+let _meetingAILoaded = false;
+
+async function _loadMeetingAITemplates() {
+  try {
+    const res = await fetch('/api/templates/?type=meeting_ai');
+    if (res.ok) MEETING_AI_TEMPLATES = await res.json();
+  } catch(e) {}
+  if (!MEETING_AI_TEMPLATES.length) {
+    MEETING_AI_TEMPLATES = [
+      {pk: 0, name: 'Action Items', icon: '📌', description: 'List action items with owners and deadlines', prompt: 'List action items from this meeting so far with owners and deadlines.'},
+      {pk: 1, name: 'Info Gaps', icon: '❓', description: 'Key information gaps or unanswered questions', prompt: 'What are the key information gaps or unanswered questions in this meeting?'},
+    ];
+  }
+  _meetingAILoaded = true;
+  _renderMeetingAIList();
+}
+
+function _renderMeetingAIList() {
+  const list = document.getElementById('meetingAITplList');
+  if (!list) return;
+  if (!MEETING_AI_TEMPLATES.length) {
+    list.innerHTML = '<div style="padding:12px;color:var(--text3);font-size:12px">Loading…</div>';
+    return;
+  }
+  list.innerHTML = MEETING_AI_TEMPLATES.map(t => `
+    <div class="ai-tpl-item" onclick="meetingAIPrompt(${JSON.stringify(t.prompt)});closeMeetingAIDropdown()">
+      <span class="ai-tpl-icon">${t.icon}</span>
+      <div>
+        <div class="ai-tpl-name">${t.name}</div>
+        <div class="ai-tpl-desc">${t.description || ''}</div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleMeetingAIDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('meetingAIDropdown');
+  if (!dd) return;
+  const isOpen = dd.classList.contains('open');
+  if (!isOpen) {
+    if (!_meetingAILoaded) _loadMeetingAITemplates();
+    else _renderMeetingAIList();
+    dd.classList.add('open');
+  } else dd.classList.remove('open');
+}
+function closeMeetingAIDropdown() {
+  document.getElementById('meetingAIDropdown')?.classList.remove('open');
+}
+document.addEventListener('click', e => { if (!e.target.closest('#meetingAISplitWrap')) closeMeetingAIDropdown(); });
+
+// Load AI Help templates on page init
+_loadAITemplates();
 
 // Apply template prompt prefix to the question before sending
 function _applyTemplate(question) {
@@ -4314,10 +4350,15 @@ if (SESSION_TYPE === 'meeting') {
       if (!resp.ok) { toast(data.error || 'Scan failed', 'error'); return; }
 
       const names = (data.names || []).filter(n => n && n.trim());
-      if (!names.length) { toast('No participant names detected in screenshot', 'info'); return; }
+      const speakers = (data.speakers || []).filter(n => n && n.trim());
+      const detectedTitle = (data.title || '').trim();
+
+      // Combine names + speakers (deduplicated)
+      const allNames = [...new Set([...names, ...speakers])];
+      if (!allNames.length) { toast('No participant names detected in screenshot', 'info'); return; }
 
       let added = 0;
-      for (const name of names) {
+      for (const name of allNames) {
         if (participants.find(p => p.name.toLowerCase() === name.toLowerCase())) continue;
         const r2 = await fetch(`/api/session/${SESSION_ID}/participants/`, {
           method: 'POST',
@@ -4329,6 +4370,27 @@ if (SESSION_TYPE === 'meeting') {
       }
       renderParticipants();
       toast(added ? `Added ${added} participant${added > 1 ? 's' : ''} from screen` : 'Participants already in list', added ? 'success' : 'info');
+
+      // Auto-update session title if detected
+      if (detectedTitle) {
+        try {
+          const tRes = await fetch(`/api/session/${SESSION_ID}/edit/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ title: detectedTitle }),
+          });
+          if (tRes.ok) {
+            const titleEl = document.querySelector('.session-info h2');
+            if (titleEl) titleEl.textContent = detectedTitle;
+            toast(`Meeting title: "${detectedTitle}"`, 'info', 3000);
+          }
+        } catch(e) {}
+      }
+
+      // Refresh calendar if connected (calendar knows about this meeting)
+      if (calendarConnected) {
+        try { refreshCalendarEvents(); } catch(e) {}
+      }
     } catch (e) {
       toast('Scan error: ' + e.message, 'error');
     } finally {

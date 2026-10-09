@@ -49,4 +49,10 @@ urlpatterns = [
     # Admin: DB Sync Portal
     path("admin-portal/db-sync/", views.admin_db_sync, name="admin_db_sync"),
     path("admin-portal/db-sync/action/", views.admin_db_sync_action, name="admin_db_sync_action"),
+    # Templates
+    path("templates/", views.templates_page, name="templates_page"),
+    path("api/templates/", views.api_templates_list, name="api_templates_list"),
+    path("api/templates/create/", views.api_template_create, name="api_template_create"),
+    path("api/templates/<int:template_id>/update/", views.api_template_update, name="api_template_update"),
+    path("api/templates/<int:template_id>/delete/", views.api_template_delete, name="api_template_delete"),
 ]
