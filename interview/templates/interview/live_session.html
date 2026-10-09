@@ -880,12 +880,22 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
           <button class="font-btn" onclick="adjustFontSize(-1)" title="Decrease font">A-</button>
           <button class="font-btn" onclick="adjustFontSize(1)" title="Increase font">A+</button>
         </div>
+        <button class="btn btn-ghost btn-xs" onclick="toggleTranscriptSearch()" id="tcSearchBtn" title="Search transcript (Ctrl+F)">🔍</button>
         <button class="btn btn-ghost btn-xs" onclick="copyTranscriptLive()" title="Copy all">📋</button>
         <button class="btn btn-ghost btn-xs" onclick="exportSession()" title="Export session as Markdown">⬇ Export</button>
         <button class="btn btn-ghost btn-xs" onclick="clearTranscript()" title="Clear transcript">🗑</button>
         <span id="transcriptCount" style="font-size:10px;color:var(--text3);font-family:var(--mono)">{{ transcripts.count }}</span>
         <button class="btn btn-ghost btn-xs" id="transcriptMinBtn" onclick="minimizeTranscript()" title="Minimize transcript">⊟</button>
       </div>
+    </div>
+    <!-- Transcript search bar -->
+    <div id="tcSearchBar" style="display:none;padding:6px 10px;border-bottom:1px solid var(--border);background:var(--bg3)">
+      <input id="tcSearchInput" type="text" placeholder="// search transcript…"
+             style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:3px;
+                    padding:5px 10px;color:var(--text);font-size:12px;font-family:var(--mono);outline:none"
+             oninput="filterTranscript(this.value)"
+             onkeydown="if(event.key==='Escape'){toggleTranscriptSearch();filterTranscript('')}">
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px" id="tcSearchCount"></div>
     </div>
     <!-- Scroll-lock indicator — shown when user has scrolled up -->
     <div id="transcriptScrollBadge"
@@ -1227,6 +1237,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <tr><td>Focus note input</td><td><kbd>N</kbd></td></tr>
       <tr><td>Toggle mic</td><td><kbd>M</kbd></td></tr>
       <tr><td>Speak / stop AI answer (TTS)</td><td><kbd>S</kbd></td></tr>
+      <tr><td>Search transcript</td><td><kbd>Ctrl F</kbd></td></tr>
       <tr><td>Toggle focus mode</td><td><kbd>F</kbd></td></tr>
       <tr><td>Export session as Markdown</td><td><kbd>X</kbd></td></tr>
       <tr><td>End session</td><td><kbd>Shift E</kbd></td></tr>
@@ -2075,6 +2086,61 @@ function copyTranscriptLive() {
     lines.push(`[${label.toUpperCase()}]: ${text}`);
   });
   copyText(lines.join('\n\n'), 'Transcript');
+}
+
+// ── Transcript Search ─────────────────────────────────────────────────────────
+function toggleTranscriptSearch() {
+  const bar = document.getElementById('tcSearchBar');
+  const btn = document.getElementById('tcSearchBtn');
+  const open = bar.style.display !== 'none';
+  bar.style.display = open ? 'none' : 'block';
+  btn.classList.toggle('active', !open);
+  if (!open) {
+    const inp = document.getElementById('tcSearchInput');
+    inp.value = '';
+    inp.focus();
+    filterTranscript('');
+  } else {
+    filterTranscript('');
+  }
+}
+
+function filterTranscript(query) {
+  const q = query.trim().toLowerCase();
+  const entries = document.querySelectorAll('#transcriptPanel .transcript-entry');
+  let matches = 0;
+  entries.forEach(el => {
+    const text = el.querySelector('.text')?.textContent.toLowerCase() || '';
+    if (!q || text.includes(q)) {
+      el.style.display = '';
+      if (q) {
+        const textEl = el.querySelector('.text');
+        if (textEl) {
+          const raw = textEl.dataset.raw || textEl.textContent;
+          textEl.dataset.raw = raw;
+          const idx = raw.toLowerCase().indexOf(q);
+          if (idx >= 0) {
+            textEl.innerHTML = escHtml(raw.slice(0, idx)) +
+              `<mark style="background:rgba(0,200,255,0.3);color:var(--text);border-radius:2px">` +
+              escHtml(raw.slice(idx, idx + q.length)) + `</mark>` +
+              escHtml(raw.slice(idx + q.length));
+          }
+        }
+        matches++;
+      }
+    } else {
+      el.style.display = 'none';
+    }
+  });
+  if (!q) {
+    entries.forEach(el => {
+      const textEl = el.querySelector('.text');
+      if (textEl && textEl.dataset.raw) textEl.textContent = textEl.dataset.raw;
+      el.style.display = '';
+    });
+  }
+  const countEl = document.getElementById('tcSearchCount');
+  if (countEl) countEl.textContent = q ? `${matches} match${matches !== 1 ? 'es' : ''}` : '';
 }
 
 // ── Focus Mode ────────────────────────────────────────────────────────────────
@@ -3044,6 +3110,7 @@ document.addEventListener('keydown', e => {
   const tag = document.activeElement.tagName;
   const typing = ['INPUT','TEXTAREA'].includes(tag);
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); if (!isStreaming) triggerAI(); return; }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'f') { e.preventDefault(); toggleTranscriptSearch(); return; }
   if (typing) return;
   if (e.key === '/') { e.preventDefault(); questionInput.focus(); }
   if (e.key === 'n' || e.key === 'N') { e.preventDefault(); document.getElementById('noteInput').focus(); }
