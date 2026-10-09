@@ -839,7 +839,13 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <!-- Transcript Panel — left column -->
   <div class="panel">
     <div class="panel-header">
-      <span class="panel-title">🎙️ Transcript</span>
+      <span class="panel-title">// TRANSCRIPT</span>
+      <!-- Live stats readout -->
+      <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--text3)">
+        <span id="tcWordCount" title="Total words captured" style="color:var(--text3)">0w</span>
+        <span style="opacity:0.3">|</span>
+        <span id="tcSpeakRate" title="Speaking rate (words per minute, last 60s)" style="color:var(--text3)">—</span>
+      </div>
       <div class="panel-header-actions">
         <div class="font-controls">
           <button class="font-btn" onclick="adjustFontSize(-1)" title="Decrease font">A-</button>
@@ -847,16 +853,16 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
         </div>
         <button class="btn btn-ghost btn-xs" onclick="copyTranscriptLive()" title="Copy all">📋</button>
         <button class="btn btn-ghost btn-xs" onclick="clearTranscript()" title="Clear transcript">🗑</button>
-        <span id="transcriptCount" style="font-size:12px;color:var(--text3)">{{ transcripts.count }}</span>
+        <span id="transcriptCount" style="font-size:10px;color:var(--text3);font-family:var(--mono)">{{ transcripts.count }}</span>
         <button class="btn btn-ghost btn-xs" id="transcriptMinBtn" onclick="minimizeTranscript()" title="Minimize transcript">⊟</button>
       </div>
     </div>
     <div class="panel-body" id="transcriptPanel">
       {% if not transcripts %}
-      <div id="transcriptPlaceholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--text3);text-align:center;padding:32px">
-        <span style="font-size:36px">🎙️</span>
-        <p style="font-size:14px;color:var(--text2)">No transcript yet</p>
-        <p style="font-size:12px">Click the mic <strong style="color:var(--accent2)">🎤</strong> button below to start capturing.</p>
+      <div id="transcriptPlaceholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--text3);text-align:center;padding:32px">
+        <span style="font-size:32px">🤖</span>
+        <p style="font-size:13px;color:var(--text2);font-family:var(--mono)">// no transcript</p>
+        <p style="font-size:11px;font-family:var(--mono)">activate mic <span style="color:var(--accent)">🎤</span> to begin capture</p>
       </div>
       {% endif %}
       {% for entry in transcripts %}
@@ -1893,6 +1899,31 @@ function speakerLabel(type, speakerName) {
   return type;
 }
 
+// Word count and speaking rate tracking
+let _totalWords = 0;
+const _speakEvents = []; // {ts, words}
+function _updateWordStats(text) {
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  _totalWords += words;
+  _speakEvents.push({ ts: Date.now(), words });
+  // Keep only events in last 60s
+  const cutoff = Date.now() - 60000;
+  while (_speakEvents.length && _speakEvents[0].ts < cutoff) _speakEvents.shift();
+  const wpm = _speakEvents.reduce((s, e) => s + e.words, 0);
+  const wcEl = document.getElementById('tcWordCount');
+  const srEl = document.getElementById('tcSpeakRate');
+  if (wcEl) wcEl.textContent = _totalWords >= 1000 ? (_totalWords / 1000).toFixed(1) + 'k w' : _totalWords + 'w';
+  if (srEl) {
+    if (wpm > 0) {
+      srEl.textContent = wpm + ' wpm';
+      srEl.style.color = wpm > 180 ? 'var(--red)' : wpm > 120 ? 'var(--accent)' : 'var(--green)';
+    } else {
+      srEl.textContent = '—';
+      srEl.style.color = '';
+    }
+  }
+}
+
 function addTranscriptEntryUI(text, type, speakerName) {
   const ph = document.getElementById('transcriptPlaceholder');
   if (ph) ph.remove();
@@ -1904,6 +1935,7 @@ function addTranscriptEntryUI(text, type, speakerName) {
   transcriptPanel.insertBefore(div, interimEntry);
   transcriptCount++;
   document.getElementById('transcriptCount').textContent = `${transcriptCount}`;
+  if (type === 'microphone' || type === 'system') _updateWordStats(text);
   scrollTranscript();
   // Auto-type into question input when transcript is minimized
   if (transcriptMinimized) {
