@@ -174,3 +174,28 @@ class AIMessage(models.Model):
 
     def __str__(self):
         return f"AI: {self.content[:60]}"
+
+
+class DbSyncLog(models.Model):
+    DIRECTION_BACKUP = "backup"
+    DIRECTION_RESTORE = "restore"
+    DIRECTION_CHOICES = [("backup", "SQLite → MySQL"), ("restore", "MySQL → SQLite")]
+
+    STATUS_RUNNING = "running"
+    STATUS_SUCCESS = "success"
+    STATUS_ERROR = "error"
+    STATUS_CHOICES = [("running", "Running"), ("success", "Success"), ("error", "Error")]
+
+    direction = models.CharField(max_length=10, choices=DIRECTION_CHOICES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="running")
+    records_count = models.IntegerField(default=0)
+    error_message = models.TextField(blank=True)
+    triggered_by = models.CharField(max_length=50, blank=True)  # 'startup', 'session_end', 'manual'
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-started_at"]
+
+    def __str__(self):
+        return f"{self.direction} {self.status} @ {self.started_at:%Y-%m-%d %H:%M}"

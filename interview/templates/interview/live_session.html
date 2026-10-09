@@ -4238,21 +4238,27 @@ if (SESSION_TYPE === 'meeting') {
   }
 
   async function addParticipant() {
-    const name = document.getElementById('newParticipantName').value.trim();
-    if (!name) return;
+    const nameEl = document.getElementById('newParticipantName');
+    const name = nameEl.value.trim();
+    if (!name) { nameEl.focus(); toast('Enter a participant name first', 'info'); return; }
     const role = document.getElementById('newParticipantRole').value.trim();
-    const r = await fetch(`/api/session/${SESSION_ID}/participants/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-      body: JSON.stringify({ name, role }),
-    });
-    const d = await r.json();
-    if (d.id) {
-      participants.push({ id: d.id, name: d.name, role: d.role, color: d.color });
-      document.getElementById('newParticipantName').value = '';
-      document.getElementById('newParticipantRole').value = '';
-      renderParticipants();
-      toast(`Added ${name}`, 'success');
+    try {
+      const r = await fetch(`/api/session/${SESSION_ID}/participants/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ name, role }),
+      });
+      const d = await r.json();
+      if (!r.ok) { toast(d.error || 'Failed to add participant', 'error'); return; }
+      if (d.id) {
+        participants.push({ id: d.id, name: d.name, role: d.role, color: d.color });
+        nameEl.value = '';
+        document.getElementById('newParticipantRole').value = '';
+        renderParticipants();
+        toast(`Added ${name}`, 'success');
+      }
+    } catch (e) {
+      toast('Network error: ' + e.message, 'error');
     }
   }
 

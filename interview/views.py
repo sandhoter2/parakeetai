@@ -9,7 +9,8 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
+from django.contrib import messages
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone as dj_timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -250,6 +251,16 @@ def api_end_session(request, session_id):
     session.status = InterviewSession.STATUS_ENDED
     session.ended_at = dj_timezone.now()
     session.save()
+    # Trigger async backup to MySQL if configured
+    if getattr(settings, "MYSQL_BACKUP_ENABLED", False):
+        import threading
+        def _async_backup():
+            try:
+                from interview.db_sync import backup_to_mysql
+                backup_to_mysql(triggered_by="session_end")
+            except Exception:
+                pass
+        threading.Thread(target=_async_backup, daemon=True).start()
     return JsonResponse({"status": "ended"})
 
 
@@ -1383,3 +1394,46 @@ def api_new_session(request):
         "title": session.title,
         "sessions_used": sessions_used + 1,
     })
+
+
+# ── Admin: DB Sync Portal ──────────────────────────────────────────────────────
+
+@login_required
+def admin_db_sync(request):
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Staff only")
+    from .models import DbSyncLog
+    logs = DbSyncLog.objects.all()[:50]
+    mysql_enabled = getattr(settings, "MYSQL_BACKUP_ENABLED", False)
+    return render(request, "interview/admin_db_sync.html", {
+        "logs": logs,
+        "mysql_enabled": mysql_enabled,
+    })
+
+
+@login_required
+@require_POST
+def admin_db_sync_action(request):
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Staff only")
+    if not getattr(settings, "MYSQL_BACKUP_ENABLED", False):
+        messages.error(request, "MySQL backup is not configured (MYSQL_HOST env var missing).")
+        return redirect("admin_db_sync")
+    action = request.POST.get("action")
+    if action == "backup":
+        from .db_sync import backup_to_mysql
+        count, err = backup_to_mysql(triggered_by="admin_manual")
+        if err:
+            messages.error(request, f"Backup failed: {err}")
+        else:
+            messages.success(request, f"Backup complete: {count} records → MySQL")
+    elif action == "restore":
+        from .db_sync import restore_from_mysql
+        count, err = restore_from_mysql(triggered_by="admin_manual")
+        if err:
+            messages.error(request, f"Restore failed: {err}")
+        else:
+            messages.success(request, f"Restore complete: {count} records ← MySQL")
+    else:
+        messages.error(request, "Unknown action")
+    return redirect("admin_db_sync")

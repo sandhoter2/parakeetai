@@ -84,6 +84,16 @@ DATABASES = {
     }
 }
 
+# MySQL backup config (credentials via env vars)
+MYSQL_BACKUP_CONFIG = {
+    "host": os.environ.get("MYSQL_HOST", ""),
+    "port": int(os.environ.get("MYSQL_PORT", "3306")),
+    "database": os.environ.get("MYSQL_DB", "288315318_parakeetai"),
+    "user": os.environ.get("MYSQL_USER", "parakeetai"),
+    "password": os.environ.get("MYSQL_PASSWORD", ""),
+}
+MYSQL_BACKUP_ENABLED = bool(os.environ.get("MYSQL_HOST", ""))
+
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"

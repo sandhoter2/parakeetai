@@ -46,4 +46,7 @@ urlpatterns = [
     # Desktop overlay auth
     path("api/login/", views.api_login, name="api_login"),
     path("api/session/new/", views.api_new_session, name="api_new_session"),
+    # Admin: DB Sync Portal
+    path("admin-portal/db-sync/", views.admin_db_sync, name="admin_db_sync"),
+    path("admin-portal/db-sync/action/", views.admin_db_sync_action, name="admin_db_sync_action"),
 ]
