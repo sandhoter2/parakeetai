@@ -966,6 +966,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <div class="ai-trigger-text" id="aiTriggerText"></div>
       <div class="ai-answer" id="aiAnswerText"></div><span class="ai-cursor" id="aiCursor"></span>
       <div class="ai-live-actions" id="aiLiveActions" style="display:none">
+        <span id="aiReadTime" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-right:4px"></span>
         <button class="btn btn-ghost btn-xs" onclick="copyCurrentAI()">📋 Copy</button>
         <button class="btn btn-ghost btn-xs" onclick="speakCurrentAI()" id="speakLiveBtn">🔊 Speak</button>
         <button class="btn btn-ghost btn-xs" onclick="regenAI()">🔄 Regenerate</button>
@@ -2056,6 +2057,26 @@ function copyTranscriptLive() {
   copyText(lines.join('\n\n'), 'Transcript');
 }
 
+// ── Bookmark AI Answer ────────────────────────────────────────────────────────
+function toggleBookmarkAI(btn) {
+  const item = btn.closest('.ai-item');
+  const isBookmarked = item.dataset.bookmarked === '1';
+  if (isBookmarked) {
+    item.dataset.bookmarked = '0';
+    item.style.borderLeftColor = '';
+    item.style.borderLeftWidth = '';
+    btn.textContent = '🔖';
+    btn.style.color = '';
+  } else {
+    item.dataset.bookmarked = '1';
+    item.style.borderLeftColor = 'var(--yellow)';
+    item.style.borderLeftWidth = '3px';
+    btn.textContent = '⭐';
+    btn.style.color = 'var(--yellow)';
+    toast('Answer bookmarked', 'info', 2000);
+  }
+}
+
 // ── Quick Questions ───────────────────────────────────────────────────────────
 function toggleQuickQ() {
   const strip = document.getElementById('quickQStrip');
@@ -2264,7 +2285,16 @@ function triggerAI(question, fromVoice) {
         if (!line.startsWith('data: ')) continue;
         try {
           const d = JSON.parse(line.slice(6));
-          if (d.type === 'text') { aiAnswerText.textContent += d.text; scrollAI(); }
+          if (d.type === 'text') {
+            aiAnswerText.textContent += d.text;
+            scrollAI();
+            const _wc2 = aiAnswerText.textContent.trim().split(/\s+/).filter(Boolean).length;
+            const _rt2El = document.getElementById('aiReadTime');
+            if (_rt2El) {
+              const _rs2 = Math.ceil(_wc2 / 3.5);
+              _rt2El.textContent = `${_wc2}w`;
+            }
+          }
           else if (d.type === 'error') { aiAnswerText.textContent += '\n\n❌ ' + d.error; }
         } catch {}
       }
@@ -2293,6 +2323,12 @@ function triggerAI(question, fromVoice) {
     }
     archiveAI(question, finalAnswer);
     aiLive.style.display = 'none';
+    // Update reading time in live actions
+    const wc = finalAnswer.trim().split(/\s+/).filter(Boolean).length;
+    const rs = Math.ceil(wc / 3.5);
+    const rt = rs >= 60 ? `${Math.floor(rs/60)}m ${rs%60}s` : `${rs}s`;
+    const rtEl = _df.getElementById('aiReadTime');
+    if (rtEl) rtEl.textContent = `${wc}w · ${rt}`;
   });
 }
 
@@ -2329,7 +2365,10 @@ function archiveAI(question, answer) {
   }
   item.innerHTML = `<div class="ai-item-q">Q: ${escHtml(question.slice(0,120))}</div>`;
   item.appendChild(answerEl);
-  item.insertAdjacentHTML('beforeend', `<div class="ai-item-actions"><button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">📋 Copy</button><button class="btn btn-ghost btn-xs" onclick="speakAI(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,this)">🔊 Speak</button></div>`);
+  const wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
+  const readSec = Math.ceil(wordCount / 3.5);
+  const readLabel = readSec >= 60 ? `${Math.floor(readSec/60)}m ${readSec%60}s` : `${readSec}s`;
+  item.insertAdjacentHTML('beforeend', `<div class="ai-item-actions"><span style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-right:4px">${wordCount}w · ${readLabel} read</span><button class="btn btn-ghost btn-xs" onclick="toggleBookmarkAI(this)">🔖</button><button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">📋 Copy</button><button class="btn btn-ghost btn-xs" onclick="speakAI(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,this)">🔊 Speak</button></div>`);
   // Toggle minimized on click of the question line
   item.querySelector('.ai-item-q').addEventListener('click', () => item.classList.toggle('minimized'));
   hist.prepend(item);
