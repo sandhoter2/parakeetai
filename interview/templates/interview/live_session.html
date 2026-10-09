@@ -2461,10 +2461,18 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
   const formData = new FormData();
   formData.append('audio', blob, `audio.${ext}`);
   formData.append('speaker', speaker);
-  // Include active speaker name if set (for system audio) so DB entry is labelled at creation
-  if (speaker === 'system' && typeof getActiveSpeakerName === 'function') {
-    const asn = getActiveSpeakerName();
-    if (asn) formData.append('speaker_name', asn);
+  let _resolvedSpeakerName = '';
+  if (speaker === 'system') {
+    // Teams active speaker takes priority; fall back to auto-speaker numbering
+    const teamsName = typeof getActiveSpeakerName === 'function' ? getActiveSpeakerName() : '';
+    if (teamsName) {
+      _resolvedSpeakerName = teamsName;
+      _lastSystemAudioTs = Date.now(); // keep gap tracking in sync
+    } else {
+      const autoSpk = _checkSpeakerChange(); // creates/advances auto-speaker as needed
+      if (autoSpk) _resolvedSpeakerName = autoSpk.name;
+    }
+    if (_resolvedSpeakerName) formData.append('speaker_name', _resolvedSpeakerName);
   }
 
   try {
@@ -2478,8 +2486,7 @@ async function sendAudioChunk(blob, mimeType, speaker = 'microphone') {
     if (data.error) { setStatus('Transcribe error: ' + data.error); return; }
     if (!data.text || !data.text.trim()) return;
 
-    if (speaker === 'system') _checkSpeakerChange();
-    addTranscriptEntryUI(data.text.trim(), data.speaker || speaker, data.speaker_name || '');
+    addTranscriptEntryUI(data.text.trim(), data.speaker || speaker, data.speaker_name || _resolvedSpeakerName);
     refreshMHSuggestions();
     setStatus('Transcribed ✓');
 
@@ -2621,6 +2628,10 @@ function _updateWordStats(text, type) {
 let _voiceParticipants = []; // [{id, name, color}, ...]
 let _lastSystemAudioTs = 0;  // timestamp of last system audio chunk
 const _SPEAKER_CHANGE_GAP_MS = 3000; // gap > 3s → likely new speaker
+// Auto-speaker numbering (used when no Teams participants are loaded)
+const _AUTO_COLORS = ['#4fc3f7','#81c784','#ffb74d','#f48fb1','#ce93d8','#80cbc4'];
+let _autoSpeakers = [];        // [{id, name, color}] client-side only
+let _autoSpeakerIdx = -1;      // index of current auto-speaker (-1 = none yet)
 
 function _renderVoiceChips(entryDiv, assignedName) {
   const row = entryDiv.querySelector('.voice-assign-row');
@@ -2667,16 +2678,57 @@ function _assignVoiceToEntry(entryDiv, participant) {
   toast(`// → ${participant.name}`, 'success', 1500);
 }
 
-// Called when new system audio arrives to detect speaker changes
+// Called before sending system audio — manages auto-speaker numbering and gap detection
+// Returns the current auto-speaker object (or null if Teams participants are active)
 function _checkSpeakerChange() {
   const now = Date.now();
-  const gap = now - _lastSystemAudioTs;
+  const gap = _lastSystemAudioTs ? now - _lastSystemAudioTs : Infinity;
   _lastSystemAudioTs = now;
-  if (_lastSystemAudioTs && gap > _SPEAKER_CHANGE_GAP_MS && _voiceParticipants.length > 1) {
-    // Pulse the speaker buttons to prompt user to confirm who is speaking
-    const btns = document.querySelectorAll('#speakerBtnList button');
-    btns.forEach(b => { b.classList.remove('speaker-btn-pulse'); void b.offsetWidth; b.classList.add('speaker-btn-pulse'); });
+
+  // Teams participants present: pulse buttons on gap, don't auto-number
+  if (_voiceParticipants.length && _voiceParticipants[0].id && !String(_voiceParticipants[0].id).startsWith('auto_')) {
+    if (gap > _SPEAKER_CHANGE_GAP_MS && _voiceParticipants.length > 1) {
+      const btns = document.querySelectorAll('#speakerBtnList button');
+      btns.forEach(b => { b.classList.remove('speaker-btn-pulse'); void b.offsetWidth; b.classList.add('speaker-btn-pulse'); });
+    }
+    return null;
   }
+
+  // Auto-speaker mode: create or advance speaker based on gap
+  if (_autoSpeakerIdx < 0 || gap > _SPEAKER_CHANGE_GAP_MS) {
+    // First chunk ever, or gap detected → advance to next auto-speaker
+    _autoSpeakerIdx++;
+    if (_autoSpeakerIdx >= _autoSpeakers.length) {
+      const n = _autoSpeakers.length + 1;
+      _autoSpeakers.push({ id: `auto_${n}`, name: `Speaker ${n}`, color: _AUTO_COLORS[(n - 1) % _AUTO_COLORS.length] });
+    }
+    _voiceParticipants = [..._autoSpeakers];
+    _syncAutoSpeakerUI();
+    _refreshAllVoiceChips();
+  }
+  return _autoSpeakers[_autoSpeakerIdx] || null;
+}
+
+// Render auto-speaker buttons in the Teams panel speaker section
+function _syncAutoSpeakerUI() {
+  const speakerBtns = document.getElementById('speakerBtnList');
+  if (!speakerBtns || !_autoSpeakers.length) return;
+  speakerBtns.innerHTML = '';
+  const display = document.getElementById('activeSpeakerDisplay');
+  _autoSpeakers.forEach((sp, idx) => {
+    const isActive = idx === _autoSpeakerIdx;
+    const btn = document.createElement('button');
+    btn.style.cssText = `padding:4px 10px;border-radius:10px;border:2px solid ${isActive ? sp.color : 'var(--border)'};background:${isActive ? sp.color + '22' : 'transparent'};color:${isActive ? sp.color : 'var(--text2)'};font-size:12px;font-weight:${isActive ? '700' : '400'};cursor:pointer;transition:all 0.15s`;
+    btn.textContent = sp.name;
+    btn.title = `Set ${sp.name} as active speaker`;
+    btn.addEventListener('click', () => {
+      _autoSpeakerIdx = idx;
+      _syncAutoSpeakerUI();
+      if (display) display.innerHTML = `<span style="color:${sp.color};font-weight:700">${escHtml(sp.name)}</span>`;
+    });
+    speakerBtns.appendChild(btn);
+    if (isActive && display) display.innerHTML = `<span style="color:${sp.color};font-weight:700">${escHtml(sp.name)}</span> <span style="font-size:10px;color:var(--text3)">(auto)</span>`;
+  });
 }
 
 // Refresh voice chips on all unassigned system entries (called after participants load)
@@ -4142,7 +4194,15 @@ if (SESSION_TYPE === 'meeting') {
 
   function renderParticipants() {
     // Sync global voice participants so transcript chips stay up to date
-    _voiceParticipants = participants.map(p => ({ id: p.id, name: p.name, color: p.color }));
+    if (participants.length) {
+      // Real participants: override auto-speakers
+      _voiceParticipants = participants.map(p => ({ id: p.id, name: p.name, color: p.color }));
+    } else if (_autoSpeakers.length) {
+      // No real participants: keep auto-speakers
+      _voiceParticipants = [..._autoSpeakers];
+    } else {
+      _voiceParticipants = [];
+    }
     _refreshAllVoiceChips();
     const list = document.getElementById('participantsList');
     const speakerBtns = document.getElementById('speakerBtnList');
