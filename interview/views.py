@@ -310,6 +310,100 @@ def api_save_audio_chunk(request, session_id):
     return JsonResponse({"ok": True, "seq": seq, "bytes": len(audio_data)})
 
 
+_CONV_HELPER_PROMPT = """You are a real-time conversation analyst embedded in an interview or meeting assistant.
+
+Given the transcript entries below, do exactly two things:
+
+1. LABEL each entry with one tag on its own line:
+   [❓ Q]  — a question being asked
+   [💡 P]  — a new point / fact being stated
+   [🔁 R]  — a repeat or restatement of a previous point (same concept, even different words)
+   [✅ T]  — a takeaway, conclusion, or commitment
+
+2. After ALL labels, write a CONTEXT block (3 lines max):
+   TONE: (one adjective, e.g. collaborative / curious / tense / defensive / exploratory)
+   DYNAMIC: (who is driving the conversation and what pressure or motive is present — one sentence)
+   KEY: (the single most important fact, demand, or reveal — one sentence)
+
+Format:
+[1] [❓ Q] brief rephrasing of the entry
+[2] [💡 P] brief rephrasing
+...
+
+TONE: ...
+DYNAMIC: ...
+KEY: ...
+
+Be precise and brutally concise. No filler. No disclaimers."""
+
+
+@csrf_exempt
+def api_conversation_helper(request, session_id):
+    """Analyze the conversation transcript: label entries and extract context."""
+    if (r := _auth_required(request)): return r
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+
+    session = get_object_or_404(InterviewSession, id=session_id)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid JSON"}, status=400)
+
+    entries = data.get("entries", [])
+    if not entries:
+        # Fall back to the last 20 transcript entries from DB
+        recent = session.transcripts.order_by("-created_at")[:20]
+        entries = [
+            {"speaker": {"microphone": "You", "system": "Them"}.get(e.speaker_type, e.speaker_type),
+             "text": e.content}
+            for e in reversed(list(recent))
+        ]
+
+    if not entries:
+        return JsonResponse({"error": "no transcript entries yet"}, status=400)
+
+    client, model, provider = _get_chat_client()
+    if not client:
+        return JsonResponse(
+            {"error": "No AI key set. Add OPENROUTER_API_KEY or GROQ_API_KEY."},
+            status=500,
+        )
+
+    lines = "\n".join(
+        f"[{i+1}] {e.get('speaker','?')}: {e.get('text','')}"
+        for i, e in enumerate(entries)
+    )
+    user_msg = f"Transcript entries to analyze:\n{lines}"
+
+    def stream_sse():
+        yield f"data: {json.dumps({'type': 'start'})}\n\n"
+        try:
+            stream = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": _CONV_HELPER_PROMPT},
+                    {"role": "user", "content": user_msg},
+                ],
+                max_tokens=500,
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    yield f"data: {json.dumps({'type': 'text', 'text': delta})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+    return StreamingHttpResponse(
+        stream_sse(),
+        content_type="text/event-stream",
+        headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"},
+    )
+
+
 @csrf_exempt
 def api_chat(request, session_id):
     """Stream Claude's answer as Server-Sent Events."""

@@ -15,6 +15,7 @@ urlpatterns = [
     path("api/session/<uuid:session_id>/end/", views.api_end_session, name="api_end"),
     path("api/session/<uuid:session_id>/transcript/", views.api_transcript, name="api_transcript"),
     path("api/session/<uuid:session_id>/audio-chunk/", views.api_save_audio_chunk, name="api_audio_chunk"),
+    path("api/session/<uuid:session_id>/conversation-helper/", views.api_conversation_helper, name="api_conv_helper"),
     path("api/session/<uuid:session_id>/transcribe/", views.api_transcribe, name="api_transcribe"),
     path("api/session/<uuid:session_id>/chat/", views.api_chat, name="api_chat"),
     path("api/session/<uuid:session_id>/data/", views.api_session_data, name="api_data"),

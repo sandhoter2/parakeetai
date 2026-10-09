@@ -850,6 +850,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
            placeholder="Type question or speak…"
            onkeydown="if(event.key==='Enter')triggerAI()">
     <button class="fai-btn" id="fAiHelpBtn" onclick="triggerAI()">✨ AI Help</button>
+    <button class="fai-btn" id="fConvHelperBtn" onclick="triggerConvHelper()" title="Conversation insights" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">🧠</button>
     <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:10px;padding:2px 6px" onclick="clearInput()" title="Clear input">✕ Clear</button>
     <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:10px;padding:2px 6px" onclick="saveAndClearInput()" title="Save to transcript">💾 Save</button>
   </div>
@@ -1008,6 +1009,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 
   <div class="ai-btn-group" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
     <button class="ai-help-btn" id="aiHelpBtn" onclick="triggerAI()">✨ AI Help</button>
+    <button class="ai-help-btn" id="convHelperBtn" onclick="triggerConvHelper()" title="Analyze conversation: label entries, extract tone and key facts" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);font-size:11px;padding:4px 10px">🧠 Insights</button>
     <div style="display:flex;gap:4px">
       <button class="ai-help-btn" style="font-size:10px;padding:2px 7px;background:var(--bg3);color:var(--text2)" onclick="clearInput()" title="Clear input">✕ Clear</button>
       <button class="ai-help-btn" style="font-size:10px;padding:2px 7px;background:var(--bg3);color:var(--text2)" onclick="saveAndClearInput()" title="Save to transcript without sending to AI">💾 Save</button>
@@ -2006,6 +2008,92 @@ function clearAI() {
   // keep bionic-on class so toggle state is preserved
 }
 
+// ── CONVERSATION HELPER ───────────────────────────────────────────────────────
+function triggerConvHelper() {
+  if (isStreaming) return;
+  showAiPanel();
+
+  // Gather visible transcript entries from the DOM
+  const entryEls = transcriptPanel.querySelectorAll('.transcript-entry:not(.interim-entry)');
+  const entries = Array.from(entryEls).slice(-20).map(el => ({
+    speaker: (el.querySelector('.speaker') || {textContent: 'You'}).textContent.trim(),
+    text: (el.querySelector('.text') || {textContent: ''}).textContent.trim(),
+  })).filter(e => e.text);
+
+  if (entries.length === 0) { setStatus('No transcript yet'); return; }
+
+  isStreaming = true;
+  const btn  = document.getElementById('convHelperBtn');
+  const fBtn = _doc().getElementById('fConvHelperBtn');
+  if (btn)  { btn.disabled  = true; btn.textContent  = '⏳…'; }
+  if (fBtn) { fBtn.disabled = true; fBtn.textContent = '⏳'; }
+
+  const _d = _doc();
+  const aiHistory = _d.getElementById('aiHistory');
+  aiPlaceholder.style.display = 'none';
+  if (aiHistory) aiHistory.style.display = 'none';
+  aiLive.style.display = 'block';
+  aiTriggerText.textContent = '🧠 Conversation Insights';
+  aiAnswerText.textContent = '';
+  aiAnswerText.style.fontSize = aiFontSize + 'px';
+  aiCursor.style.display = 'inline-block';
+  _d.getElementById('aiLiveActions').style.display = 'none';
+  _d.getElementById('clearAIBtn').style.display = 'flex';
+  _d.getElementById('copyAIBtn').style.display = 'none';
+  _d.getElementById('regenBtn').style.display = 'none';
+
+  fetch(`/api/session/${SESSION_ID}/conversation-helper/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ entries }),
+  }).then(async (resp) => {
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      aiAnswerText.textContent = '❌ ' + (err.error || `HTTP ${resp.status}`);
+      return;
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const d = JSON.parse(line.slice(6));
+          if (d.type === 'text') { aiAnswerText.textContent += d.text; scrollAI(); }
+          else if (d.type === 'error') { aiAnswerText.textContent += '\n\n❌ ' + d.error; }
+        } catch {}
+      }
+    }
+  }).catch(err => {
+    aiAnswerText.textContent = '❌ ' + err.message;
+  }).finally(() => {
+    isStreaming = false;
+    if (btn)  { btn.disabled  = false; btn.textContent  = '🧠 Insights'; }
+    if (fBtn) { fBtn.disabled = false; fBtn.textContent = '🧠'; }
+    aiCursor.style.display = 'none';
+    setStatus('Insights ready ✓');
+    const _df = _doc();
+    _df.getElementById('aiLiveActions').style.display = 'flex';
+    _df.getElementById('copyAIBtn').style.display = 'flex';
+    _df.getElementById('regenBtn').style.display = 'none';
+    const finalAnswer = aiAnswerText.textContent;
+    aiAnswerText.dataset.plain = finalAnswer;
+    if (bionicMode) {
+      aiAnswerText.innerHTML = toBionicHTML(finalAnswer);
+    } else {
+      renderMarkdown(aiAnswerText, finalAnswer);
+    }
+    archiveAI('Conversation Insights', finalAnswer);
+    aiLive.style.display = 'none';
+  });
+}
+
 function endSession() {
   if (!confirm('End this session?')) return;
   clearInterval(timerInterval);
@@ -2374,7 +2462,7 @@ async function popOutAI() {
         const _pipFns = ['popOutAI','toggleAiPanel','toggleBionic','adjustAIFontSize',
           'regenAI','copyCurrentAI','clearAI','triggerAI','toggleMic',
           'restoreTranscript','copyText','setFloatOpacity','openModal','adjustFontSize',
-          'toggleTCPanel','clearInput','saveAndClearInput'];
+          'toggleTCPanel','clearInput','saveAndClearInput','triggerConvHelper'];
         _pipFns.forEach(fn => {
           window[fn] = function() { return window.opener[fn].apply(window.opener, arguments); };
         });
@@ -2421,7 +2509,7 @@ async function popOutAI() {
         #aiFloatPanel .ai-float-foot { display:none!important; }
         /* Show input row and all control buttons in PiP window */
         .ai-float-input-row { display: flex !important; }
-        #fMicBtn, #fTcConfigBtn, #fAiHelpBtn, .fai-btn { display: inline-flex !important; }
+        #fMicBtn, #fTcConfigBtn, #fAiHelpBtn, #fConvHelperBtn, .fai-btn { display: inline-flex !important; }
       `;
       pipWin.document.head.appendChild(bodyStyle);
 
