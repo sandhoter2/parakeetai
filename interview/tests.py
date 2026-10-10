@@ -59,6 +59,17 @@ class UserProfileTests(TestCase):
         user = User.objects.create_user(username="bob", password="pw")
         self.assertTrue(UserProfile.objects.filter(user=user).exists())
 
+    def test_default_theme_is_dark(self):
+        user = make_user(username="theme_user")
+        self.assertEqual(user.profile.theme, UserProfile.THEME_DARK)
+
+    def test_theme_can_be_set_to_light(self):
+        user = make_user(username="theme_user2")
+        user.profile.theme = UserProfile.THEME_LIGHT
+        user.profile.save()
+        user.refresh_from_db()
+        self.assertEqual(user.profile.theme, UserProfile.THEME_LIGHT)
+
 
 class SessionLimitTests(TestCase):
     def test_free_user_under_limit(self):
@@ -235,3 +246,31 @@ class UrlRoutingTests(TestCase):
 
     def test_pricing_resolves(self):
         self.assertEqual(reverse("pricing"), "/pricing/")
+
+    def test_api_theme_resolves(self):
+        self.assertEqual(reverse("api_theme"), "/api/theme/")
+
+
+class ThemeViewTests(TestCase):
+    def setUp(self):
+        self.user = make_user(username="themetester", password="pw")
+
+    def test_toggle_theme_unauthenticated_redirects(self):
+        r = self.client.post("/api/theme/", {"theme": "light"})
+        self.assertEqual(r.status_code, 302)
+
+    def test_toggle_theme_authenticated(self):
+        self.client.login(username="themetester", password="pw")
+        r = self.client.post("/api/theme/", {"theme": "light"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["theme"], "light")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.profile.theme, "light")
+
+        # Toggle back
+        r2 = self.client.post("/api/theme/", {})
+        self.assertEqual(r2.status_code, 200)
+        self.assertEqual(r2.json()["theme"], "dark")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.profile.theme, "dark")
+

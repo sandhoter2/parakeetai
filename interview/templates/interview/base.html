@@ -1,16 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{% if request.user.is_authenticated %}{{ request.user.profile.theme|default:'dark' }}{% else %}dark{% endif %}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}PARAKEETAI{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <script>
+    (function() {
+      var saved = localStorage.getItem('pkai_theme');
+      var userTheme = "{% if request.user.is_authenticated %}{{ request.user.profile.theme|default:'dark' }}{% else %}dark{% endif %}";
+      var active = saved || userTheme || 'dark';
+      document.documentElement.setAttribute('data-theme', active);
+    })();
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      /* ── ROBOT / CYBERPUNK PALETTE ─────────────────────────────── */
+      /* ── ROBOT / CYBERPUNK PALETTE (DARK) ─────────────────────────── */
       --bg:    #040b10;
       --bg2:   #07111a;
       --bg3:   #0c1c28;
@@ -34,6 +42,82 @@
       --nav-h: 54px;
       /* scan-line effect toggle (set to 1 to enable) */
       --scan: 0;
+    }
+
+    [data-theme="light"] {
+      /* ── SLEEK LIGHT PALETTE ──────────────────────────────────────── */
+      --bg:    #f8fafc;
+      --bg2:   #ffffff;
+      --bg3:   #f1f5f9;
+      --bg4:   #e2e8f0;
+      --border:  #cbd5e1;
+      --border2: #94a3b8;
+      --accent:  #0284c7;
+      --accent2: #0369a1;
+      --accent-glow: rgba(2,132,199,0.18);
+      --accent-dim:  rgba(2,132,199,0.08);
+      --green:  #15803d;
+      --red:    #dc2626;
+      --yellow: #b45309;
+      --blue:   #2563eb;
+      --purple: #7c3aed;
+      --text:   #0f172a;
+      --text2:  #334155;
+      --text3:  #64748b;
+      --scan: 0;
+    }
+
+    [data-theme="light"] body {
+      background-color: var(--bg);
+      color: var(--text);
+      background-image: radial-gradient(circle, rgba(2,132,199,0.06) 1px, transparent 1px);
+    }
+    [data-theme="light"] body::after {
+      display: none !important;
+    }
+    [data-theme="light"] .navbar {
+      background: rgba(255,255,255,0.95);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    [data-theme="light"] .nav-user-badge {
+      background: var(--bg3);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    [data-theme="light"] .btn-secondary {
+      background: var(--bg2);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    [data-theme="light"] .btn-secondary:hover {
+      background: var(--bg3);
+      border-color: var(--border2);
+    }
+    [data-theme="light"] .btn-ghost {
+      color: var(--text2);
+    }
+    [data-theme="light"] .btn-ghost:hover {
+      background: var(--bg3);
+      color: var(--text);
+    }
+    [data-theme="light"] .form-control {
+      background: var(--bg2);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    [data-theme="light"] select.form-control option {
+      background: #ffffff;
+      color: #0f172a;
+    }
+    [data-theme="light"] .modal {
+      background: var(--bg2);
+      border-color: var(--border);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.12);
+    }
+    [data-theme="light"] .card {
+      background: var(--bg2);
+      border-color: var(--border);
     }
 
     body {
@@ -270,6 +354,7 @@
       PARAKEET<span style="color:var(--accent);font-size:11px;vertical-align:super;margin-left:1px">AI</span>
     </a>
     <div class="navbar-actions">
+      <button id="themeToggleBtn" type="button" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle Light / Dark Mode" style="padding:5px 9px;font-size:13px;border:1px solid var(--border2)">🌓</button>
       {% block navbar_actions %}
       {% if user.is_authenticated %}
       <a href="/templates/" class="btn btn-ghost btn-sm">🗂 Templates</a>
@@ -296,6 +381,32 @@
   <div id="toast-container"></div>
 
   <script>
+  function toggleTheme() {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('pkai_theme', next);
+
+    const select = document.getElementById('themeSelect');
+    if (select) select.value = next;
+    const radios = document.querySelectorAll('input[name="theme"]');
+    radios.forEach(r => { if (r.value === next) r.checked = true; });
+
+    const csrf = getCookie('csrftoken');
+    if (csrf) {
+      fetch('/api/theme/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrf
+        },
+        body: JSON.stringify({ theme: next })
+      }).catch(function() {});
+    }
+    toast(next === 'light' ? 'Light mode enabled' : 'Dark mode enabled', 'info', 2000);
+  }
+
   function toast(msg, type='info', duration=3000) {
     const icons = {success:'✓', error:'✗', info:'ℹ', warn:'⚠'};
     const el = document.createElement('div');

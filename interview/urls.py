@@ -56,4 +56,5 @@ urlpatterns = [
     path("api/templates/create/", views.api_template_create, name="api_template_create"),
     path("api/templates/<int:template_id>/update/", views.api_template_update, name="api_template_update"),
     path("api/templates/<int:template_id>/delete/", views.api_template_delete, name="api_template_delete"),
+    path("api/theme/", views.api_toggle_theme, name="api_theme"),
 ]

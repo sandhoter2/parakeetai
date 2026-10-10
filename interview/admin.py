@@ -13,12 +13,12 @@ from .models import AIMessage, InterviewSession, Task, TranscriptEntry, UserProf
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "display_name", "role", "company", "created_at")
+    list_display = ("user", "display_name", "role", "company", "theme", "created_at")
     search_fields = ("user__username", "user__email", "display_name", "company")
-    list_filter = ("role",)
+    list_filter = ("role", "theme")
     readonly_fields = ("created_at",)
     fieldsets = (
-        ("Account", {"fields": ("user", "display_name")}),
+        ("Account", {"fields": ("user", "display_name", "theme")}),
         ("Professional", {"fields": ("role", "company", "background")}),
         ("Meta", {"fields": ("created_at",)}),
     )

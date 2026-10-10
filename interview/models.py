@@ -26,6 +26,13 @@ class UserProfile(models.Model):
     ]
     FREE_SESSION_LIMIT = 5
 
+    THEME_DARK = "dark"
+    THEME_LIGHT = "light"
+    THEME_CHOICES = [
+        (THEME_DARK, "Dark"),
+        (THEME_LIGHT, "Light"),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     display_name = models.CharField(max_length=100, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="engineer", blank=True)
@@ -34,6 +41,7 @@ class UserProfile(models.Model):
     ext_token = models.CharField(max_length=64, unique=True, blank=True, default="",
                                  help_text="Static token used by the Electron overlay to authenticate API calls.")
     plan = models.CharField(max_length=10, choices=PLAN_CHOICES, default=PLAN_FREE)
+    theme = models.CharField(max_length=10, choices=THEME_CHOICES, default=THEME_DARK)
     stripe_customer_id = models.CharField(max_length=64, blank=True, default="")
     stripe_subscription_id = models.CharField(max_length=64, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)

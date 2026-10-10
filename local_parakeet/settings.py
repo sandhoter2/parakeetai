@@ -123,6 +123,11 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# MariaDB on Hostinger shared hosting does not have timezone tables loaded.
+# Render's server timezone is UTC. Storing naive datetimes in UTC is correct here.
+USE_TZ = False
+TIME_ZONE = "UTC"
+
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/login/"

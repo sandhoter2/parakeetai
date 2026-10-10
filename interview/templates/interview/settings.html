@@ -49,6 +49,24 @@
       {% csrf_token %}
 
       <div class="settings-section">
+        <div class="settings-section-title">Appearance & Theme</div>
+        <div class="form-group">
+          <label>Interface Theme</label>
+          <div style="display:flex;gap:12px;margin-top:8px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);font-size:13px;font-family:var(--mono)">
+              <input type="radio" name="theme" value="dark" {% if profile.theme != 'light' %}checked{% endif %} onchange="toggleThemeRadio('dark')">
+              🌙 Dark Mode
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);font-size:13px;font-family:var(--mono)">
+              <input type="radio" name="theme" value="light" {% if profile.theme == 'light' %}checked{% endif %} onchange="toggleThemeRadio('light')">
+              ☀️ Light Mode
+            </label>
+          </div>
+          <div class="form-hint">Changes apply immediately across all pages and persist to your account.</div>
+        </div>
+      </div>
+
+      <div class="settings-section">
         <div class="settings-section-title">Groq API</div>
 
         <div class="form-group">
@@ -154,4 +172,25 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleThemeRadio(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('pkai_theme', theme);
+  const csrf = getCookie('csrftoken');
+  if (csrf) {
+    fetch('/api/theme/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrf
+      },
+      body: JSON.stringify({ theme: theme })
+    }).catch(function() {});
+  }
+  toast(theme === 'light' ? 'Light mode enabled' : 'Dark mode enabled', 'info', 1500);
+}
+</script>
 {% endblock %}

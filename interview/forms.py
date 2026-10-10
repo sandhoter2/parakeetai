@@ -53,11 +53,12 @@ class UserProfileForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ["display_name", "role", "company", "background"]
+        fields = ["display_name", "role", "company", "theme", "background"]
         widgets = {
             "display_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "How you'd like to be called"}),
             "role": forms.Select(attrs={"class": "form-control"}),
             "company": forms.TextInput(attrs={"class": "form-control", "placeholder": "Your company or team"}),
+            "theme": forms.Select(attrs={"class": "form-control", "id": "themeSelect"}),
             "background": forms.Textarea(attrs={
                 "class": "form-control", "rows": 8,
                 "placeholder": "Resume summary, skills, experience — this auto-populates the background field in new sessions.",

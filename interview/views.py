@@ -1125,8 +1125,14 @@ def profile_page(request):
 
 @login_required
 def settings_page(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
     msg = None
     if request.method == "POST":
+        theme = request.POST.get("theme", "").strip()
+        if theme in [UserProfile.THEME_LIGHT, UserProfile.THEME_DARK]:
+            profile.theme = theme
+            profile.save(update_fields=["theme"])
+
         api_key = request.POST.get("api_key", "").strip()
         model = request.POST.get("model", "").strip()
         whisper_model = request.POST.get("whisper_model", "").strip()
@@ -1158,7 +1164,7 @@ def settings_page(request):
             with open(env_path, "w") as f:
                 for k, v in env_dict.items():
                     f.write(f"{k}={v}\n")
-            msg = ("success", "Settings saved. Restart the server for changes to take effect.")
+            msg = ("success", "Settings saved successfully.")
         except Exception as exc:
             msg = ("error", f"Failed to save: {exc}")
 
@@ -1169,7 +1175,7 @@ def settings_page(request):
         "openrouter_key": settings.OPENROUTER_API_KEY or "",
         "openrouter_model": settings.OPENROUTER_MODEL or "",
     }
-    return render(request, "interview/settings.html", {"current": current, "msg": msg})
+    return render(request, "interview/settings.html", {"current": current, "profile": profile, "msg": msg})
 
 
 def _build_system_prompt(session: InterviewSession) -> str:
@@ -1714,3 +1720,25 @@ def api_template_delete(request, template_id):
     t = get_object_or_404(PromptTemplate, pk=template_id, owner=request.user)
     t.delete()
     return JsonResponse({"status": "deleted"})
+
+
+@login_required
+@require_POST
+def api_toggle_theme(request):
+    try:
+        if request.content_type == "application/json":
+            data = json.loads(request.body.decode("utf-8") if isinstance(request.body, bytes) else request.body)
+            theme = data.get("theme", "").strip()
+        else:
+            theme = request.POST.get("theme", "").strip()
+    except Exception:
+        theme = ""
+
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    if theme not in [UserProfile.THEME_LIGHT, UserProfile.THEME_DARK]:
+        theme = UserProfile.THEME_LIGHT if profile.theme == UserProfile.THEME_DARK else UserProfile.THEME_DARK
+
+    profile.theme = theme
+    profile.save(update_fields=["theme"])
+    return JsonResponse({"ok": True, "theme": theme})
+
