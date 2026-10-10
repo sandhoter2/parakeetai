@@ -1,13 +1,12 @@
-{% extends "interview/base.html" %}
-{% block content %}
-<div class="container mt-5">
-  <h2>Welcome to HappyHelper!</h2>
-  <p class="lead">Let's get you set up for your first session.</p>
-  <ol>
-    <li>Choose an interview type</li>
-    <li>Start a session and speak naturally</li>
-    <li>Get real-time AI coaching</li>
-  </ol>
-  <a href="{% url 'new_session' %}" class="btn btn-primary">Start your first session</a>
-</div>
+{% extends "interview/_notice.html" %}
+{% block title %}Welcome — HappyHelper{% endblock %}
+{% block notice %}
+<h1>Welcome to HappyHelper</h1>
+<p>Three steps to your first session.</p>
+<ol>
+  <li>Choose interview or meeting, and add your background</li>
+  <li>Start the session and speak naturally</li>
+  <li>Ask for a cue whenever a question lands</li>
+</ol>
+<div><a href="{% url 'new_session' %}" class="btn btn-primary btn-lg">Create your first session</a></div>
 {% endblock %}

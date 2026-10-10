@@ -36,14 +36,14 @@ body { overflow: hidden; display: flex; flex-direction: column; height: 100dvh; 
 .session-info { display: flex; align-items: center; gap: 10px; }
 .session-info h2 {
   font-size: 13px; font-weight: 700;
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
+  font-family: var(--sans);
   color: var(--text);
 }
-.session-info span { color: var(--text3); font-size: 11px; font-family: var(--mono); }
-.session-cost { color: rgba(52,211,153,0.7) !important; font-size: 10px !important; font-family: var(--mono); letter-spacing: 0.5px; }
+.session-info span { color: var(--text3); font-size: 12px; font-family: var(--sans); }
+.session-cost { color: rgb(var(--green-rgb) / 0.7) !important; font-size: 11.5px !important; font-family: var(--sans); }
 .session-controls { display: flex; align-items: center; gap: 8px; }
 
-/* REC indicator — robot style */
+/* REC indicator */
 .rec-dot {
   width: 7px; height: 7px; border-radius: 50%; background: var(--red);
   animation: recPulse 1.0s infinite; display: none;
@@ -60,9 +60,9 @@ body { overflow: hidden; display: flex; flex-direction: column; height: 100dvh; 
   font-size: 12px; font-weight: 600; color: var(--accent);
   font-variant-numeric: tabular-nums; font-family: var(--mono);
   background: var(--accent-dim);
-  border: 1px solid rgba(0,200,255,0.2);
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
   padding: 2px 8px; border-radius: 3px;
-  letter-spacing: 1px;
+
 }
 
 .main-layout {
@@ -105,7 +105,7 @@ body.teams-zoomed .main-layout {
   background: var(--accent-dim);
 }
 .cal-event-item .evt-time {
-  font-size:10px;
+  font-size:11.5px;
   color:var(--text3);
   font-weight:600;
 }
@@ -135,7 +135,7 @@ body.focus-mode .focus-hint { display: flex !important; }
   display: none;
   position: fixed; top: 8px; left: 50%; transform: translateX(-50%);
   background: rgba(0,0,0,0.7); color: var(--text3);
-  font-size: 10px; font-family: var(--mono); padding: 3px 12px;
+  font-size: 11.5px; font-family: var(--sans); padding: 3px 12px;
   border-radius: 3px; z-index: 9999; pointer-events: none;
   gap: 6px; align-items: center;
 }
@@ -171,9 +171,9 @@ body.focus-mode .focus-hint { display: flex !important; }
   min-height: 0 !important;
   opacity: 1 !important;
   border: none !important;
-  border-left: 1px solid rgba(0,200,255,0.15) !important;
+  border-left: 1px solid rgb(var(--accent-rgb) / 0.15) !important;
   box-shadow: none !important;
-  background: rgba(4,11,16,0.98) !important;
+  background: rgb(var(--bg-rgb) / 0.98) !important;
 }
 #aiFloatPanel.ai-panel-embedded .ai-float-foot { display: none !important; }
 #aiFloatPanel.ai-panel-embedded .drag-handle { display: none !important; }
@@ -189,14 +189,14 @@ body.focus-mode .focus-hint { display: flex !important; }
   height: 480px;
   min-width: 280px;
   min-height: 180px;
-  background: rgba(4,11,16, var(--panel-bg-alpha, 0.88));
+  background: rgb(var(--bg-rgb) / var(--panel-bg-alpha, 0.88));
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(0,200,255, calc(var(--panel-bg-alpha, 0.55) * 0.5));
+  border: 1px solid var(--border2);
   border-radius: 8px;
-  box-shadow: 0 0 0 1px rgba(0,200,255,0.06),
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.06),
               0 12px 48px rgba(0,0,0,0.8),
-              0 0 30px rgba(0,200,255,0.05);
+              0 0 30px rgb(var(--accent-rgb) / 0.05);
   z-index: 9999;
   display: flex;
   flex-direction: column;
@@ -229,7 +229,7 @@ body.focus-mode .focus-hint { display: flex !important; }
   border-radius: 0 0 8px 0;
 }
 
-/* Collapsed: robot pill */
+/* Collapsed: pill */
 #aiFloatPanel.collapsed {
   width: 52px !important;
   height: 52px !important;
@@ -267,8 +267,8 @@ body.focus-mode .focus-hint { display: flex !important; }
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: rgba(0,200,255,0.06);
-  border-bottom: 1px solid rgba(0,200,255,0.15);
+  background: rgb(var(--accent-rgb) / 0.06);
+  border-bottom: 1px solid rgb(var(--accent-rgb) / 0.15);
   cursor: grab;
   user-select: none;
   flex-shrink: 0;
@@ -277,10 +277,10 @@ body.focus-mode .focus-hint { display: flex !important; }
 .ai-float-bar:active { cursor: grabbing; }
 .ai-float-bar .drag-handle { font-size: 12px; color: var(--text3); flex-shrink:0; }
 .ai-float-title {
-  font-size: 10px; font-weight: 700; color: var(--accent);
-  text-transform: uppercase; letter-spacing: 1.5px; flex: 1;
+  font-size: 11.5px; font-weight: 700; color: var(--accent);
+ flex: 1;
   display: flex; align-items: center; gap: 6px;
-  font-family: var(--mono);
+  font-family: var(--sans);
 }
 .ai-float-title .live-dot {
   width: 5px; height: 5px; border-radius: 50%;
@@ -295,7 +295,7 @@ body.focus-mode .focus-hint { display: flex !important; }
   width: 22px; height: 22px; border-radius: 3px;
   border: 1px solid var(--border2);
   background: var(--bg3); color: var(--text2);
-  cursor: pointer; font-size: 10px; font-weight: 700;
+  cursor: pointer; font-size: 11.5px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.12s; flex-shrink: 0;
 }
@@ -306,7 +306,7 @@ body.focus-mode .focus-hint { display: flex !important; }
 .opacity-slider {
   -webkit-appearance: none;
   width: 52px; height: 3px; border-radius: 2px; outline: none; cursor: pointer;
-  background: rgba(0,200,255,0.1);
+  background: rgb(var(--accent-rgb) / 0.1);
   flex-shrink: 0;
 }
 .opacity-slider::-webkit-slider-thumb {
@@ -323,23 +323,23 @@ body.focus-mode .focus-hint { display: flex !important; }
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.ai-float-sub span { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+.ai-float-sub span { font-size: 11.5px; color: var(--text3); font-family: var(--sans); }
 
 /* Body */
 .ai-float-body {
   flex: 1; overflow-y: auto; padding: 14px;
   background: transparent;
-  scrollbar-width: thin; scrollbar-color: rgba(0,200,255,0.2) transparent;
+  scrollbar-width: thin; scrollbar-color: rgb(var(--accent-rgb) / 0.2) transparent;
 }
 .ai-float-body::-webkit-scrollbar { width: 3px; }
-.ai-float-body::-webkit-scrollbar-thumb { background: rgba(0,200,255,0.25); border-radius: 2px; }
+.ai-float-body::-webkit-scrollbar-thumb { background: rgb(var(--accent-rgb) / 0.25); border-radius: 2px; }
 
 /* Input row inside float panel */
 .ai-float-input-row {
   display: flex; align-items: center; gap: 6px;
   padding: 8px 10px;
   background: rgba(0,0,0,0.3);
-  border-top: 1px solid rgba(0,200,255,0.1);
+  border-top: 1px solid rgb(var(--accent-rgb) / 0.1);
   flex-shrink: 0;
 }
 /* float panel mic/settings/forward buttons hidden when embedded (bottom bar has them) */
@@ -356,25 +356,25 @@ body.pip-active .note-input-wrap { display: flex !important; }
   transition: all 0.2s; background: var(--bg3); color: var(--text); flex-shrink: 0;
 }
 .ai-float-input-row .fmic-btn.active {
-  background: rgba(255,71,87,0.15); border-color: var(--red); color: var(--red);
+  background: rgb(var(--red-rgb) / 0.15); border-color: var(--red); color: var(--red);
   animation: micPulse 1.5s infinite;
-  box-shadow: 0 0 10px rgba(255,71,87,0.3);
+  box-shadow: 0 0 10px rgb(var(--red-rgb) / 0.3);
 }
 .ai-float-input-row .fmic-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
 .ai-float-input-row .fq-input {
   flex: 1; background: var(--bg3); border: 1px solid var(--border2);
   border-radius: 4px; padding: 6px 10px; color: var(--text); font-size: 12px;
-  outline: none; font-family: var(--mono); min-width: 0;
+  outline: none; font-family: var(--sans); min-width: 0;
 }
 .ai-float-input-row .fq-input::placeholder { color: var(--text3); }
 .ai-float-input-row .fq-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
 .ai-float-input-row .fai-btn {
-  padding: 5px 10px; font-size: 11px; font-weight: 700;
+  padding: 5px 10px; font-size: 12px; font-weight: 700;
   background: var(--accent-dim);
   border: 1px solid var(--accent); border-radius: 4px;
   color: var(--accent); cursor: pointer;
   white-space: nowrap; flex-shrink: 0; transition: all 0.15s;
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
+  font-family: var(--sans);
 }
 .ai-float-input-row .fai-btn:hover {
   background: var(--accent); color: var(--bg);
@@ -389,8 +389,8 @@ body.pip-active .note-input-wrap { display: flex !important; }
   align-items: center;
   justify-content: center;
   height: 16px;
-  background: rgba(0,200,255,0.04);
-  border-top: 1px solid rgba(0,200,255,0.1);
+  background: rgb(var(--accent-rgb) / 0.04);
+  border-top: 1px solid rgb(var(--accent-rgb) / 0.1);
   cursor: grab;
   user-select: none;
   flex-shrink: 0;
@@ -402,7 +402,7 @@ body.pip-active .note-input-wrap { display: flex !important; }
 }
 .ai-float-foot .drag-dots span {
   width: 12px; height: 1px; border-radius: 1px;
-  background: rgba(0,200,255,0.3);
+  background: rgb(var(--accent-rgb) / 0.3);
 }
 #aiFloatPanel.collapsed .ai-float-foot { display: none; }
 
@@ -414,14 +414,14 @@ body.pip-active .note-input-wrap { display: flex !important; }
   background: var(--bg2); flex-shrink: 0; gap: 8px;
 }
 .panel-title {
-  font-size: 10px; font-weight: 700; color: var(--text3);
-  text-transform: uppercase; letter-spacing: 1.5px;
-  font-family: var(--mono);
+  font-size: 11.5px; font-weight: 700; color: var(--text3);
+
+  font-family: var(--sans);
 }
 .panel-header-actions { display: flex; align-items: center; gap: 6px; }
 .panel-body { flex: 1; overflow-y: auto; padding: 12px; }
 .panel-body::-webkit-scrollbar { width: 3px; }
-.panel-body::-webkit-scrollbar-thumb { background: rgba(0,200,255,0.2); border-radius: 2px; }
+.panel-body::-webkit-scrollbar-thumb { background: rgb(var(--accent-rgb) / 0.2); border-radius: 2px; }
 
 .transcript-entry {
   margin-bottom: 8px; padding: 9px 12px;
@@ -433,7 +433,7 @@ body.pip-active .note-input-wrap { display: flex !important; }
 }
 .transcript-entry:hover { background: var(--bg4); border-left-color: var(--accent) !important; }
 .transcript-entry:hover::after {
-  content: '↗'; font-size: 10px; color: var(--text3);
+  content: '↗'; font-size: 11.5px; color: var(--text3);
   float: right; margin-top: 2px;
 }
 /* Selection checkbox */
@@ -443,7 +443,7 @@ body.pip-active .note-input-wrap { display: flex !important; }
   border: 1.5px solid var(--border2); background: var(--bg2);
   cursor: pointer; opacity: 0; transition: opacity 0.15s, background 0.1s;
   display: flex; align-items: center; justify-content: center;
-  font-size: 9px; flex-shrink: 0; z-index: 2;
+  font-size: 10.5px; flex-shrink: 0; z-index: 2;
 }
 .transcript-entry:hover .entry-select-cb,
 body.tc-select-mode .entry-select-cb { opacity: 1; }
@@ -451,9 +451,9 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
   opacity: 1; background: var(--accent); border-color: var(--accent); color: var(--bg);
 }
 .transcript-entry.selected {
-  background: rgba(0,200,255,0.08) !important;
+  background: rgb(var(--accent-rgb) / 0.08) !important;
   border-left-color: var(--accent) !important;
-  box-shadow: inset 0 0 0 1px rgba(0,200,255,0.15);
+  box-shadow: inset 0 0 0 1px rgb(var(--accent-rgb) / 0.15);
 }
 /* Floating multi-select action bar */
 #tcMultiBar {
@@ -461,11 +461,11 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
   background: var(--bg2); border-top: 1px solid var(--accent);
   padding: 8px 12px; gap: 8px; align-items: center; flex-wrap: wrap;
   z-index: 100; flex-shrink: 0;
-  box-shadow: 0 -4px 20px rgba(0,200,255,0.12);
+  box-shadow: 0 -4px 20px rgb(var(--accent-rgb) / 0.12);
 }
 #tcMultiBar.visible { display: flex; }
 .tc-multi-count {
-  font-size: 10px; font-family: var(--mono); font-weight: 700;
+  font-size: 11.5px; font-family: var(--sans); font-weight: 700;
   color: var(--accent); white-space: nowrap; flex-shrink: 0;
   background: var(--accent-dim); border: 1px solid var(--accent);
   border-radius: 3px; padding: 2px 8px;
@@ -473,56 +473,56 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 .tc-multi-input {
   flex: 1; min-width: 180px; background: var(--bg3);
   border: 1px solid var(--border2); border-radius: 4px;
-  color: var(--text); font-size: 12px; font-family: var(--mono);
+  color: var(--text); font-size: 12px; font-family: var(--sans);
   padding: 5px 10px; outline: none; transition: border-color 0.15s;
 }
 .tc-multi-input:focus { border-color: var(--accent); }
 .tc-multi-input::placeholder { color: var(--text3); }
 .tc-multi-send {
-  padding: 6px 14px; font-size: 11px; font-weight: 700;
+  padding: 6px 14px; font-size: 12px; font-weight: 700;
   background: var(--accent); border: 1px solid var(--accent);
   border-radius: 4px; color: var(--bg); cursor: pointer;
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
+  font-family: var(--sans);
   transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
 }
 .tc-multi-send:hover { box-shadow: 0 0 14px var(--accent-glow); }
 .tc-multi-clear {
-  padding: 5px 10px; font-size: 10px; font-family: var(--mono);
+  padding: 5px 10px; font-size: 11.5px; font-family: var(--sans);
   background: var(--bg3); border: 1px solid var(--border2);
   border-radius: 4px; color: var(--text3); cursor: pointer;
   transition: all 0.15s; white-space: nowrap;
 }
 .tc-multi-clear:hover { border-color: var(--red); color: var(--red); }
 .transcript-entry.microphone {
-  border-left-color: rgba(0,200,255,0.5);
+  border-left-color: rgb(var(--accent-rgb) / 0.5);
   margin-left: 12%;
-  background: rgba(0,200,255,0.04);
+  background: rgb(var(--accent-rgb) / 0.04);
 }
 .transcript-entry.system {
-  border-left-color: rgba(255,211,42,0.5);
+  border-left-color: rgb(var(--yellow-rgb) / 0.5);
   margin-right: 12%;
-  background: rgba(255,211,42,0.04);
+  background: rgb(var(--yellow-rgb) / 0.04);
 }
 .transcript-entry.note {
-  border-left-color: rgba(168,85,247,0.5);
+  border-left-color: rgb(var(--purple-rgb) / 0.5);
   margin-left: 8%; margin-right: 8%;
-  background: rgba(168,85,247,0.04);
+  background: rgb(var(--purple-rgb) / 0.04);
 }
 .transcript-entry .speaker {
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 1px; margin-bottom: 3px;
-  font-family: var(--mono); display: flex; align-items: center; justify-content: space-between;
+  font-size: 11.5px; font-weight: 700;
+ margin-bottom: 3px;
+  font-family: var(--sans); display: flex; align-items: center; justify-content: space-between;
 }
 .transcript-entry .speaker::before { content: '// '; opacity: 0.4; }
 .transcript-entry.microphone .speaker { color: var(--accent); }
 .transcript-entry.system .speaker { color: var(--yellow); }
 .speaker-name-editable { cursor: pointer; border-bottom: 1px dashed currentColor; opacity: 0.9; transition: opacity 0.15s; }
 .speaker-name-editable:hover { opacity: 1; }
-.speaker-tone { font-size: 10px; margin-left: 4px; opacity: 0.75; cursor: default; }
-.speaker-rename-input { background: var(--bg); border: 1px solid var(--accent); border-radius: 3px; color: var(--accent); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 1px 5px; width: 120px; outline: none; }
+.speaker-tone { font-size: 11.5px; margin-left: 4px; opacity: 0.75; cursor: default; }
+.speaker-rename-input { background: var(--bg); border: 1px solid var(--accent); border-radius: 3px; color: var(--accent); font-family: var(--sans); font-size: 11.5px; font-weight: 700; padding: 1px 5px; width: 120px; outline: none; }
 .transcript-entry .text { font-size: 13px; line-height: 1.55; user-select: text; cursor: text; }
 .transcript-entry .entry-ts {
-  font-size: 9px; font-family: var(--mono); color: var(--text3);
+  font-size: 10.5px; font-family: var(--sans); color: var(--text3);
   opacity: 0; transition: opacity 0.15s; flex-shrink: 0;
 }
 .transcript-entry:hover .entry-ts { opacity: 1; }
@@ -531,8 +531,8 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 }
 .transcript-entry:hover .entry-actions { display: flex; }
 .entry-action-btn {
-  font-size: 9px; font-family: var(--mono); padding: 2px 7px;
-  background: var(--accent-dim); border: 1px solid rgba(0,200,255,0.3);
+  font-size: 10.5px; font-family: var(--sans); padding: 2px 7px;
+  background: var(--accent-dim); border: 1px solid rgb(var(--accent-rgb) / 0.3);
   border-radius: 3px; color: var(--accent); cursor: pointer; letter-spacing: 0.3px;
   transition: all 0.15s;
 }
@@ -545,8 +545,8 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 .transcript-entry:hover .voice-assign-row,
 .transcript-entry.unassigned-system .voice-assign-row { display: flex; }
 .voice-chip {
-  font-size: 10px; padding: 2px 8px; border-radius: 10px; cursor: pointer;
-  border: 1px solid; font-family: var(--mono); font-weight: 600; letter-spacing: 0.5px;
+  font-size: 11.5px; padding: 2px 8px; border-radius: 10px; cursor: pointer;
+  border: 1px solid; font-family: var(--sans); font-weight: 600;
   transition: all 0.12s; opacity: 0.75;
 }
 .voice-chip:hover { opacity: 1; filter: brightness(1.2); }
@@ -558,11 +558,11 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 
 .interim-entry {
   padding: 8px 12px; border-radius: 4px;
-  background: rgba(0,200,255,0.04); border-left: 2px solid rgba(0,200,255,0.3);
+  background: rgb(var(--accent-rgb) / 0.04); border-left: 2px solid rgb(var(--accent-rgb) / 0.3);
   color: var(--text2); font-style: italic; font-size: 12px; margin-bottom: 4px;
   display: flex; align-items: center; gap: 8px;
 }
-.interim-entry.sys { background: rgba(255,211,42,0.04); border-left-color: rgba(255,211,42,0.4); }
+.interim-entry.sys { background: rgb(var(--yellow-rgb) / 0.04); border-left-color: rgb(var(--yellow-rgb) / 0.4); }
 .interim-entry.sys .spinner { border-top-color: var(--yellow); }
 .spinner {
   width: 12px; height: 12px; border: 1.5px solid var(--border);
@@ -577,8 +577,8 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 #waveformCanvas { display:block; width:100%; height:32px; }
 .waveform-wrap {
   display:none; flex: 1; min-width: 0; background: var(--bg3);
-  border: 1px solid rgba(0,200,255,0.3); border-radius: 4px; overflow: hidden;
-  box-shadow: 0 0 12px rgba(0,200,255,0.08);
+  border: 1px solid rgb(var(--accent-rgb) / 0.3); border-radius: 4px; overflow: hidden;
+  box-shadow: 0 0 12px rgb(var(--accent-rgb) / 0.08);
 }
 .waveform-wrap.active { display:flex; align-items:center; }
 .bottom-bar.recording .question-input-wrap { display: none; }
@@ -593,29 +593,29 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 
 .ai-answer h1, .ai-answer h2, .ai-answer h3,
 .ai-item-a h1, .ai-item-a h2, .ai-item-a h3 {
-  font-family: var(--mono); color: var(--accent); margin: 14px 0 6px;
+  font-family: var(--sans); color: var(--accent); margin: 14px 0 6px;
   letter-spacing: 0.3px; font-weight: 700;
 }
-.ai-answer h1, .ai-item-a h1 { font-size: 15px; border-bottom: 1px solid rgba(0,200,255,0.2); padding-bottom: 4px; }
+.ai-answer h1, .ai-item-a h1 { font-size: 15px; border-bottom: 1px solid rgb(var(--accent-rgb) / 0.2); padding-bottom: 4px; }
 .ai-answer h2, .ai-item-a h2 { font-size: 14px; }
 .ai-answer h3, .ai-item-a h3 { font-size: 13px; color: var(--accent2); }
 
 .ai-answer code, .ai-item-a code {
   font-family: var(--mono); font-size: 11.5px;
-  background: rgba(0,200,255,0.08); color: var(--accent);
-  border: 1px solid rgba(0,200,255,0.18); border-radius: 3px;
+  background: rgb(var(--accent-rgb) / 0.08); color: var(--accent);
+  border: 1px solid rgb(var(--accent-rgb) / 0.18); border-radius: 3px;
   padding: 1px 5px;
 }
 
 .ai-answer pre, .ai-item-a pre {
-  background: rgba(0,0,0,0.45); border: 1px solid rgba(0,200,255,0.18);
+  background: rgba(0,0,0,0.45); border: 1px solid rgb(var(--accent-rgb) / 0.18);
   border-radius: 5px; padding: 12px 14px; margin: 10px 0;
   overflow-x: auto; position: relative;
-  box-shadow: inset 0 0 20px rgba(0,200,255,0.03);
+  box-shadow: inset 0 0 20px rgb(var(--accent-rgb) / 0.03);
 }
 .ai-answer pre code, .ai-item-a pre code {
   background: none; border: none; padding: 0; font-size: 12px;
-  color: #e2e8f0; display: block;
+  color: var(--text); display: block;
 }
 
 .ai-answer ul, .ai-item-a ul,
@@ -624,11 +624,11 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 }
 .ai-answer li, .ai-item-a li { margin-bottom: 4px; line-height: 1.6; }
 .ai-answer ul li::marker, .ai-item-a ul li::marker { color: var(--accent); }
-.ai-answer ol li::marker, .ai-item-a ol li::marker { color: var(--accent2); font-family: var(--mono); font-size: 11px; }
+.ai-answer ol li::marker, .ai-item-a ol li::marker { color: var(--accent2); font-family: var(--sans); font-size: 12px; }
 
 .ai-answer blockquote, .ai-item-a blockquote {
   border-left: 3px solid var(--accent); margin: 10px 0;
-  padding: 6px 12px; background: rgba(0,200,255,0.05);
+  padding: 6px 12px; background: rgb(var(--accent-rgb) / 0.05);
   color: var(--text2); border-radius: 0 4px 4px 0; font-style: italic;
 }
 
@@ -644,15 +644,15 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
   margin: 10px 0; display: block; overflow-x: auto;
 }
 .ai-answer th, .ai-item-a th {
-  background: rgba(0,200,255,0.1); color: var(--accent);
-  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
-  letter-spacing: 0.5px; padding: 6px 10px; border: 1px solid var(--border2);
+  background: rgb(var(--accent-rgb) / 0.1); color: var(--accent);
+  font-family: var(--sans); font-size: 11.5px;
+ padding: 6px 10px; border: 1px solid var(--border2);
 }
 .ai-answer td, .ai-item-a td {
   padding: 5px 10px; border: 1px solid var(--border);
   color: var(--text2); vertical-align: top;
 }
-.ai-answer tr:hover td, .ai-item-a tr:hover td { background: rgba(0,200,255,0.04); }
+.ai-answer tr:hover td, .ai-item-a tr:hover td { background: rgb(var(--accent-rgb) / 0.04); }
 
 .ai-cursor {
   display: inline-block; width: 8px; height: 14px;
@@ -662,13 +662,13 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 }
 @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
 .ai-trigger-text {
-  font-size: 10px; color: var(--text3); margin-bottom: 12px; padding-bottom: 8px;
-  border-bottom: 1px solid var(--border); font-family: var(--mono);
-  text-transform: uppercase; letter-spacing: 0.5px;
+  font-size: 11.5px; color: var(--text3); margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border); font-family: var(--sans);
+
 }
 .ai-placeholder {
   color: var(--text3); text-align: center; padding: 40px 20px; font-size: 13px;
-  font-family: var(--mono);
+  font-family: var(--sans);
 }
 .ai-placeholder div { font-size: 32px; margin-bottom: 12px; }
 .ai-history { display: flex; flex-direction: column; gap: 12px; }
@@ -679,8 +679,8 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 }
 .ai-item:hover { border-left-color: var(--accent); }
 .ai-item-q {
-  font-size: 10px; color: var(--text3); margin-bottom: 8px;
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
+  font-size: 11.5px; color: var(--text3); margin-bottom: 8px;
+  font-family: var(--sans);
   cursor: pointer;
 }
 .ai-item-q:hover { color: var(--accent); }
@@ -699,7 +699,7 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 .bionic-on .ai-item-a { word-break: break-word; }
 .bionic-on .ai-answer mark,
 .bionic-on .ai-item-a mark {
-  background: rgba(0,200,255,0.12);
+  background: rgb(var(--accent-rgb) / 0.12);
   color: var(--accent);
   border-radius: 2px;
   padding: 0 2px;
@@ -708,19 +708,19 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 .bionic-toggle-btn {
   display:flex; align-items:center; gap:5px; padding:3px 8px;
   border-radius:3px; border:1px solid var(--border2); background:var(--bg3);
-  font-size:10px; font-weight:700; color:var(--text3); cursor:pointer;
-  transition:all 0.15s; white-space:nowrap; font-family:var(--mono); text-transform:uppercase;
+  font-size:11.5px; font-weight:700; color:var(--text3); cursor:pointer;
+  transition:all 0.15s; white-space:nowrap; font-family:var(--sans);
 }
 .bionic-toggle-btn.on { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
 .bionic-dot { width:6px;height:6px;border-radius:50%;background:var(--border2);transition:all 0.15s; }
 .bionic-toggle-btn.on .bionic-dot { background:var(--accent); box-shadow:0 0 6px var(--accent); }
 
-/* Bottom bar — robot command bar */
+/* Bottom bar */
 .qq-chip {
   display: inline-block;
   padding: 3px 10px; margin-right: 5px;
   background: var(--bg3); border: 1px solid var(--border2);
-  border-radius: 3px; font-size: 10px; font-family: var(--mono);
+  border-radius: 3px; font-size: 11.5px; font-family: var(--sans);
   color: var(--text2); cursor: pointer; white-space: nowrap;
   transition: all 0.15s; letter-spacing: 0.3px;
 }
@@ -745,14 +745,14 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
   transition: all 0.2s; background: var(--bg3); color: var(--text2); flex-shrink: 0;
 }
 .mic-btn.active {
-  background: rgba(255,71,87,0.12); border-color: var(--red); color: var(--red);
+  background: rgb(var(--red-rgb) / 0.12); border-color: var(--red); color: var(--red);
   animation: micPulse 1.5s infinite;
-  box-shadow: 0 0 14px rgba(255,71,87,0.3);
+  box-shadow: 0 0 14px rgb(var(--red-rgb) / 0.3);
 }
 .mic-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
 @keyframes micPulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(255,71,87,0.4); }
-  50%      { box-shadow: 0 0 0 8px rgba(255,71,87,0); }
+  0%,100% { box-shadow: 0 0 0 0 rgb(var(--red-rgb) / 0.4); }
+  50%      { box-shadow: 0 0 0 8px rgb(var(--red-rgb) / 0); }
 }
 
 .question-input-wrap {
@@ -765,17 +765,17 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 .question-input {
   flex: 1; background: transparent; border: none; outline: none;
   color: var(--text); font-size: 13px; padding: 9px 0;
-  font-family: var(--mono);
+  font-family: var(--sans);
 }
 .question-input::placeholder { color: var(--text3); }
 
 .ai-help-btn {
-  padding: 9px 18px; font-size: 11px; font-weight: 700;
+  padding: 9px 18px; font-size: 12px; font-weight: 700;
   background: var(--accent-dim);
   border: 1px solid var(--accent); border-radius: 4px 0 0 4px;
   color: var(--accent); cursor: pointer;
   transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
+  font-family: var(--sans);
 }
 .ai-help-btn:hover {
   background: var(--accent); color: var(--bg);
@@ -787,7 +787,7 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 .ai-tpl-arrow {
   display:flex; align-items:center; padding:0 7px; cursor:pointer;
   background: var(--accent-dim); border:1px solid var(--accent); border-left:none;
-  border-radius:0 4px 4px 0; color:var(--accent); font-size:11px; transition:all 0.15s;
+  border-radius:0 4px 4px 0; color:var(--accent); font-size:12px; transition:all 0.15s;
 }
 .ai-tpl-arrow:hover { background:var(--accent); color:var(--bg); }
 .ai-tpl-dropdown {
@@ -799,8 +799,8 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 .ai-tpl-dropdown.open { display:flex; flex-direction:column; }
 #aiTplList, #meetingAITplList, #convInsightList { overflow-y:auto; flex:1; }
 .ai-tpl-header {
-  padding:8px 12px; font-size:9px; font-family:var(--mono); color:var(--text3);
-  text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border);
+  padding:8px 12px; font-size:10.5px; font-family:var(--sans); color:var(--text3);
+ border-bottom:1px solid var(--border);
   display:flex; align-items:center; justify-content:space-between;
 }
 .ai-tpl-item {
@@ -808,40 +808,40 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
   transition:background 0.1s; border-bottom:1px solid rgba(255,255,255,0.03);
 }
 .ai-tpl-item:last-child { border-bottom:none; }
-.ai-tpl-item:hover { background:rgba(0,200,255,0.07); }
-.ai-tpl-item.active { background:rgba(0,200,255,0.12); }
+.ai-tpl-item:hover { background:rgb(var(--accent-rgb) / 0.07); }
+.ai-tpl-item.active { background:rgb(var(--accent-rgb) / 0.12); }
 .ai-tpl-item.active .ai-tpl-name { color:var(--accent); }
 .ai-tpl-icon { font-size:14px; flex-shrink:0; margin-top:1px; }
-.ai-tpl-name { font-size:11px; font-weight:700; font-family:var(--mono); color:var(--text); }
-.ai-tpl-desc { font-size:10px; color:var(--text3); margin-top:1px; }
+.ai-tpl-name { font-size:12px; font-weight:700; font-family:var(--sans); color:var(--text); }
+.ai-tpl-desc { font-size:11.5px; color:var(--text3); margin-top:1px; }
 .ai-tpl-setdefault {
-  padding:6px 12px; font-size:9px; font-family:var(--mono); color:var(--text3);
+  padding:6px 12px; font-size:10.5px; font-family:var(--sans); color:var(--text3);
   background:var(--bg3); border-top:1px solid var(--border); text-align:center;
   cursor:pointer; transition:color 0.15s;
 }
 .ai-tpl-setdefault:hover { color:var(--accent); }
 .ai-tpl-badge {
-  font-size:9px; font-family:var(--mono); color:var(--text3); margin-left:4px;
+  font-size:10.5px; font-family:var(--sans); color:var(--text3); margin-left:4px;
   background:var(--bg3); border:1px solid var(--border); border-radius:3px;
   padding:0 4px; vertical-align:middle;
 }
 
 .status-chip {
-  font-size: 10px; color: var(--text3); flex-shrink: 1; min-width: 0; text-align: center;
-  font-family: var(--mono);
+  font-size: 11.5px; color: var(--text3); flex-shrink: 1; min-width: 0; text-align: center;
+  font-family: var(--sans);
 }
 
 /* Font size controls */
 .font-controls { display:flex; gap:3px; align-items:center; }
 .font-btn {
   width:24px; height:24px; border-radius:3px; border:1px solid var(--border);
-  background:var(--bg3); color:var(--text3); cursor:pointer; font-size:11px;
+  background:var(--bg3); color:var(--text3); cursor:pointer; font-size:12px;
   display:flex; align-items:center; justify-content:center;
   transition:all 0.15s;
 }
 .font-btn:hover { border-color:var(--accent); color:var(--accent); }
 
-/* Transcribe config popover — robot panel */
+/* Transcribe config popover */
 .transcribe-config-panel {
   position: absolute;
   bottom: calc(100% + 8px);
@@ -851,7 +851,7 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
   border-radius: 6px;
   padding: 12px 14px;
   min-width: 220px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,200,255,0.06);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgb(var(--accent-rgb) / 0.06);
   z-index: 100;
   display: none;
   flex-direction: column;
@@ -866,19 +866,19 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 .transcribe-config-panel.open { display: flex; }
 .tc-row {
   display:flex; align-items:center; justify-content:space-between; gap:8px;
-  font-size:11px; color:var(--text2); font-family:var(--mono);
+  font-size:12px; color:var(--text2); font-family:var(--sans);
 }
 .tc-mode-btns { display:flex; gap:4px; }
 .tc-btn {
   padding: 3px 10px; border-radius: 3px; border: 1px solid var(--border2);
-  background: var(--bg3); color: var(--text2); font-size: 10px; cursor: pointer;
-  transition: all 0.15s; font-family: var(--mono); text-transform: uppercase;
+  background: var(--bg3); color: var(--text2); font-size: 11.5px; cursor: pointer;
+  transition: all 0.15s; font-family: var(--sans);
 }
 .tc-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 .tc-select {
   background: var(--bg3); border: 1px solid var(--border2); border-radius: 3px;
-  color: var(--text); font-size: 11px; padding: 3px 6px; outline: none; cursor: pointer;
-  font-family: var(--mono);
+  color: var(--text); font-size: 12px; padding: 3px 6px; outline: none; cursor: pointer;
+  font-family: var(--sans);
 }
 .tc-config-btn {
   width: 30px; height: 30px; border-radius: 4px; border: 1px solid var(--border2);
@@ -895,12 +895,12 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
   display: flex; align-items: center; justify-content: center;
   transition: all 0.15s; flex-shrink: 0; position: relative;
 }
-.meeting-helper-btn:hover, .meeting-helper-btn.active { border-color: var(--yellow); color: var(--yellow); background: rgba(255,211,42,0.08); }
+.meeting-helper-btn:hover, .meeting-helper-btn.active { border-color: var(--yellow); color: var(--yellow); background: rgb(var(--yellow-rgb) / 0.08); }
 .mh-badge {
   position: absolute; top: -4px; right: -4px;
-  background: var(--yellow); color: #000; border-radius: 3px;
-  font-size: 8px; font-weight: 700; padding: 1px 3px; display: none;
-  font-family: var(--mono);
+  background: var(--yellow); color: var(--bg); border-radius: 3px;
+  font-size: 10.5px; font-weight: 700; padding: 1px 3px; display: none;
+  font-family: var(--sans);
 }
 .meeting-helper-panel {
   position: absolute; bottom: calc(100% + 8px); left: 0;
@@ -913,17 +913,17 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 .mh-role-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
 .mh-role-tab {
   padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border);
-  background: var(--bg3); color: var(--text2); font-size: 11px; cursor: pointer;
+  background: var(--bg3); color: var(--text2); font-size: 12px; cursor: pointer;
   transition: all 0.15s; white-space: nowrap;
 }
-.mh-role-tab.active { background: var(--yellow); border-color: var(--yellow); color: #000; font-weight: 600; }
+.mh-role-tab.active { background: var(--yellow); border-color: var(--yellow); color: var(--bg); font-weight: 600; }
 .mh-suggestions { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; }
 .mh-suggestion-item {
   padding: 6px 9px; background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 6px; font-size: 11px; color: var(--text2); cursor: pointer;
+  border-radius: 6px; font-size: 12px; color: var(--text2); cursor: pointer;
   transition: all 0.15s; text-align: left; line-height: 1.4; width: 100%;
 }
-.mh-suggestion-item:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.mh-suggestion-item:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .mh-suggestion-item.context-match { border-left: 3px solid var(--yellow); padding-left: 7px; }
 
 /* Note input */
@@ -942,7 +942,7 @@ body.tc-select-mode .entry-select-cb { opacity: 1; }
 .shortcuts-table { width:100%; border-collapse:collapse; font-size:13px; }
 .shortcuts-table td { padding:8px 10px; border-bottom:1px solid var(--border); }
 .shortcuts-table td:first-child { color:var(--text3); width:45%; }
-kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; padding:2px 6px; font-size:11px; font-family:monospace; }
+kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; padding:2px 6px; font-size:12px; font-family:monospace; }
 
 /* ── MOBILE RESPONSIVE ──────────────────────────────────────────────────── */
 .mobile-tab-bar { display: none; }
@@ -961,7 +961,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   .session-controls { gap: 4px; flex-shrink: 0; }
   .session-controls > button:first-child { display: none; }
   .auto-ai-label { display: none; }
-  .elapsed-timer { font-size: 11px; padding: 2px 5px; }
+  .elapsed-timer { font-size: 12px; padding: 2px 5px; }
 
   /* Mobile panel tab bar */
   .mobile-tab-bar {
@@ -979,7 +979,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   .mobile-tab-btn.active {
     color: var(--accent2);
     border-bottom-color: var(--accent);
-    background: rgba(108,99,255,0.06);
+    background: rgb(var(--accent2-rgb) / 0.06);
   }
 
   /* Main layout: flex:1 fills remaining space, single column */
@@ -1013,7 +1013,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   /* Collapse AI float controls on mobile */
   .ai-float-bar { padding: 7px 10px; }
   #opacitySlider { display: none; }
-  .float-ctrl-btn { width: 28px; height: 28px; font-size: 11px; }
+  .float-ctrl-btn { width: 28px; height: 28px; font-size: 12px; }
   .ai-float-title { font-size: 12px; }
 
   /* Note strip */
@@ -1082,59 +1082,142 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     width: auto !important;
   }
 }
+
+/* ── HappyHelper skin ─────────────────────────────────────────────────
+   Presentation overrides for the live workspace. Layout rules above are
+   unchanged; this block sets type, shape and emphasis in one place. */
+#sessionProgressFill { background: var(--brand); box-shadow: none; }
+.session-bar { padding: 10px 20px; }
+.session-bar::after { display: none; }
+.session-info { gap: 12px; min-width: 0; }
+.session-info h2 { font-family: var(--display); font-size: 18px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.session-info span { font-size: 13px; color: var(--text2); }
+.session-info .badge { text-transform: capitalize; }
+.elapsed-timer { color: var(--text) !important; background: var(--bg3); border-color: var(--border2); border-radius: 999px; padding: 2px 10px; }
+.rec-dot { box-shadow: none; }
+
+.panel-header { padding: 10px 16px; }
+.panel-title, .ai-float-title { font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+.panel-body { padding: 16px; }
+
+/* Transcript: other speakers on the left, you on the right */
+.transcript-entry { border-radius: 14px; border-left: 0; padding: 10px 14px; margin-bottom: 10px; background: var(--bg3); }
+.transcript-entry:hover { background: var(--bg4); }
+.transcript-entry.system { background: var(--bg3); margin-right: 14%; border-bottom-left-radius: 4px; }
+.transcript-entry.microphone { background: var(--bg4); margin-left: 14%; border-bottom-right-radius: 4px; }
+.transcript-entry.note { background: rgb(var(--accent2-rgb) / 0.10); border-radius: 10px; }
+.transcript-entry .speaker { font-size: 12.5px; font-weight: 700; margin-bottom: 2px; }
+.transcript-entry .speaker::before { content: none; }
+.transcript-entry.note .speaker { text-transform: capitalize; }
+.transcript-entry.microphone .speaker, .transcript-entry.system .speaker { color: var(--text2); }
+.transcript-entry .text { font-size: 14.5px; }
+.transcript-entry.selected { background: rgb(255 200 61 / 0.16) !important; box-shadow: inset 0 0 0 1.5px var(--brand); }
+
+/* Answer panel: the suggestion is the one thing on this screen that is highlighted */
+#aiFloatPanel { background: rgb(var(--bg-rgb) / var(--panel-bg-alpha, 0.88)); border: 1px solid var(--border2); border-radius: 14px; box-shadow: var(--shadow-lg); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
+#aiFloatPanel::before, #aiFloatPanel::after { display: none; }
+#aiFloatPanel.ai-panel-embedded { border-radius: 0; box-shadow: none; }
+#aiFloatPanel.collapsed { border-radius: 16px !important; background: var(--brand); border-color: var(--brand); box-shadow: var(--shadow-md); }
+#aiFloatPanel.collapsed .ai-float-bar { background: transparent; }
+#aiFloatPanel.collapsed #collapseBtn { color: var(--on-brand); }
+.ai-float-bar { background: var(--bg2); border-bottom: 1px solid var(--border); height: 44px; padding: 8px 14px; }
+.ai-float-sub, .ai-float-input-row { background: var(--bg2); }
+.ai-float-input-row { border-top: 1px solid var(--border); }
+.float-ctrl-btn { width: 26px; height: 26px; border-radius: 7px; background: transparent; border-color: var(--border); }
+.float-ctrl-btn:hover { background: var(--bg3); border-color: var(--border2); color: var(--text); }
+.opacity-slider { background: var(--border2); }
+.opacity-slider::-webkit-slider-thumb { border-radius: 50%; box-shadow: none; background: var(--text2); }
+.ai-float-body { padding: 18px; }
+
+.ai-answer { font-size: 15.5px; line-height: 1.65; }
+.ai-item-a { font-size: 14.5px; line-height: 1.6; }
+.ai-answer h1, .ai-answer h2, .ai-answer h3, .ai-item-a h1, .ai-item-a h2, .ai-item-a h3 { font-family: var(--display); color: var(--text); letter-spacing: -0.01em; }
+.ai-answer h3, .ai-item-a h3 { color: var(--text); }
+.ai-answer strong, .ai-item-a strong { color: var(--text); background: linear-gradient(transparent 60%, rgb(255 200 61 / 0.38) 60%); }
+.ai-answer code, .ai-item-a code { background: var(--bg3); color: var(--text); border-color: var(--border); border-radius: 6px; font-size: 12.5px; }
+.ai-answer pre, .ai-item-a pre { background: var(--bg); border-color: var(--border2); border-radius: 10px; }
+.ai-answer pre code, .ai-item-a pre code { background: none; border: 0; }
+.ai-trigger-text, .ai-item-q { font-size: 13px; color: var(--text2); font-weight: 600; }
+.ai-item { border-radius: 12px; border-left: 3px solid var(--brand); padding: 14px 16px; }
+.ai-item:hover { border-left-color: var(--brand); }
+.ai-cursor { box-shadow: none !important; }
+.ai-placeholder { font-size: 14.5px; color: var(--text2); max-width: 44ch; margin: 0 auto; }
+.ai-placeholder kbd { font-size: 12px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; padding: 1px 6px; }
+
+/* Bottom bar: one primary action */
+.bottom-bar { padding: 10px 16px; gap: 10px; }
+.bottom-bar::before { display: none; }
+.mic-btn { border-radius: 12px; }
+.mic-btn:hover:not(.active) { border-color: var(--border3); color: var(--text); box-shadow: none; }
+.question-input { font-size: 14.5px; }
+.ai-help-btn { font-size: 13px; border-radius: 8px; background: var(--bg3); border-color: var(--border2); color: var(--text2); }
+.ai-help-btn:hover { background: var(--bg4); color: var(--text); box-shadow: none; }
+#aiHelpBtn { background: var(--brand); border-color: var(--brand); color: var(--on-brand); border-radius: 10px 0 0 10px; padding: 10px 18px; font-size: 14px; }
+#aiHelpBtn:hover { background: var(--brand-hover); border-color: var(--brand-hover); color: var(--on-brand); }
+#aiHelpBtn + .ai-tpl-arrow { background: var(--brand); border-color: var(--brand); color: var(--on-brand); border-left: 1px solid rgb(23 21 46 / 0.2); border-radius: 0 10px 10px 0; }
+#aiHelpBtn + .ai-tpl-arrow:hover { background: var(--brand-hover); color: var(--on-brand); }
+.ai-tpl-dropdown { border-radius: 12px; }
+.ai-tpl-item.active { background: rgb(255 200 61 / 0.16); }
+.ai-tpl-item.active .ai-tpl-name { color: var(--text); }
+.ai-tpl-name { font-size: 13px; }
+.ai-tpl-desc { font-size: 12px; }
+.note-input-wrap { padding-left: 16px; padding-right: 16px; }
+
+.focus-hint { border-radius: 999px; }
+/* Keep toasts clear of the answer button in the bottom-right corner */
+#toast-container { bottom: auto; top: calc(var(--nav-h) + 68px); }
 {% endblock %}
 
-{% block navbar_actions %}
-<a href="/" class="btn btn-secondary btn-sm">← Sessions</a>
-{% endblock %}
+{% block navbar_actions %}{% endblock %}
 
 {% block content %}
 
 <div id="sessionProgressBar"><div id="sessionProgressFill"></div></div>
-<div class="focus-hint">// focus mode — press F to exit</div>
+<div class="focus-hint">Focus mode. Press F to exit.</div>
 <div class="session-bar">
   <div class="session-info">
     <span class="rec-dot" id="recDot"></span>
     <h2>{{ session.title }}</h2>
     {% if session.company %}<span class="session-company">{{ session.company }}</span>{% endif %}
-    <span class="badge" id="statusBadge" style="background:rgba(251,191,36,0.15);color:#fbbf24">{{ session.status }}</span>
+    <span class="badge" id="statusBadge" style="background:rgb(var(--yellow-rgb) / 0.15);color:var(--yellow)">{{ session.status }}</span>
     <span class="elapsed-timer" id="elapsedTimer">00:00</span>
     <span class="session-cost" id="sessionCostDisplay" title="Estimated AI cost this session" style="display:none">~$0.0000</span>
   </div>
   <div class="session-controls">
-    <button class="btn btn-ghost btn-sm" onclick="toggleQuickQ()" id="quickQBtn" title="Quick question presets">⚡ Quick</button>
+    <button class="btn btn-ghost btn-sm" onclick="toggleQuickQ()" id="quickQBtn" title="Quick question presets">Quick questions</button>
     <button class="btn btn-ghost btn-sm" onclick="toggleFocusMode()" id="focusModeBtn" title="Focus mode — hide UI chrome (F)">⊡</button>
     <button class="btn btn-ghost btn-sm" onclick="openModal('shortcutsModal')" title="Keyboard shortcuts">⌨️</button>
     {% if session.session_type != 'meeting' %}
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer">
-      <div class="toggle on" id="autoToggle" onclick="toggleAuto()"></div><span class="auto-ai-label"> Auto AI</span>
+      <div class="toggle on" id="autoToggle" onclick="toggleAuto()"></div><span class="auto-ai-label"> Auto answer</span>
     </label>
     {% endif %}
-    <button class="btn btn-ghost btn-sm" id="showAiBtn" onclick="restoreAIPanel()" style="display:none" title="Show AI Answer panel">✦ AI</button>
-    <button class="btn btn-danger btn-sm" onclick="endSession()">End Session</button>
+    <button class="btn btn-ghost btn-sm" id="showAiBtn" onclick="restoreAIPanel()" style="display:none" title="Show the suggested answer panel">Show answer</button>
+    <button class="btn btn-danger btn-sm" onclick="endSession()">End session</button>
   </div>
 </div>
 
 <style>
 .toggle { width:34px;height:18px;background:var(--bg3);border-radius:9px;position:relative;transition:background 0.2s;border:1px solid var(--border); }
-.toggle.on { background:var(--accent);border-color:var(--accent); }
-.toggle::after { content:'';position:absolute;width:12px;height:12px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform 0.2s; }
+.toggle.on { background:var(--brand);border-color:var(--brand); }
+.toggle::after { content:'';position:absolute;width:12px;height:12px;border-radius:50%;background:var(--text2);top:2px;left:2px;transition:transform 0.2s; }
+.toggle.on::after { background:var(--ink); }
 .toggle.on::after { transform:translateX(16px); }
 </style>
 
 <!-- Mobile-only panel tab switcher -->
 <div class="mobile-tab-bar" id="mobileTabBar">
-  <button class="mobile-tab-btn active" id="mTabTranscript" onclick="switchMobileTab('transcript')">🎙️ Transcript</button>
-  <button class="mobile-tab-btn" id="mTabAI" onclick="switchMobileTab('ai')">✨ AI Answer</button>
+  <button class="mobile-tab-btn active" id="mTabTranscript" onclick="switchMobileTab('transcript')">Transcript</button>
+  <button class="mobile-tab-btn" id="mTabAI" onclick="switchMobileTab('ai')">Suggested answer</button>
 </div>
 
 <div class="main-layout with-ai" id="mainLayout">
   <!-- Transcript Panel — left column -->
   <div class="panel">
     <div class="panel-header">
-      <span class="panel-title">// TRANSCRIPT</span>
+      <span class="panel-title">Transcript</span>
       <!-- Live stats readout -->
-      <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--text3)">
+      <div style="display:flex;align-items:center;gap:6px;font-family:var(--sans);font-size:11.5px;color:var(--text3)">
         <span id="tcWordCount" title="Total words captured" style="color:var(--text3)">0w</span>
         <span style="opacity:0.3">|</span>
         <span id="tcSpeakRate" title="Speaking rate (words per minute, last 60s)" style="color:var(--text3)">—</span>
@@ -1153,25 +1236,25 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
         <button class="btn btn-ghost btn-xs" onclick="exportSession()" title="Export session as Markdown">⬇ Export</button>
         <button class="btn btn-ghost btn-xs" onclick="clearTranscript()" title="Clear transcript">🗑</button>
         <button class="btn btn-ghost btn-xs" id="tcSelectBtn" onclick="toggleSelectMode()" title="Select entries to send as context to AI">☐ Select</button>
-        <span id="transcriptCount" style="font-size:10px;color:var(--text3);font-family:var(--mono)">{{ transcripts.count }}</span>
+        <span id="transcriptCount" style="font-size:11.5px;color:var(--text3);font-family:var(--sans)">{{ transcripts.count }}</span>
         <button class="btn btn-ghost btn-xs" id="transcriptMinBtn" onclick="minimizeTranscript()" title="Minimize transcript">⊟</button>
       </div>
     </div>
     <!-- Transcript search bar -->
     <div id="tcSearchBar" style="display:none;padding:6px 10px;border-bottom:1px solid var(--border);background:var(--bg3)">
-      <input id="tcSearchInput" type="text" placeholder="// search transcript…"
+      <input id="tcSearchInput" type="text" placeholder="Search the transcript"
              style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:3px;
-                    padding:5px 10px;color:var(--text);font-size:12px;font-family:var(--mono);outline:none"
+                    padding:5px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none"
              oninput="filterTranscript(this.value)"
              onkeydown="if(event.key==='Escape'){toggleTranscriptSearch();filterTranscript('')}">
-      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px" id="tcSearchCount"></div>
+      <div style="font-size:11.5px;color:var(--text3);font-family:var(--sans);margin-top:3px" id="tcSearchCount"></div>
     </div>
     <div class="panel-body" id="transcriptPanel">
       {% if not transcripts %}
       <div id="transcriptPlaceholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--text3);text-align:center;padding:32px">
-        <span style="font-size:32px">🤖</span>
-        <p style="font-size:13px;color:var(--text2);font-family:var(--mono)">// no transcript</p>
-        <p style="font-size:11px;font-family:var(--mono)">activate mic <span style="color:var(--accent)">🎤</span> to begin capture</p>
+        {% include "interview/_logo.html" with size=44 wordmark=False %}
+        <p style="font-size:16px;font-weight:600;color:var(--text)">Nothing transcribed yet</p>
+        <p style="font-size:14px;color:var(--text2)">Turn on the microphone below to start.</p>
       </div>
       {% endif %}
       {% for entry in transcripts %}
@@ -1183,7 +1266,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <div id="interimEntry" class="interim-entry" style="display:none">
         <div class="spinner"></div>
         <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
-          <span id="interimLabel" style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--accent2);font-style:normal">YOU</span>
+          <span id="interimLabel" style="font-size:11.5px;font-weight:700;color:var(--accent2);font-style:normal">You</span>
           <span id="interimText">Transcribing…</span>
         </div>
       </div>
@@ -1192,18 +1275,18 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
            onclick="_transcriptScrollLocked=false;_transcriptNewCount=0;this.style.display='none';document.getElementById('transcriptPanel').scrollTop=document.getElementById('transcriptPanel').scrollHeight"
            style="display:none;position:sticky;bottom:8px;left:50%;transform:translateX(-50%);
                   background:var(--accent);color:var(--bg);border-radius:16px;
-                  padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer;
-                  font-family:var(--mono);letter-spacing:0.5px;white-space:nowrap;
-                  box-shadow:0 2px 12px rgba(0,200,255,0.4);z-index:10;
+                  padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;
+                  font-family:var(--sans);white-space:nowrap;
+                  box-shadow:0 2px 12px rgb(var(--accent-rgb) / 0.4);z-index:10;
                   align-items:center;gap:6px">
       </div>
     </div>
     <!-- Multi-select action bar — appears when entries are selected -->
     <div id="tcMultiBar">
       <span class="tc-multi-count" id="tcMultiCount">0 selected</span>
-      <input id="tcMultiQuestion" class="tc-multi-input" type="text" placeholder="// ask AI about selected entries…" onkeydown="if(event.key==='Enter'){event.preventDefault();sendSelectedToAI()}">
-      <button class="tc-multi-send" onclick="sendSelectedToAI()">✨ Ask AI</button>
-      <button class="tc-multi-clear" onclick="clearSelection()">✕ Clear</button>
+      <input id="tcMultiQuestion" class="tc-multi-input" type="text" placeholder="Ask about the selected lines" onkeydown="if(event.key==='Enter'){event.preventDefault();sendSelectedToAI()}">
+      <button class="tc-multi-send" onclick="sendSelectedToAI()">Ask</button>
+      <button class="tc-multi-clear" onclick="clearSelection()">Clear</button>
     </div>
   </div>
 
@@ -1215,7 +1298,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <!-- Drag bar -->
   <div class="ai-float-bar" id="aiDragBar">
     <span class="drag-handle">⠿</span>
-    <span class="ai-float-title">✨ AI Answer</span>
+    <span class="ai-float-title">Suggested answer</span>
     <div class="ai-float-controls">
       <input type="range" class="opacity-slider" id="opacitySlider"
              min="15" max="100" value="90" title="Transparency"
@@ -1234,25 +1317,24 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   </div>
   <!-- Bionic state sub-bar -->
   <div class="ai-float-sub" id="aiBionicBar">
-    <span style="font-size:11px;color:var(--text3)" id="bionicStatus">Bionic off</span>
-    <span style="display:none;font-size:11px;color:var(--accent2);cursor:pointer" id="showTranscriptBtn" onclick="restoreTranscript()" title="Show transcript panel">⊞ Show Transcript</span>
-    <span style="font-size:11px;color:var(--text3)" id="dragHint">Drag edge to resize</span>
+    <span style="font-size:12px;color:var(--text3)" id="bionicStatus">Bionic off</span>
+    <span style="display:none;font-size:12px;color:var(--accent2);cursor:pointer" id="showTranscriptBtn" onclick="restoreTranscript()" title="Show transcript panel">⊞ Show Transcript</span>
+    <span style="font-size:12px;color:var(--text3)" id="dragHint">Drag edge to resize</span>
   </div>
   <!-- Panel body -->
   <div class="ai-float-body" id="aiPanel">
     <div class="ai-placeholder" id="aiPlaceholder" {% if ai_messages %}style="display:none"{% endif %}>
-      <div>🤖</div>
-      <p>Click <strong>🎤</strong> to start recording, or type a question below and press <strong>✨ AI Help</strong>.</p>
+      <p>Turn on the microphone, or type a question below and press <strong>Get answer</strong>.</p>
       <p style="margin-top:8px;font-size:12px">Shortcut: <kbd style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:1px 5px">⌘ Return</kbd> or <kbd style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:1px 5px">Ctrl Enter</kbd></p>
     </div>
     {% if ai_messages %}
     <div class="ai-history" id="aiHistory">
       {% for msg in ai_messages %}
       <div class="ai-item">
-        {% if msg.trigger_text %}<div class="ai-item-q">Q: {{ msg.trigger_text }}</div>{% endif %}
+        {% if msg.trigger_text %}<div class="ai-item-q">{{ msg.trigger_text }}</div>{% endif %}
         <div class="ai-item-a">{{ msg.content }}</div>
         <div class="ai-item-actions">
-          <button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">📋 Copy</button>
+          <button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">Copy</button>
         </div>
       </div>
       {% endfor %}
@@ -1262,19 +1344,19 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
          onclick="_aiScrollLocked=false;_aiNewCount=0;this.style.display='none';aiPanel.scrollTop=aiPanel.scrollHeight"
          style="display:none;position:sticky;bottom:8px;left:50%;transform:translateX(-50%);
                 background:var(--accent);color:var(--bg);border-radius:16px;
-                padding:4px 14px;font-size:11px;font-weight:700;cursor:pointer;
-                font-family:var(--mono);letter-spacing:0.5px;white-space:nowrap;
-                box-shadow:0 2px 12px rgba(0,200,255,0.4);z-index:10;
+                padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;
+                font-family:var(--sans);white-space:nowrap;
+                box-shadow:0 2px 12px rgb(var(--accent-rgb) / 0.4);z-index:10;
                 display:none;align-items:center;gap:6px">
     </div>
     <div id="aiLive" style="display:none">
       <div class="ai-trigger-text" id="aiTriggerText"></div>
       <div class="ai-answer" id="aiAnswerText"></div><span class="ai-cursor" id="aiCursor"></span>
       <div class="ai-live-actions" id="aiLiveActions" style="display:none">
-        <span id="aiReadTime" style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-right:4px"></span>
-        <button class="btn btn-ghost btn-xs" onclick="copyCurrentAI()">📋 Copy</button>
-        <button class="btn btn-ghost btn-xs" onclick="speakCurrentAI()" id="speakLiveBtn">🔊 Speak</button>
-        <button class="btn btn-ghost btn-xs" onclick="regenAI()">🔄 Regenerate</button>
+        <span id="aiReadTime" style="font-size:11.5px;font-family:var(--sans);color:var(--text3);margin-right:4px"></span>
+        <button class="btn btn-ghost btn-xs" onclick="copyCurrentAI()">Copy</button>
+        <button class="btn btn-ghost btn-xs" onclick="speakCurrentAI()" id="speakLiveBtn">Read aloud</button>
+        <button class="btn btn-ghost btn-xs" onclick="regenAI()">Regenerate</button>
       </div>
     </div>
   </div>
@@ -1287,7 +1369,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
       <div class="transcribe-config-panel" id="tcPanel">
         <div class="tc-row">
           <span style="font-weight:600">Transcribe</span>
-          <span style="font-size:10px;color:var(--text3)">🎤 mic</span>
+          <span style="font-size:11.5px;color:var(--text3)">🎤 mic</span>
         </div>
         <div class="tc-row">
           <span>Interval</span>
@@ -1303,12 +1385,12 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
           </select>
         </div>
         <div class="tc-row" id="tcManualInfo" style="display:none;flex-direction:column;gap:4px">
-          <span style="font-size:11px;color:var(--yellow)">⚠ Words won't show in transcript until committed</span>
-          <span style="font-size:11px;color:var(--text3)">Press ✨ AI Help (or 💾 Save) to commit speech to transcript</span>
-          <button onclick="setTranscribeMode('30');toggleTCPanel()" style="margin-top:2px;font-size:11px;padding:3px 8px;background:rgba(0,200,255,0.1);border:1px solid var(--accent);border-radius:6px;color:var(--accent);cursor:pointer">Switch to 30s mode →</button>
+          <span style="font-size:12px;color:var(--yellow)">⚠ Words won't show in transcript until committed</span>
+          <span style="font-size:12px;color:var(--text3)">Press Get answer (or Save) to add the speech to the transcript</span>
+          <button onclick="setTranscribeMode('30');toggleTCPanel()" style="margin-top:2px;font-size:12px;padding:3px 8px;background:rgb(var(--accent-rgb) / 0.1);border:1px solid var(--accent);border-radius:6px;color:var(--accent);cursor:pointer">Switch to 30s mode →</button>
         </div>
         <div class="tc-row" id="tcDynamicInfo" style="display:none">
-          <span style="font-size:11px;color:var(--text3)">Auto-sends when a question ends ✦</span>
+          <span style="font-size:12px;color:var(--text3)">Auto-sends when a question ends ✦</span>
         </div>
       </div>
     </div>
@@ -1316,13 +1398,13 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     <input type="text" class="fq-input" id="fQuestionInput"
            placeholder="Type question or speak…"
            onkeydown="if(event.key==='Enter')triggerAI()">
-    <button class="fai-btn" id="fAiHelpBtn" onclick="triggerAI()">✨ AI Help</button>
+    <button class="fai-btn" id="fAiHelpBtn" onclick="triggerAI()">Get answer</button>
     <div class="ai-split-wrap" id="fConvInsightWrap" style="position:relative;display:inline-flex;flex-shrink:0">
-      <button class="fai-btn" id="fConvHelperBtn" onclick="triggerConvHelper()" title="Conversation insights" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:6px 0 0 6px;border-right:none;padding-right:4px">🧠</button>
-      <button class="fai-btn" id="fConvInsightArrow" onclick="toggleConvInsightDropdown(event)" title="Choose insight type" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);font-size:10px;padding:0 5px;border-radius:0 6px 6px 0;min-width:18px">▾</button>
+      <button class="fai-btn" id="fConvHelperBtn" onclick="triggerConvHelper()" title="Conversation insights" style="background:linear-gradient(135deg,var(--accent2),var(--purple));border-radius:6px 0 0 6px;border-right:none;padding-right:4px">🧠</button>
+      <button class="fai-btn" id="fConvInsightArrow" onclick="toggleConvInsightDropdown(event)" title="Choose insight type" style="background:linear-gradient(135deg,var(--accent2),var(--purple));font-size:11.5px;padding:0 5px;border-radius:0 6px 6px 0;min-width:18px">▾</button>
     </div>
-    <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:10px;padding:2px 6px" onclick="clearInput()" title="Clear input">✕ Clear</button>
-    <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:10px;padding:2px 6px" onclick="saveAndClearInput()" title="Save to transcript">💾 Save</button>
+    <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:11.5px;padding:2px 6px" onclick="clearInput()" title="Clear input">Clear</button>
+    <button class="fai-btn" style="background:var(--bg3);color:var(--text2);font-size:11.5px;padding:2px 6px" onclick="saveAndClearInput()" title="Save to transcript">Save</button>
   </div>
   <!-- Bottom drag bar -->
   <div class="ai-float-foot" id="aiDragBarBottom">
@@ -1338,9 +1420,9 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
   <div style="display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="toggleRecorderPanel()">
     <span style="font-size:15px">📹</span>
     <span style="font-size:13px;font-weight:700;color:var(--text)">Teams Recorder</span>
-    <span id="recorderPanelIndicator" style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(108,99,255,0.15);color:var(--accent2);font-weight:600">LIVE</span>
+    <span id="recorderPanelIndicator" style="font-size:11.5px;padding:2px 8px;border-radius:10px;background:rgb(var(--accent2-rgb) / 0.15);color:var(--accent2);font-weight:600">LIVE</span>
     <div style="flex:1"></div>
-    <button class="btn btn-ghost btn-xs" id="calSyncStatusBtn" onclick="event.stopPropagation();toggleCalendarPanel()" title="Sync calendar" style="font-size:11px;border-color:var(--border)">📅 Calendar</button>
+    <button class="btn btn-ghost btn-xs" id="calSyncStatusBtn" onclick="event.stopPropagation();toggleCalendarPanel()" title="Sync calendar" style="font-size:12px;border-color:var(--border)">📅 Calendar</button>
     <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();generateMeetingSummary()" title="Generate AI meeting summary" id="summaryBtn">📋 Summary</button>
     <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();toggleTeamsZoom()" id="teamsZoomBtn" title="Expand / collapse panel" style="font-size:13px;padding:2px 6px">⤢</button>
     <span id="recorderPanelToggle" style="font-size:12px;color:var(--text3)">▲</span>
@@ -1351,21 +1433,21 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
       <!-- Connect buttons -->
       <div style="flex:0 0 auto">
-        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Connect Calendar</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:6px">Connect Calendar</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-xs" id="googleCalBtn" onclick="connectGoogleCalendar()" style="border-color:var(--accent);font-size:11px">
+          <button class="btn btn-ghost btn-xs" id="googleCalBtn" onclick="connectGoogleCalendar()" style="border-color:var(--accent);font-size:12px">
             🌐 Google Calendar
           </button>
-          <button class="btn btn-ghost btn-xs" id="msCalBtn" onclick="connectMicrosoftCalendar()" style="border-color:#0078d4;font-size:11px">
+          <button class="btn btn-ghost btn-xs" id="msCalBtn" onclick="connectMicrosoftCalendar()" style="border-color:#0078d4;font-size:12px">
             🪟 Outlook / Teams
           </button>
-          <button class="btn btn-ghost btn-xs" onclick="refreshCalendarEvents()" id="calRefreshBtn" title="Refresh events" style="font-size:11px;display:none">↻ Refresh</button>
+          <button class="btn btn-ghost btn-xs" onclick="refreshCalendarEvents()" id="calRefreshBtn" title="Refresh events" style="font-size:12px;display:none">↻ Refresh</button>
         </div>
-        <div id="calConnectStatus" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
+        <div id="calConnectStatus" style="font-size:12px;color:var(--text3);margin-top:4px"></div>
       </div>
       <!-- Today's meetings list -->
       <div style="flex:1 1 300px;min-width:0">
-        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Today's Meetings <span id="calEventCount" style="font-weight:400;text-transform:none"></span></div>
+        <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:6px">Today's Meetings <span id="calEventCount" style="font-weight:400;text-transform:none"></span></div>
         <div id="calendarEventsList" style="display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto">
           <div style="font-size:12px;color:var(--text3);font-style:italic">Connect a calendar to see today's meetings</div>
         </div>
@@ -1378,7 +1460,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 
     <!-- Left: Participants -->
     <div style="flex:1 1 200px;min-width:0;overflow:hidden">
-      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Participants</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">Participants</div>
       <div id="participantsList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
       <div style="display:flex;gap:6px;min-width:0">
         <input id="newParticipantName" type="text" class="form-control" placeholder="Name…" style="font-size:12px;padding:4px 8px;flex:1;min-width:0"
@@ -1391,15 +1473,15 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 
     <!-- Center: Active speaker -->
     <div style="flex:1 1 160px;min-width:0;overflow:hidden">
-      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Who's Speaking?</div>
-      <div style="font-size:10px;color:var(--text3);margin-bottom:6px">Tap to label incoming system audio</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:4px">Who's Speaking?</div>
+      <div style="font-size:11.5px;color:var(--text3);margin-bottom:6px">Tap to label incoming system audio</div>
       <div id="activeSpeakerDisplay" style="font-size:13px;color:var(--text2);margin-bottom:8px">None selected</div>
       <div id="speakerBtnList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
 
     <!-- Right: Smart prompt buttons -->
     <div style="flex:2 1 200px;min-width:0">
-      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Meeting AI</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">Meeting AI</div>
       <div id="meetingAISplitWrap" class="ai-split-wrap" style="position:relative;display:inline-flex">
         <button class="ai-help-btn" style="background:var(--bg3);color:var(--text2);cursor:default;border-color:var(--border2)" title="Meeting AI Templates">🤖 Meeting AI</button>
         <button class="ai-tpl-arrow" id="meetingAIArrow" onclick="toggleMeetingAIDropdown(event)" title="Select meeting AI template">▾</button>
@@ -1409,7 +1491,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
         </div>
       </div>
       {% if session.company %}
-      <div id="crossSessionCtx" style="margin-top:10px;font-size:11px;color:var(--text3)">
+      <div id="crossSessionCtx" style="margin-top:10px;font-size:12px;color:var(--text3)">
         🔗 Loading past meeting context for <strong>{{ session.company }}</strong>…
       </div>
       {% endif %}
@@ -1430,18 +1512,18 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 
 <!-- Note input strip -->
 <div class="note-input-wrap">
-  <span style="font-size:11px;color:var(--yellow);font-weight:600;white-space:nowrap">📝 Note:</span>
+  <span style="font-size:13px;color:var(--text2);font-weight:600;white-space:nowrap">Note</span>
   <input type="text" class="note-input" id="noteInput"
-         placeholder="Add interviewer note / question (Enter to save)…"
+         placeholder="Add a note to the transcript and press Enter"
          onkeydown="if(event.key==='Enter')addNote()"
          oninput="_saveNoteDraft(this.value)">
-  <button class="btn btn-ghost btn-xs" onclick="addNote()" style="color:var(--yellow);white-space:nowrap">+ Add</button>
+  <button class="btn btn-ghost btn-xs" onclick="addNote()" style="white-space:nowrap">Add note</button>
 </div>
 
 <!-- Bottom bar -->
 <!-- Quick Questions strip -->
 <div id="quickQStrip" style="display:none;padding:6px 12px;background:var(--bg2);border-top:1px solid var(--border);overflow-x:auto;white-space:nowrap;scrollbar-width:none">
-  <span style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-right:8px">// quick:</span>
+  <span style="font-size:12.5px;color:var(--text3);margin-right:8px">Quick questions</span>
   <button class="qq-chip" onclick="quickQ('Explain this concept simply')">explain simply</button>
   <button class="qq-chip" onclick="quickQ('What are the pros and cons?')">pros &amp; cons</button>
   <button class="qq-chip" onclick="quickQ('Give me a real-world example')">example</button>
@@ -1454,14 +1536,14 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 
 <div class="bottom-bar">
   <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Start/stop mic (your voice)">🎤</button>
-  <span id="micModeBadge" onclick="toggleTCPanel()" title="Transcribe mode — click to change" style="font-size:10px;font-family:var(--mono);color:var(--text3);padding:2px 7px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);cursor:pointer;white-space:nowrap;line-height:1.8;transition:color .2s,border-color .2s">30s</span>
+  <span id="micModeBadge" onclick="toggleTCPanel()" title="Transcribe mode — click to change" style="font-size:11.5px;font-family:var(--sans);color:var(--text3);padding:2px 7px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);cursor:pointer;white-space:nowrap;line-height:1.8;transition:color .2s,border-color .2s">30s</span>
 
   <!-- Conversation Insights split button + dropdown -->
   <div class="ai-split-wrap" id="convInsightWrap" style="position:relative;display:inline-flex;flex-shrink:0">
-    <button class="tc-config-btn" id="convHelperBtn" onclick="triggerConvHelper()" title="Conversation insights — analyze the full session" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:#7c3aed;color:#fff;font-size:15px;border-radius:6px 0 0 6px;border-right:none;padding-right:4px">🧠</button>
-    <button class="tc-config-btn" id="convInsightArrow" onclick="toggleConvInsightDropdown(event)" title="Choose insight type" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:#7c3aed;color:#fff;font-size:10px;padding:0 5px;border-radius:0 6px 6px 0;min-width:18px">▾</button>
+    <button class="tc-config-btn" id="convHelperBtn" onclick="triggerConvHelper()" title="Conversation insights — analyze the full session" style="background:var(--bg3);border-color:var(--border2);color:var(--text);font-size:15px;border-radius:6px 0 0 6px;border-right:none;padding-right:4px">🧠</button>
+    <button class="tc-config-btn" id="convInsightArrow" onclick="toggleConvInsightDropdown(event)" title="Choose insight type" style="background:var(--bg3);border-color:var(--border2);color:var(--text);font-size:11.5px;padding:0 5px;border-radius:0 6px 6px 0;min-width:18px">▾</button>
     <div class="ai-tpl-dropdown" id="convInsightDropdown" style="min-width:220px;max-height:240px">
-      <div class="ai-tpl-header"><span>Insight Type</span></div>
+      <div class="ai-tpl-header"><span>Insight type</span></div>
       <div id="convInsightList"></div>
     </div>
   </div>
@@ -1473,8 +1555,8 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
     </button>
     <div class="meeting-helper-panel" id="mhPanel">
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-weight:600;font-size:12px">Meeting Helper</span>
-        <span style="font-size:10px;color:var(--text3)">click question to fill ↓</span>
+        <span style="font-weight:600;font-size:13px">Meeting helper</span>
+        <span style="font-size:11.5px;color:var(--text3)">Click a question to use it</span>
       </div>
       <div class="mh-role-tabs" id="mhRoleTabs">
         <button class="mh-role-tab" data-role="architect" onclick="setMeetingRole('architect')">🏗️ Architect</button>
@@ -1484,7 +1566,7 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
         <button class="mh-role-tab" data-role="devops" onclick="setMeetingRole('devops')">⚙ DevOps</button>
       </div>
       <div class="mh-suggestions" id="mhSuggestions">
-        <span style="font-size:11px;color:var(--text3)">Select a role above to see suggested questions</span>
+        <span style="font-size:12px;color:var(--text3)">Select a role above to see suggested questions</span>
       </div>
     </div>
   </div>
@@ -1496,33 +1578,33 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 
   <div class="question-input-wrap">
     <input type="text" class="question-input" id="questionInput"
-           placeholder="Type a question or let the mic capture it… (Enter to send)"
+           placeholder="Type a question, or let the microphone pick it up. Enter to send."
            onkeydown="if(event.key==='Enter')triggerAI()"
            oninput="_updateQInputCount(this)">
     <span id="qInputCount" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);
-          font-size:9px;font-family:var(--mono);color:var(--text3);pointer-events:none;opacity:0;
+          font-size:10.5px;font-family:var(--sans);color:var(--text3);pointer-events:none;opacity:0;
           transition:opacity 0.2s"></span>
   </div>
 
   <div class="ai-btn-group" style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0">
     <div class="ai-split-wrap">
-      <button class="ai-help-btn" id="aiHelpBtn" onclick="triggerAI()">✨ AI Help</button>
+      <button class="ai-help-btn" id="aiHelpBtn" onclick="triggerAI()">Get answer</button>
       <button class="ai-tpl-arrow" id="aiTplArrow" onclick="toggleTplDropdown(event)" title="Output template">▾</button>
       <!-- Template dropdown -->
       <div class="ai-tpl-dropdown" id="aiTplDropdown">
         <div class="ai-tpl-header">
-          <span>Output Template</span>
+          <span>Answer template</span>
           <span id="aiTplActiveName" style="color:var(--accent)">Default</span>
         </div>
         <div id="aiTplList"><!-- populated by JS --></div>
-        <div class="ai-tpl-setdefault" onclick="setDefaultTemplate()">☆ Set as profile default</div>
+        <div class="ai-tpl-setdefault" onclick="setDefaultTemplate()">Set as my default</div>
       </div>
     </div>
     <div style="display:flex;gap:4px">
-      <button class="ai-help-btn" style="font-size:10px;padding:2px 7px;background:var(--bg3);color:var(--text2);border-radius:4px" onclick="clearInput()" title="Clear input">✕ Clear</button>
-      <button class="ai-help-btn" style="font-size:10px;padding:2px 7px;background:var(--bg3);color:var(--text2);border-radius:4px" onclick="saveAndClearInput()" title="Save to transcript">💾 Save</button>
+      <button class="ai-help-btn" style="font-size:11.5px;padding:2px 7px;background:var(--bg3);color:var(--text2);border-radius:4px" onclick="clearInput()" title="Clear input">Clear</button>
+      <button class="ai-help-btn" style="font-size:11.5px;padding:2px 7px;background:var(--bg3);color:var(--text2);border-radius:4px" onclick="saveAndClearInput()" title="Save to transcript">Save</button>
     </div>
-    <span id="aiTplCurrentBadge" style="font-size:9px;color:var(--text3);font-family:var(--mono);text-align:center"></span>
+    <span id="aiTplCurrentBadge" style="font-size:10.5px;color:var(--text3);font-family:var(--sans);text-align:center"></span>
   </div>
 
   <div class="status-chip" id="statusChip"></div>
@@ -1531,9 +1613,9 @@ kbd { background:var(--bg3); border:1px solid var(--border); border-radius:4px; 
 <!-- Keyboard Shortcuts Modal -->
 <div class="modal-overlay" id="shortcutsModal">
   <div class="modal" style="max-width:460px">
-    <div class="modal-title">⌨️ Keyboard Shortcuts</div>
+    <div class="modal-title">Keyboard shortcuts</div>
     <table class="shortcuts-table">
-      <tr><td>Trigger AI help</td><td><kbd>⌘ Enter</kbd> or <kbd>Ctrl Enter</kbd></td></tr>
+      <tr><td>Get an answer</td><td><kbd>⌘ Enter</kbd> or <kbd>Ctrl Enter</kbd></td></tr>
       <tr><td>Close modal</td><td><kbd>Esc</kbd></td></tr>
       <tr><td>Focus question input</td><td><kbd>/</kbd></td></tr>
       <tr><td>Focus note input</td><td><kbd>N</kbd></td></tr>
@@ -1784,12 +1866,18 @@ function renderMarkdown(el, text) {
   }
 }
 
+// Answers saved earlier arrive from the server as plain text. Format them the same way as live answers.
+document.querySelectorAll('#aiHistory .ai-item-a').forEach(el => {
+  el.dataset.plain = el.textContent;
+  renderMarkdown(el, el.textContent);
+});
+
 function toggleBionic() {
   bionicMode = !bionicMode;
   const d = _doc();
   const btn = d.getElementById('bionicToggle');
   const aiPanelEl = d.getElementById('aiPanel');
-  if (btn) { btn.style.background = bionicMode ? 'rgba(108,99,255,0.4)' : ''; btn.style.color = bionicMode ? 'var(--accent2)' : ''; }
+  if (btn) { btn.style.background = bionicMode ? 'rgb(var(--accent2-rgb) / 0.4)' : ''; btn.style.color = bionicMode ? 'var(--accent2)' : ''; }
   if (aiPanelEl) aiPanelEl.classList.toggle('bionic-on', bionicMode);
   const st = d.getElementById('bionicStatus');
   if (st) st.textContent = 'Bionic ' + (bionicMode ? 'ON' : 'off');
@@ -1838,7 +1926,7 @@ function _updateQInputCount(inp) {
 questionInput.addEventListener('paste', () => {
   setTimeout(() => {
     if (questionInput.value.trim().length >= 40) {
-      toast('// Tip: press ⌘ Enter to ask AI', 'info', 3000);
+      toast('Tip: press ⌘ Enter for an answer', 'info', 3000);
     }
   }, 50);
 });
@@ -1895,7 +1983,7 @@ function startTimer() {
       toast('⚠ 90% of session time elapsed', 'warn', 5000);
     } else if (pct >= 75 && !_timer75Toasted) {
       _timer75Toasted = true;
-      toast('// 75% of session time elapsed', 'info', 4000);
+      toast('75% of the session time has passed', 'info', 4000);
     }
   }, 1000);
 }
@@ -1914,7 +2002,7 @@ window.addEventListener('offline', () => {
   setStatus('Offline');
 });
 window.addEventListener('online', () => {
-  toast('// Back online', 'success', 3000);
+  toast('Back online', 'success', 3000);
   setStatus('');
 });
 
@@ -1923,8 +2011,8 @@ fetch(`/api/session/${SESSION_ID}/activate/`, {
   method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken')}
 }).then(() => {
   statusBadge.textContent = 'active';
-  statusBadge.style.background = 'rgba(52,211,153,0.15)';
-  statusBadge.style.color = '#34d399';
+  statusBadge.style.background = 'rgb(var(--green-rgb) / 0.15)';
+  statusBadge.style.color = 'var(--green)';
 });
 
 // ── Font size controls ────────────────────────────────────────────────────────
@@ -1968,9 +2056,10 @@ function drawWave() {
   const w = waveformCanvas.width, h = waveformCanvas.height;
   waveCtx.clearRect(0, 0, w, h);
 
-  // Pick waveform color: gold while AI is streaming, cyan otherwise
-  const waveColor = isStreaming ? '#ffd700' : '#00c8ff';
-  const waveGlow = isStreaming ? 'rgba(255,215,0,0.15)' : 'rgba(0,200,255,0.15)';
+  // Waveform colour: brand yellow while an answer is streaming, the secondary accent otherwise
+  const _light = document.documentElement.getAttribute('data-theme') === 'light';
+  const waveColor = isStreaming ? (_light ? '#A15C00' : '#FFC83D') : (_light ? '#4636C9' : '#A9A4FF');
+  const waveGlow = isStreaming ? 'rgba(255,200,61,0.18)' : (_light ? 'rgba(70,54,201,0.14)' : 'rgba(169,164,255,0.18)');
 
   // Glow pass
   waveCtx.beginPath();
@@ -2105,7 +2194,7 @@ function setTranscribeMode(mode) {
     badge.textContent = modeLabels[mode] || mode;
     badge.style.color = mode === 'manual' ? 'var(--yellow)' : 'var(--text3)';
     badge.style.borderColor = mode === 'manual' ? 'var(--yellow)' : 'var(--border)';
-    badge.style.background = mode === 'manual' ? 'rgba(255,211,42,0.08)' : 'var(--bg3)';
+    badge.style.background = mode === 'manual' ? 'rgb(var(--yellow-rgb) / 0.08)' : 'var(--bg3)';
   }
 
   // Hide Auto AI toggle in manual mode — it has no effect there
@@ -2233,7 +2322,7 @@ function refreshMHSuggestions() {
   const badge = document.getElementById('mhBadge');
   if (!container) return;
   if (!meetingRole || !MEETING_ROLES[meetingRole]) {
-    container.innerHTML = '<span style="font-size:11px;color:var(--text3)">Select a role above to see questions</span>';
+    container.innerHTML = '<span style="font-size:12px;color:var(--text3)">Select a role above to see questions</span>';
     if (badge) badge.style.display = 'none';
     return;
   }
@@ -2378,7 +2467,7 @@ function makeMicRecognition() {
 async function startMic() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    toast('// Web Speech API not supported — use Chrome or Edge', 'error', 6000);
+    toast('This browser cannot transcribe speech. Use Chrome or Edge.', 'error', 6000);
     return;
   }
 
@@ -2386,7 +2475,7 @@ async function startMic() {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
   } catch(err) {
     setStatus('Mic blocked');
-    toast('// Mic denied: ' + err.message + ' — check browser permissions', 'error', 7000);
+    toast('Microphone blocked: ' + err.message + '. Allow it in the browser permissions.', 'error', 7000);
     return;
   }
 
@@ -2408,7 +2497,7 @@ async function startMic() {
 
   // Warn clearly if manual mode is active — words won't appear in transcript automatically
   if (transcribeMode === 'manual') {
-    toast('⚠ Manual mode — speech accumulates but won\'t appear in transcript until you press ✨ AI Help or 💾 Save', 'warn', 6000);
+    toast('Manual mode: speech is held back until you press Get answer or Save', 'warn', 6000);
   }
 }
 
@@ -2668,7 +2757,7 @@ function _renderVoiceChips(entryDiv, assignedName) {
   if (!row || !_voiceParticipants.length) return;
   row.innerHTML = '';
   const label = document.createElement('span');
-  label.style.cssText = 'font-size:9px;color:var(--text3);font-family:var(--mono);align-self:center';
+  label.style.cssText = 'font-size:10.5px;color:var(--text3);font-family:var(--sans);align-self:center';
   label.textContent = '👤';
   row.appendChild(label);
   _voiceParticipants.forEach(p => {
@@ -2757,7 +2846,7 @@ function _syncAutoSpeakerUI() {
       if (display) display.innerHTML = `<span style="color:${sp.color};font-weight:700">${escHtml(sp.name)}</span>`;
     });
     speakerBtns.appendChild(btn);
-    if (isActive && display) display.innerHTML = `<span style="color:${sp.color};font-weight:700">${escHtml(sp.name)}</span> <span style="font-size:10px;color:var(--text3)">(auto)</span>`;
+    if (isActive && display) display.innerHTML = `<span style="color:${sp.color};font-weight:700">${escHtml(sp.name)}</span> <span style="font-size:11.5px;color:var(--text3)">(auto)</span>`;
   });
 }
 
@@ -2783,7 +2872,7 @@ function addTranscriptEntryUI(text, type, speakerName) {
   const ts = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   const tone = _detectTone(text);
   const isSystem = type === 'system';
-  div.innerHTML = `<div class="entry-select-cb" title="Select for multi-send">✓</div><div class="speaker"><span class="speaker-name-editable" title="Click to rename this speaker">${escHtml(label.toUpperCase())}</span>${tone ? `<span class="speaker-tone" title="Tone">${tone}</span>` : ''}<span class="entry-ts">${ts}</span></div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div><div class="voice-assign-row"></div><div class="entry-actions"><button class="entry-action-btn" onclick="event.stopPropagation();sendEntryToAI(this)" title="Ask AI about this">✨ Ask AI</button><button class="entry-action-btn" onclick="event.stopPropagation();editTranscriptEntry(this)" title="Edit">✎ Edit</button><button class="entry-action-btn" style="color:var(--red);border-color:rgba(255,80,80,0.3)" onclick="event.stopPropagation();deleteTranscriptEntry(this)" title="Delete">✕</button></div>`;
+  div.innerHTML = `<div class="entry-select-cb" title="Select for multi-send">✓</div><div class="speaker"><span class="speaker-name-editable" title="Click to rename this speaker">${escHtml(label.toUpperCase())}</span>${tone ? `<span class="speaker-tone" title="Tone">${tone}</span>` : ''}<span class="entry-ts">${ts}</span></div><div class="text" style="font-size:${transcriptFontSize}px">${escHtml(text)}</div><div class="voice-assign-row"></div><div class="entry-actions"><button class="entry-action-btn" onclick="event.stopPropagation();sendEntryToAI(this)" title="Ask AI about this">✨ Ask AI</button><button class="entry-action-btn" onclick="event.stopPropagation();editTranscriptEntry(this)" title="Edit">✎ Edit</button><button class="entry-action-btn" style="color:var(--red);border-color:rgb(var(--red-rgb) / 0.3)" onclick="event.stopPropagation();deleteTranscriptEntry(this)" title="Delete">✕</button></div>`;
   // Populate voice-assign chips for system entries using current participants
   if (isSystem) {
     _renderVoiceChips(div, speakerName);
@@ -2935,7 +3024,7 @@ function filterTranscript(query) {
           const idx = raw.toLowerCase().indexOf(q);
           if (idx >= 0) {
             textEl.innerHTML = escHtml(raw.slice(0, idx)) +
-              `<mark style="background:rgba(0,200,255,0.3);color:var(--text);border-radius:2px">` +
+              `<mark style="background:rgb(var(--accent-rgb) / 0.3);color:var(--text);border-radius:2px">` +
               escHtml(raw.slice(idx, idx + q.length)) + `</mark>` +
               escHtml(raw.slice(idx + q.length));
           }
@@ -3005,7 +3094,7 @@ function editTranscriptEntry(btn) {
   const current = textEl.textContent.trim();
   const input = document.createElement('input');
   Object.assign(input.style, { width:'100%', background:'var(--bg3)', border:'1px solid var(--accent)',
-    borderRadius:'3px', color:'var(--text)', fontFamily:'var(--mono)', fontSize:'12px', padding:'3px 6px' });
+    borderRadius:'3px', color:'var(--text)', fontFamily:'var(--sans)', fontSize:'12px', padding:'3px 6px' });
   input.value = current;
   textEl.replaceWith(input);
   input.focus(); input.select();
@@ -3059,11 +3148,11 @@ function rateAI(btn, rating) {
   if (rating === 1) {
     btn.style.color = 'var(--green)';
     item.style.borderLeftColor = 'var(--green)';
-    toast('// Marked as helpful', 'success', 1500);
+    toast('Marked as helpful', 'success', 1500);
   } else {
     btn.style.color = 'var(--red)';
     item.style.borderLeftColor = 'var(--red)';
-    toast('// Marked as not helpful', 'warn', 1500);
+    toast('Marked as not helpful', 'warn', 1500);
   }
 }
 
@@ -3225,7 +3314,7 @@ function saveAndClearInput() {
   micManualAccum = '';
   addTranscriptEntryUI(text, 'microphone');
   saveMicToServer(text);
-  if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
+  if (interimLabel) { interimLabel.textContent = 'You'; interimLabel.style.color = 'var(--accent2)'; }
   clearInput();
   setStatus('Saved to transcript ✓');
 }
@@ -3513,7 +3602,7 @@ function triggerAI(question, fromVoice) {
     addTranscriptEntryUI(accum, 'microphone');
     interimEntry.style.display = 'none';
     interimText.textContent = 'Transcribing…';
-    if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
+    if (interimLabel) { interimLabel.textContent = 'You'; interimLabel.style.color = 'var(--accent2)'; }
     question = accum;
     fromVoice = true; // already saved above
   }
@@ -3537,7 +3626,7 @@ function triggerAI(question, fromVoice) {
   // Clear the interim transcript entry so the panel looks clean after submit
   interimEntry.style.display = 'none';
   interimText.textContent = 'Transcribing…';
-  if (interimLabel) { interimLabel.textContent = 'YOU'; interimLabel.style.color = 'var(--accent2)'; }
+  if (interimLabel) { interimLabel.textContent = 'You'; interimLabel.style.color = 'var(--accent2)'; }
   isStreaming = true;
   document.title = '✨ Thinking — ' + document.title.replace(/^[🔴✨]\s*/,'').replace(/^Thinking — /,'');
   aiHelpBtn.disabled = true;
@@ -3611,7 +3700,7 @@ function triggerAI(question, fromVoice) {
     }
     document.title = document.title.replace(/^✨ Thinking — /,'');
     aiHelpBtn.disabled = false;
-    aiHelpBtn.textContent = '✨ AI Help';
+    aiHelpBtn.textContent = 'Get answer';
     const fBtnF = _doc().getElementById('fAiHelpBtn');
     if (fBtnF) { fBtnF.disabled = false; fBtnF.textContent = '✨ AI'; }
     aiCursor.style.display = 'none';
@@ -3680,7 +3769,7 @@ function archiveAI(question, answer) {
   const confScore = Math.max(0, Math.min(100, wordCount >= 80 ? 85 - hedgeWords * 5 : wordCount >= 40 ? 65 - hedgeWords * 5 : 40 - hedgeWords * 5));
   const confColor = confScore >= 75 ? 'var(--green)' : confScore >= 50 ? 'var(--accent)' : 'var(--yellow)';
   const confLabel = confScore >= 75 ? 'high' : confScore >= 50 ? 'med' : 'low';
-  item.insertAdjacentHTML('beforeend', `<div class="ai-item-actions"><span style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-right:4px">${wordCount}w · ${readLabel} read</span><span style="font-size:9px;font-family:var(--mono);color:${confColor};border:1px solid ${confColor};border-radius:3px;padding:1px 5px;opacity:0.8" title="Confidence estimate">${confLabel}</span><button class="btn btn-ghost btn-xs" onclick="rateAI(this,1)" title="Good answer">👍</button><button class="btn btn-ghost btn-xs" onclick="rateAI(this,-1)" title="Not helpful">👎</button><button class="btn btn-ghost btn-xs" onclick="toggleBookmarkAI(this)">🔖</button><button class="btn btn-ghost btn-xs" onclick="copyQA(this.closest('.ai-item'))" title="Copy Q+A pair">📋 Q+A</button><button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">📋 Copy</button><button class="btn btn-ghost btn-xs" onclick="speakAI(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,this)">🔊 Speak</button></div>`);
+  item.insertAdjacentHTML('beforeend', `<div class="ai-item-actions"><span style="font-size:11.5px;font-family:var(--sans);color:var(--text3);margin-right:4px">${wordCount}w · ${readLabel} read</span><span style="font-size:10.5px;font-family:var(--sans);color:${confColor};border:1px solid ${confColor};border-radius:3px;padding:1px 5px;opacity:0.8" title="Confidence estimate">${confLabel}</span><button class="btn btn-ghost btn-xs" onclick="rateAI(this,1)" title="Good answer">👍</button><button class="btn btn-ghost btn-xs" onclick="rateAI(this,-1)" title="Not helpful">👎</button><button class="btn btn-ghost btn-xs" onclick="toggleBookmarkAI(this)">🔖</button><button class="btn btn-ghost btn-xs" onclick="copyQA(this.closest('.ai-item'))" title="Copy Q+A pair">📋 Q+A</button><button class="btn btn-ghost btn-xs" onclick="copyText(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,'Answer')">Copy</button><button class="btn btn-ghost btn-xs" onclick="speakAI(this.closest('.ai-item').querySelector('.ai-item-a').dataset.plain||this.closest('.ai-item').querySelector('.ai-item-a').textContent,this)">🔊 Speak</button></div>`);
   // Toggle minimized on click of the question line
   item.querySelector('.ai-item-q').addEventListener('click', () => item.classList.toggle('minimized'));
   hist.prepend(item);
@@ -3868,7 +3957,7 @@ function endSession() {
 }
 
 function _launchConfetti() {
-  const colors = ['#00c8ff','#34d399','#ffd700','#f472b6','#a78bfa'];
+  const colors = ['#FFC83D','#4ADE9B','#A9A4FF','#FF9EC0','#7CC0FF'];
   for (let i = 0; i < 80; i++) {
     const el = document.createElement('div');
     const size = 6 + Math.random() * 8;
@@ -4296,16 +4385,13 @@ async function popOutAI() {
         }
       });
 
-      // Style PiP body to match dark theme
+      // Carry the current theme into the PiP window so its tokens match the main window
+      pipWin.document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') || 'dark');
       const bodyStyle = pipWin.document.createElement('style');
       bodyStyle.textContent = `
         html, body {
           margin:0; padding:0; overflow:hidden;
-          background: linear-gradient(145deg,
-            rgba(12,8,35,1) 0%,
-            rgba(5,12,28,1) 35%,
-            rgba(18,8,40,1) 65%,
-            rgba(8,18,32,1) 100%) !important;
+          background: var(--bg) !important;
         }
         #aiFloatPanel {
           position:fixed!important; top:0!important; left:0!important;
@@ -4414,7 +4500,7 @@ if (SESSION_TYPE === 'meeting') {
       list.insertAdjacentHTML('beforeend', `
         <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:${p.color}22;border:1px solid ${p.color};font-size:12px;color:${p.color};font-weight:600">
           ${escHtml(p.name)}
-          <span onclick="removeParticipant('${p.id}')" style="cursor:pointer;opacity:0.6;font-size:10px" title="Remove">✕</span>
+          <span onclick="removeParticipant('${p.id}')" style="cursor:pointer;opacity:0.6;font-size:11.5px" title="Remove">✕</span>
         </span>
       `);
       // Speaker select button
@@ -4904,7 +4990,7 @@ if (SESSION_TYPE === 'meeting') {
           <span style="font-size:12px;font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(ev.summary || 'Untitled')}</span>
           <span class="evt-time" style="flex-shrink:0">${escHtml(timeLabel)}</span>
         </div>
-        ${attendeeCount ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${attendeeCount} attendee${attendeeCount !== 1 ? 's' : ''} • click to sync participants</div>` : ''}
+        ${attendeeCount ? `<div style="font-size:11.5px;color:var(--text3);margin-top:2px">${attendeeCount} attendee${attendeeCount !== 1 ? 's' : ''} • click to sync participants</div>` : ''}
       `;
       div.addEventListener('click', () => loadCalendarMeeting(ev));
       container.appendChild(div);

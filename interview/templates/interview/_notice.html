@@ -1,0 +1,14 @@
+{% extends "interview/base.html" %}
+{% comment %} Shared layout for one-message pages (billing result, onboarding). {% endcomment %}
+{% block extra_style %}
+.notice { max-width: 560px; margin: 72px auto; text-align: center; padding: 0 16px; }
+.notice h1 { font-size: 34px; font-weight: 800; margin: 20px 0 10px; }
+.notice p { color: var(--text2); font-size: 16px; margin-bottom: 24px; }
+.notice ol { text-align: left; display: inline-block; margin: 0 auto 28px; padding-left: 22px; color: var(--text); font-size: 16px; line-height: 1.9; }
+{% endblock %}
+{% block content %}
+<div class="notice">
+  {% include "interview/_logo.html" with size=64 wordmark=False %}
+  {% block notice %}{% endblock %}
+</div>
+{% endblock %}

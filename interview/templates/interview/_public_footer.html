@@ -1,0 +1,22 @@
+{# Footer for signed-out pages. #}
+<footer class="pub-footer">
+  <div class="pub-footer-inner">
+    <div>
+      {% include "interview/_logo.html" with size=28 %}
+      <p>A live helper for interviews and meetings. It listens, keeps the transcript, and suggests what to say next.</p>
+    </div>
+    <nav aria-label="Product">
+      <h4>Product</h4>
+      <a href="/#how-it-works">How it works</a>
+      <a href="/#features">Features</a>
+      <a href="/pricing/">Pricing</a>
+    </nav>
+    <nav aria-label="Account">
+      <h4>Account</h4>
+      <a href="/login/">Sign in</a>
+      <a href="/signup/">Create account</a>
+      <a href="/settings/">Settings</a>
+    </nav>
+  </div>
+  <div class="pub-footer-bottom">© {% now "Y" %} HappyHelper</div>
+</footer>

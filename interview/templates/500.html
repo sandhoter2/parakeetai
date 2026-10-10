@@ -1,39 +1,10 @@
-{% extends "interview/base.html" %}
-{% block title %}500 — Server Error{% endblock %}
-
-{% block extra_style %}
-.error-page {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-height: 60vh; text-align: center; padding: 40px 20px;
-}
-.error-code {
-  font-size: clamp(80px, 15vw, 140px); font-weight: 900; line-height: 1;
-  font-family: var(--mono);
-  background: linear-gradient(135deg, #ef4444 0%, #f59e0b 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  letter-spacing: -4px;
-}
-.error-title {
-  font-size: 18px; font-weight: 700; color: var(--text);
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px;
-  margin: 12px 0 8px;
-}
-.error-msg {
-  font-size: 14px; color: var(--text3); max-width: 380px; line-height: 1.6;
-  margin-bottom: 28px;
-}
-{% endblock %}
-
-{% block content %}
-<div class="container">
-  <div class="error-page">
-    <div class="error-code">500</div>
-    <div class="error-title">// internal server error</div>
-    <p class="error-msg">Something went wrong on our end. The issue has been logged. Please try again in a moment.</p>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-      <a href="/" class="btn btn-primary">← Back to Dashboard</a>
-      <button onclick="location.reload()" class="btn btn-secondary">Retry</button>
-    </div>
-  </div>
+{% extends "interview/_notice.html" %}
+{% block title %}Something went wrong on our side — HappyHelper{% endblock %}
+{% block notice %}
+<h1>Something went wrong on our side</h1>
+<p>The error has been logged. Try again in a moment.</p>
+<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+  <a href="/" class="btn btn-primary btn-lg">Go to sessions</a>
+  <button type="button" onclick="location.reload()" class="btn btn-secondary btn-lg">Try again</button>
 </div>
 {% endblock %}

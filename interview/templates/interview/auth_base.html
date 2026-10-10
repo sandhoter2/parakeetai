@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}HappyHelper{% endblock %}</title>
+  {% include "interview/_head.html" %}
+  <style>
+    {% include "interview/_styles.html" %}
+
+    body { font-size: 15px; }
+    .auth { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+
+    /* Brand panel: the one place the yellow fills the screen. */
+    .auth-brand {
+      background: var(--brand); color: var(--on-brand);
+      padding: 40px 48px; display: flex; flex-direction: column; justify-content: space-between; gap: 40px;
+    }
+    .auth-statement { font-family: var(--display); font-weight: 800; font-size: clamp(34px, 4.4vw, 60px); letter-spacing: -0.04em; line-height: 1.02; max-width: 12ch; }
+    .auth-points { list-style: none; display: grid; gap: 10px; font-size: 16px; font-weight: 500; max-width: 38ch; }
+    .auth-points li { padding-left: 22px; position: relative; }
+    .auth-points li::before { content: ''; position: absolute; left: 0; top: 0.55em; width: 10px; height: 3px; border-radius: 2px; background: var(--on-brand); }
+
+    .auth-main { display: flex; align-items: center; justify-content: center; padding: 40px 24px; position: relative; }
+    .auth-toggle { position: absolute; top: 20px; right: 20px; }
+    .auth-form { width: 100%; max-width: 380px; }
+    .auth-form h1 { font-size: 32px; font-weight: 800; margin-bottom: 6px; }
+    .auth-form .sub { color: var(--text2); margin-bottom: 28px; }
+    .auth-form .btn { width: 100%; padding: 12px 16px; font-size: 15px; margin-top: 6px; }
+    .auth-alt { margin-top: 22px; color: var(--text2); font-size: 14.5px; }
+    .auth-alt a { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+    .error-box {
+      background: rgb(var(--red-rgb) / 0.10); border: 1px solid rgb(var(--red-rgb) / 0.35); color: var(--red);
+      border-radius: var(--radius); padding: 10px 14px; margin-bottom: 18px; font-size: 14px; white-space: pre-line;
+    }
+
+    @media (max-width: 860px) {
+      .auth { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+      .auth-brand { padding: 16px; flex-direction: row; align-items: center; }
+      .auth-statement, .auth-points { display: none; }
+      .auth-main { align-items: flex-start; padding: 36px 16px; }
+      .auth-toggle { top: -52px; right: 16px; }
+      .auth-toggle .theme-toggle { color: var(--on-brand); border-color: rgb(23 21 46 / 0.25); }
+      .auth-toggle .theme-toggle:hover { background: rgb(23 21 46 / 0.08); color: var(--on-brand); }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth">
+    <aside class="auth-brand on-brand">
+      <a href="/" class="hh-logo" aria-label="HappyHelper home">{% include "interview/_logo.html" with size=36 %}</a>
+      <p class="auth-statement">{% block statement %}The right words, right when you need them.{% endblock %}</p>
+      <ul class="auth-points">
+        <li>Live transcript of the conversation</li>
+        <li>Suggested answers drawn from your background</li>
+        <li>A plan before the call and a summary after</li>
+      </ul>
+    </aside>
+    <main class="auth-main">
+      <div class="auth-toggle">{% include "interview/_theme_toggle.html" %}</div>
+      <div class="auth-form">
+        {% block form %}{% endblock %}
+      </div>
+    </main>
+  </div>
+</body>
+</html>

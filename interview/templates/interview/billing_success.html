@@ -1,10 +1,7 @@
-{% extends "interview/base.html" %}
-{% block content %}
-<div class="container mt-5">
-  <div class="text-center">
-    <h2>You're all set!</h2>
-    <p class="lead">Your plan has been upgraded. You now have unlimited sessions.</p>
-    <a href="/" class="btn btn-primary">Go to Dashboard</a>
-  </div>
-</div>
+{% extends "interview/_notice.html" %}
+{% block title %}Plan upgraded — HappyHelper{% endblock %}
+{% block notice %}
+<h1>Your plan is upgraded</h1>
+<p>You now have unlimited sessions.</p>
+<a href="/" class="btn btn-primary btn-lg">Go to sessions</a>
 {% endblock %}

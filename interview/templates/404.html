@@ -1,39 +1,10 @@
-{% extends "interview/base.html" %}
-{% block title %}404 — Not Found{% endblock %}
-
-{% block extra_style %}
-.error-page {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-height: 60vh; text-align: center; padding: 40px 20px;
-}
-.error-code {
-  font-size: clamp(80px, 15vw, 140px); font-weight: 900; line-height: 1;
-  font-family: var(--mono);
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  letter-spacing: -4px;
-}
-.error-title {
-  font-size: 18px; font-weight: 700; color: var(--text);
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px;
-  margin: 12px 0 8px;
-}
-.error-msg {
-  font-size: 14px; color: var(--text3); max-width: 380px; line-height: 1.6;
-  margin-bottom: 28px;
-}
-{% endblock %}
-
-{% block content %}
-<div class="container">
-  <div class="error-page">
-    <div class="error-code">404</div>
-    <div class="error-title">// page not found</div>
-    <p class="error-msg">The resource you requested does not exist or has been moved. Check the URL or return to the dashboard.</p>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-      <a href="/" class="btn btn-primary">← Back to Dashboard</a>
-      <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
-    </div>
-  </div>
+{% extends "interview/_notice.html" %}
+{% block title %}We can't find that page — HappyHelper{% endblock %}
+{% block notice %}
+<h1>We can't find that page</h1>
+<p>The link may be out of date, or the page may have moved.</p>
+<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+  <a href="/" class="btn btn-primary btn-lg">Go to sessions</a>
+  <a href="javascript:history.back()" class="btn btn-secondary btn-lg">Go back</a>
 </div>
 {% endblock %}

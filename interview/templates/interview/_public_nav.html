@@ -1,0 +1,20 @@
+{# Top navigation for signed-out pages. Usage: {% include "interview/_public_nav.html" with page="pricing" %} #}
+<header class="pub-nav">
+  <div class="pub-nav-inner">
+    <a href="/" class="hh-logo" aria-label="HappyHelper home">{% include "interview/_logo.html" with size=32 %}</a>
+    <nav class="pub-nav-links" aria-label="Main">
+      <a href="/#how-it-works" class="pub-nav-link">How it works</a>
+      <a href="/#features" class="pub-nav-link">Features</a>
+      <a href="/pricing/" class="pub-nav-link"{% if page == "pricing" %} aria-current="page"{% endif %}>Pricing</a>
+    </nav>
+    <div class="pub-nav-actions">
+      {% include "interview/_theme_toggle.html" %}
+      {% if user.is_authenticated %}
+      <a href="/" class="btn btn-primary">Open dashboard</a>
+      {% else %}
+      <a href="/login/" class="btn btn-ghost">Sign in</a>
+      <a href="/signup/" class="btn btn-primary">Get started</a>
+      {% endif %}
+    </div>
+  </div>
+</header>

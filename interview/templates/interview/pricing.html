@@ -1,241 +1,126 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pricing — HAPPYHELPER</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+  <title>Pricing — HappyHelper</title>
+  {% include "interview/_head.html" %}
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg:    #03070c;
-      --bg2:   #071018;
-      --bg3:   #0e1c2a;
-      --border:rgba(255,255,255,0.08);
-      --border2:rgba(0,240,255,0.25);
-      --accent:#00f0ff;
-      --accent2:#818cf8;
-      --green: #10b981;
-      --red:   #f43f5e;
-      --yellow:#fbbf24;
-      --text:  #f8fafc;
-      --text2: #94a3b8;
-      --text3: #475569;
-      --mono:  'JetBrains Mono', monospace;
-      --sans:  'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      --radius:8px;
-    }
-    body {
-      font-family: var(--sans);
-      background: var(--bg); color: var(--text);
-      font-size: 15px; line-height: 1.6;
-      position: relative; overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    body::before {
-      content: ''; position: fixed; inset: 0;
-      background-image: radial-gradient(circle, rgba(0,200,255,0.05) 1px, transparent 1px);
-      background-size: 28px 28px; pointer-events: none; z-index: 0;
-    }
-    * { position: relative; z-index: 1; }
+    {% include "interview/_styles.html" %}
 
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(4,11,16,0.88); backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--border); padding: 0 24px; height: 60px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    nav::after {
-      content: ''; position: absolute; bottom: -1px; left: 0;
-      width: 120px; height: 1px;
-      background: linear-gradient(90deg, var(--accent), transparent);
-    }
-    .nav-logo {
-      display: flex; align-items: center; gap: 10px;
-      font-weight: 700; font-size: 15px; text-decoration: none;
-      color: var(--accent); font-family: var(--mono); letter-spacing: 1.5px;
-      text-shadow: 0 0 14px rgba(0,200,255,0.4);
-    }
-    .nav-logo .logo-icon {
-      width: 30px; height: 30px; border-radius: var(--radius);
-      background: rgba(0,200,255,0.1); border: 1px solid rgba(0,200,255,0.3);
-      display: flex; align-items: center; justify-content: center; font-size: 15px;
-    }
-    .nav-links { display: flex; align-items: center; gap: 8px; }
-    .nav-link { color: var(--text2); text-decoration: none; padding: 7px 14px; border-radius: var(--radius); font-size: 13px; font-family: var(--mono); transition: color 0.15s; }
-    .nav-link:hover { color: var(--accent); }
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px; border-radius: var(--radius); font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; transition: all 0.15s; font-family: var(--mono); letter-spacing: 0.5px; }
-    .btn-primary { background: linear-gradient(135deg, rgba(0,200,255,0.18), rgba(108,99,255,0.18)); color: var(--accent); border: 1px solid var(--accent); box-shadow: 0 0 12px rgba(0,200,255,0.15); }
-    .btn-primary:hover { box-shadow: 0 0 24px rgba(0,200,255,0.3); }
-    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
-    .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+    body { font-size: 16px; line-height: 1.6; overflow-x: hidden; }
+    .page { padding: 64px 24px 0; max-width: 1180px; margin: 0 auto; }
+    .page-header { max-width: 640px; margin-bottom: 40px; }
+    .page-title { font-size: clamp(36px, 5.4vw, 60px); font-weight: 800; letter-spacing: -0.04em; line-height: 1.02; margin-bottom: 14px; }
+    .page-sub { font-size: 18px; color: var(--text2); margin-bottom: 26px; }
 
-    .page { padding: 100px 24px 80px; max-width: 1100px; margin: 0 auto; }
-    .page-header { text-align: center; margin-bottom: 56px; }
-    .section-tag { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; font-family: var(--mono); }
-    .section-tag::before { content: '// '; opacity: 0.5; }
-    .page-title { font-size: clamp(30px, 5vw, 48px); font-weight: 900; line-height: 1.1; margin-bottom: 14px; letter-spacing: -1px; }
-    .page-sub { font-size: 16px; color: var(--text2); max-width: 480px; margin: 0 auto 28px; }
-
-    /* Toggle */
-    .billing-toggle {
-      display: inline-flex; background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 4px; gap: 4px;
-    }
+    /* Billing period switch */
+    .billing-toggle { display: inline-flex; background: var(--bg3); border-radius: 12px; padding: 4px; gap: 2px; }
     .toggle-btn {
-      padding: 8px 20px; border-radius: var(--radius); font-size: 13px; font-weight: 700;
-      cursor: pointer; border: none; background: transparent; color: var(--text3);
-      transition: all 0.15s; font-family: var(--mono);
+      padding: 8px 16px; border-radius: 9px; font: 600 14px var(--sans);
+      cursor: pointer; border: none; background: transparent; color: var(--text2);
     }
-    .toggle-btn.active { background: var(--bg3); color: var(--accent); border: 1px solid rgba(0,200,255,0.2); }
-    .save-badge {
-      background: rgba(0,255,157,0.1); color: var(--green); border: 1px solid rgba(0,255,157,0.2);
-      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: var(--radius); margin-left: 6px;
-      font-family: var(--mono);
-    }
+    .toggle-btn.active { background: var(--bg2); color: var(--text); box-shadow: var(--shadow-sm); }
+    .save-badge { background: var(--brand); color: var(--on-brand); font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
 
     /* Plans */
-    .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 60px; }
-    .plan {
-      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 32px 28px; position: relative; overflow: hidden;
-    }
-    .plan::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border) 50%, transparent);
-    }
-    .plan.popular { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(0,200,255,0.1), 0 0 40px rgba(0,200,255,0.05); }
-    .plan.popular::before { background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent); }
+    .plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 80px; align-items: start; }
+    .plan { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 28px; position: relative; }
+    .plan.popular { border-color: var(--brand); box-shadow: inset 0 3px 0 var(--brand); }
     .plan-badge {
-      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-      background: var(--accent); color: var(--bg);
-      font-size: 10px; font-weight: 700; padding: 3px 14px; border-radius: var(--radius);
-      white-space: nowrap; font-family: var(--mono); letter-spacing: 1px;
+      position: absolute; top: 22px; right: 22px;
+      background: var(--brand); color: var(--on-brand);
+      font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap;
     }
-    .plan-name { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-family: var(--mono); }
-    .plan-price { display: flex; align-items: flex-end; gap: 4px; margin-bottom: 4px; }
-    .plan-amount { font-size: 48px; font-weight: 900; line-height: 1; font-family: var(--mono); font-variant-numeric: tabular-nums; }
-    .plan-period { font-size: 13px; color: var(--text3); padding-bottom: 8px; font-family: var(--mono); }
-    .plan-orig { font-size: 16px; color: var(--text3); text-decoration: line-through; margin-left: 6px; padding-bottom: 8px; display: none; font-family: var(--mono); }
-    .plan-orig.show { display: block; }
-    .plan-desc { font-size: 12px; color: var(--text3); margin-bottom: 24px; line-height: 1.5; font-family: var(--mono); }
+    .plan-name { font-size: 15px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+    .plan-price { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+    .plan-amount { font-family: var(--display); font-size: 52px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+    .plan-period { font-size: 15px; color: var(--text3); }
+    .plan-orig { font-size: 17px; color: var(--text3); text-decoration: line-through; display: none; }
+    .plan-orig.show { display: inline; }
+    .plan-desc { font-size: 15px; color: var(--text2); margin-bottom: 22px; min-height: 3em; }
     .plan-cta {
-      display: block; width: 100%; padding: 12px; border-radius: var(--radius);
-      text-align: center; font-weight: 700; font-size: 13px;
-      text-decoration: none; transition: all 0.15s; cursor: pointer; border: none;
-      margin-bottom: 24px; font-family: var(--mono); letter-spacing: 0.5px;
+      display: block; width: 100%; padding: 12px; border-radius: 12px;
+      text-align: center; font: 700 15px var(--sans); cursor: pointer; margin-bottom: 22px;
+      border: 1px solid var(--border2);
     }
-    .plan-cta-primary {
-      background: linear-gradient(135deg, rgba(0,200,255,0.18), rgba(108,99,255,0.18));
-      color: var(--accent); border: 1px solid var(--accent);
-      box-shadow: 0 0 16px rgba(0,200,255,0.15);
-    }
-    .plan-cta-primary:hover { box-shadow: 0 0 28px rgba(0,200,255,0.3); }
-    .plan-cta-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
-    .plan-cta-ghost:hover { border-color: var(--accent); color: var(--text); }
-    .plan-divider { height: 1px; background: var(--border); margin-bottom: 20px; }
-    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-    .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text2); }
-    .feat-check {
-      flex-shrink: 0; width: 16px; height: 16px; border-radius: var(--radius);
-      display: flex; align-items: center; justify-content: center; font-size: 10px;
-      font-weight: 700; margin-top: 2px; font-family: var(--mono);
-    }
-    .feat-check.yes { background: rgba(0,255,157,0.1); color: var(--green); }
-    .feat-check.no { background: rgba(61,104,128,0.1); color: var(--text3); }
+    .plan-cta-primary { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+    .plan-cta-primary:hover { background: var(--brand-hover); color: var(--on-brand); }
+    .plan-cta-ghost { background: transparent; color: var(--text); }
+    .plan-cta-ghost:hover { background: var(--bg3); color: var(--text); }
+    .plan-divider { height: 1px; background: var(--border); margin-bottom: 18px; }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+    .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: var(--text); }
+    .plan-features li:has(.feat-check.no) { color: var(--text3); }
+    .feat-check { flex-shrink: 0; width: 18px; text-align: center; font-weight: 700; }
+    .feat-check.yes { color: var(--green); }
+    .feat-check.no { color: var(--text3); }
 
     /* Comparison table */
     .compare { margin-bottom: 80px; }
-    .compare h2 { font-size: 22px; font-weight: 800; margin-bottom: 28px; font-family: var(--mono); color: var(--accent); }
-    .compare h2::before { content: '// '; opacity: 0.5; }
-    .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .compare-table th { padding: 12px 16px; text-align: left; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); font-family: var(--mono); }
-    .compare-table th:not(:first-child) { text-align: center; }
-    .compare-table td { padding: 12px 16px; border-bottom: 1px solid rgba(26,45,61,0.7); vertical-align: middle; }
-    .compare-table td:not(:first-child) { text-align: center; }
-    .compare-table tr:last-child td { border-bottom: none; }
-    .compare-table .section-row td { padding: 18px 16px 6px; font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; border-bottom: none; font-family: var(--mono); }
-    .compare-table .section-row td::before { content: '// '; opacity: 0.5; }
-    .compare-table .check { color: var(--green); font-size: 14px; }
+    .compare h2, .faq h2 { font-size: clamp(26px, 3.6vw, 36px); font-weight: 800; margin-bottom: 24px; }
+    .compare-table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 15px; }
+    .compare-table th { padding: 12px 16px; text-align: left; font-size: 14px; font-weight: 700; color: var(--text); border-bottom: 1px solid var(--border2); position: sticky; top: 64px; background: var(--bg); }
+    .compare-table th:not(:first-child), .compare-table td:not(:first-child) { text-align: center; }
+    .compare-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text2); }
+    .compare-table td:first-child { color: var(--text); }
+    .compare-table .section-row td { padding: 26px 16px 8px; font-size: 13px; font-weight: 700; color: var(--text3); border-bottom: 1px solid var(--border2); }
+    .compare-table .check { color: var(--green); font-weight: 700; }
     .compare-table .dash { color: var(--text3); }
-    .compare-table .col-pop { color: var(--accent); font-weight: 600; font-family: var(--mono); }
-    .compare-table .highlight td { background: rgba(0,200,255,0.02); }
+    .compare-table .col-pop { background: rgb(255 200 61 / 0.08); color: var(--text); font-weight: 600; }
+    .compare-table .check.col-pop { color: var(--green); }
 
-    /* FAQ */
-    .faq { max-width: 720px; margin: 0 auto 80px; }
-    .faq h2 { font-size: 22px; font-weight: 800; margin-bottom: 32px; text-align: center; font-family: var(--mono); color: var(--accent); }
-    .faq h2::before { content: '// '; opacity: 0.5; }
+    /* Questions */
+    .faq { max-width: 760px; margin: 0 0 80px; }
     .faq-item { border-bottom: 1px solid var(--border); }
-    .faq-q { width: 100%; background: none; border: none; color: var(--text); font-size: 14px; font-weight: 600; padding: 18px 0; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; font-family: inherit; }
-    .faq-q .arrow { color: var(--text3); font-size: 14px; transition: transform 0.2s; flex-shrink: 0; font-family: var(--mono); }
-    .faq-q.open .arrow { transform: rotate(180deg); }
-    .faq-a { font-size: 13px; color: var(--text2); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s; }
-    .faq-a.open { max-height: 300px; padding-bottom: 20px; }
-
-    /* CTA */
-    .cta-band {
-      background: linear-gradient(135deg, rgba(0,200,255,0.06), rgba(108,99,255,0.05));
-      border: 1px solid rgba(0,200,255,0.18); border-radius: var(--radius);
-      padding: 64px; text-align: center; position: relative; overflow: hidden;
+    .faq-q {
+      width: 100%; background: none; border: none; color: var(--text); font: 600 17px var(--sans);
+      padding: 18px 0; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px;
     }
-    .cta-band::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
-    }
-    .cta-band h2 { font-size: 32px; font-weight: 800; margin-bottom: 12px; font-family: var(--mono); }
-    .cta-band h2::before { content: '// '; color: var(--accent); opacity: 0.5; }
-    .cta-band p { font-size: 15px; color: var(--text2); margin-bottom: 30px; }
+    .faq-q .arrow { color: var(--text3); font-size: 22px; font-weight: 400; line-height: 1; transition: transform 0.2s; flex-shrink: 0; }
+    .faq-q.open .arrow { transform: rotate(45deg); }
+    .faq-a { font-size: 16px; color: var(--text2); max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s; max-width: 64ch; }
+    .faq-a.open { max-height: 320px; padding-bottom: 20px; }
 
-    footer {
-      border-top: 1px solid var(--border); padding: 32px 24px; margin-top: 80px;
-      text-align: center; font-size: 12px; color: var(--text3); font-family: var(--mono);
-    }
-    footer a { color: var(--text3); text-decoration: none; margin: 0 12px; }
-    footer a:hover { color: var(--accent); }
+    /* Closing band */
+    .cta-band { background: var(--bg3); border-radius: 28px; padding: 56px 40px; }
+    .cta-band h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 800; margin-bottom: 10px; }
+    .cta-band p { font-size: 17px; color: var(--text2); margin-bottom: 26px; }
+    .cta-band > div { justify-content: flex-start !important; }
 
-    @media (max-width: 768px) { .nav-links .nav-link { display: none; } .cta-band { padding: 40px 20px; } }
+    @media (max-width: 900px) { .plans { grid-template-columns: 1fr; } .plan-desc { min-height: 0; } }
+    @media (max-width: 720px) {
+      .page { padding: 40px 16px 0; }
+      .cta-band { padding: 36px 22px; border-radius: 22px; }
+      .compare-table th { position: static; }
+    }
   </style>
 </head>
 <body>
 
-<nav>
-  <a href="/" class="nav-logo">
-    <span class="logo-icon">🤖</span>
-    HAPPYHELPER
-  </a>
-  <div class="nav-links">
-    <a href="/#features" class="nav-link">// features</a>
-    <a href="/pricing/" class="nav-link" style="color:var(--accent)">// pricing</a>
-    <a href="/login/" class="btn btn-ghost">Sign in</a>
-    <a href="/signup/" class="btn btn-primary">▶ Get started</a>
-  </div>
-</nav>
+{% include "interview/_public_nav.html" with page="pricing" %}
 
 <div class="page">
   <div class="page-header">
-    <div class="section-tag">PRICING</div>
-    <h1 class="page-title">Simple, transparent pricing</h1>
+        <h1 class="page-title">Simple, transparent pricing</h1>
     <p class="page-sub">Start free. Upgrade when you need more. Cancel anytime — no hidden fees.</p>
     <div class="billing-toggle">
       <button class="toggle-btn active" id="btn-monthly" onclick="setBilling('monthly')">Monthly</button>
       <button class="toggle-btn" id="btn-annual" onclick="setBilling('annual')">
-        Annual <span class="save-badge">SAVE 20%</span>
+        Annual <span class="save-badge">Save 20%</span>
       </button>
     </div>
   </div>
 
   <div class="plans">
     <div class="plan">
-      <div class="plan-name">FREE</div>
+      <div class="plan-name">Free</div>
       <div class="plan-price">
         <span class="plan-amount" id="price-free">$0</span>
-        <span class="plan-period">/mo</span>
+        <span class="plan-period">per month</span>
       </div>
-      <p class="plan-desc">// try HAPPYHELPER with no commitment</p>
-      <a href="/signup/" class="plan-cta plan-cta-ghost">Get started free</a>
+      <p class="plan-desc">Try HappyHelper with no commitment</p>
+      {% if user.is_authenticated %}<a href="/" class="plan-cta plan-cta-ghost">Go to sessions</a>{% else %}<a href="/signup/" class="plan-cta plan-cta-ghost">Create a free account</a>{% endif %}
       <div class="plan-divider"></div>
       <ul class="plan-features">
         <li><span class="feat-check yes">✓</span> 5 sessions / month</li>
@@ -252,15 +137,15 @@
     </div>
 
     <div class="plan popular">
-      <div class="plan-badge">MOST POPULAR</div>
-      <div class="plan-name">PRO</div>
+      <div class="plan-badge">Most popular</div>
+      <div class="plan-name">Pro</div>
       <div class="plan-price">
         <span class="plan-amount" id="price-pro">$19</span>
         <span class="plan-orig" id="orig-pro">$24</span>
-        <span class="plan-period">/mo</span>
+        <span class="plan-period">per month</span>
       </div>
-      <p class="plan-desc">// for active job seekers &amp; sales pros</p>
-      <a href="/signup/" class="plan-cta plan-cta-primary">▶ Start free 14-day trial</a>
+      <p class="plan-desc">For active job seekers &amp; sales pros</p>
+      {% if user.is_authenticated %}<a href="/billing/checkout/pro/" class="plan-cta plan-cta-primary">Upgrade to Pro</a>{% else %}<a href="/signup/" class="plan-cta plan-cta-primary">Start free 14-day trial</a>{% endif %}
       <div class="plan-divider"></div>
       <ul class="plan-features">
         <li><span class="feat-check yes">✓</span> Unlimited sessions</li>
@@ -277,13 +162,13 @@
     </div>
 
     <div class="plan">
-      <div class="plan-name">TEAM</div>
+      <div class="plan-name">Team</div>
       <div class="plan-price">
         <span class="plan-amount" id="price-team">$49</span>
         <span class="plan-orig" id="orig-team">$59</span>
-        <span class="plan-period">/mo</span>
+        <span class="plan-period">per month</span>
       </div>
-      <p class="plan-desc">// for recruiting teams &amp; consulting firms</p>
+      <p class="plan-desc">For recruiting teams &amp; consulting firms</p>
       <a href="mailto:hello@happyhelper.com" class="plan-cta plan-cta-ghost">Contact sales</a>
       <div class="plan-divider"></div>
       <ul class="plan-features">
@@ -310,7 +195,7 @@
           <tr>
             <th style="width:40%">Feature</th>
             <th>Free</th>
-            <th style="color:var(--accent)">Pro</th>
+            <th>Pro</th>
             <th>Team</th>
           </tr>
         </thead>
@@ -350,40 +235,40 @@
 
   <!-- FAQ -->
   <div class="faq">
-    <h2>FAQ</h2>
+    <h2>Questions</h2>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">
-        Do I need a credit card to start? <span class="arrow">▼</span>
+        Do I need a credit card to start? <span class="arrow" aria-hidden="true">+</span>
       </button>
       <div class="faq-a">No. The Free plan requires no credit card. For Pro and Team trials, we ask for a card to activate the trial — you won't be charged until day 15, and you can cancel anytime before that.</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">
-        Can I bring my own API key (Groq / OpenRouter)? <span class="arrow">▼</span>
+        Can I bring my own API key (Groq / OpenRouter)? <span class="arrow" aria-hidden="true">+</span>
       </button>
       <div class="faq-a">Yes. Pro and Team plans let you plug in your own Groq or OpenRouter key from the Settings page. This lets you use any model available on those platforms, billed directly to your own account.</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">
-        Is my audio and transcript data private? <span class="arrow">▼</span>
+        Is my audio and transcript data private? <span class="arrow" aria-hidden="true">+</span>
       </button>
       <div class="faq-a">Yes. Transcripts are stored only in your own database. Audio is processed through Groq Whisper in transit but never persisted. We have no access to your session content. Self-hosting is also supported — clone the repo and run everything on your own infrastructure.</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">
-        What happens when I hit the free session limit? <span class="arrow">▼</span>
+        What happens when I hit the free session limit? <span class="arrow" aria-hidden="true">+</span>
       </button>
       <div class="faq-a">Sessions older than 7 days are archived and read-only. You can still view past sessions, but creating new ones requires upgrading to Pro. We'll send a reminder email before you hit the limit.</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">
-        Can I switch plans or cancel anytime? <span class="arrow">▼</span>
+        Can I switch plans or cancel anytime? <span class="arrow" aria-hidden="true">+</span>
       </button>
       <div class="faq-a">Yes. Upgrade, downgrade, or cancel from your profile page at any time. No cancellation fees. If you cancel a paid plan, you keep access until the end of the billing period.</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">
-        Is there a discount for annual billing? <span class="arrow">▼</span>
+        Is there a discount for annual billing? <span class="arrow" aria-hidden="true">+</span>
       </button>
       <div class="faq-a">Yes — annual billing saves 20% vs monthly. Pro drops from $19/mo to $15/mo ($180/year). Team drops from $49/mo to $39/mo ($468/year). Toggle between monthly and annual above to see updated prices.</div>
     </div>
@@ -394,21 +279,13 @@
     <h2>Start for free today</h2>
     <p>No credit card. No time limit on the free plan. Upgrade when you're ready.</p>
     <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
-      <a href="/signup/" class="btn btn-primary" style="padding:14px 32px;font-size:14px">▶ Create free account</a>
-      <a href="/login/" class="btn btn-ghost" style="padding:14px 32px;font-size:14px">Sign in</a>
+      <a href="/signup/" class="btn btn-primary btn-lg">Create a free account</a>
+      <a href="/login/" class="btn btn-secondary btn-lg">Sign in</a>
     </div>
   </div>
 </div>
 
-<footer>
-  <a href="/">Home</a>
-  <a href="/#features">Features</a>
-  <a href="/pricing/">Pricing</a>
-  <a href="/login/">Sign in</a>
-  <a href="/signup/">Sign up</a>
-  <br><br>
-  // © 2026 HAPPYHELPER. All rights reserved.
-</footer>
+{% include "interview/_public_footer.html" %}
 
 <script>
   function setBilling(type) {

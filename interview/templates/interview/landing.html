@@ -1,731 +1,330 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HAPPYHELPER — AI Assistant for Interviews &amp; Meetings</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
-  <script>
-    (function() {
-      var saved = localStorage.getItem('pkai_theme');
-      var active = saved || 'dark';
-      document.documentElement.setAttribute('data-theme', active);
-    })();
-  </script>
+  <title>HappyHelper — a live helper for interviews and meetings</title>
+  <meta name="description" content="HappyHelper listens to your interview or meeting, keeps a live transcript, and suggests what to say next, grounded in your own background.">
+  {% include "interview/_head.html" %}
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg:      #03070c;
-      --bg2:     #071018;
-      --bg3:     #0e1c2a;
-      --border:  rgba(255, 255, 255, 0.08);
-      --border2: rgba(0, 240, 255, 0.25);
-      --accent:  #00f0ff;
-      --accent2: #818cf8;
-      --green:   #10b981;
-      --red:     #f43f5e;
-      --yellow:  #fbbf24;
-      --text:    #f8fafc;
-      --text2:   #94a3b8;
-      --text3:   #475569;
-      --mono:    'JetBrains Mono', monospace;
-      --sans:    'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      --radius:  8px;
-    }
-    [data-theme="light"] {
-      --bg:      #f8fafc;
-      --bg2:     #ffffff;
-      --bg3:     #f1f5f9;
-      --border:  #e2e8f0;
-      --border2: #cbd5e1;
-      --accent:  #0284c7;
-      --accent2: #4f46e5;
-      --text:    #0f172a;
-      --text2:   #334155;
-      --text3:   #64748b;
-    }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: var(--sans);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 15px;
-      line-height: 1.6;
-      overflow-x: hidden;
-      position: relative;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    /* Robot dot grid */
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background-image: radial-gradient(circle, rgba(0,200,255,0.055) 1px, transparent 1px);
-      background-size: 28px 28px;
-      pointer-events: none;
-      z-index: 0;
-    }
-    /* Cyan glow blobs */
-    body::after {
-      content: '';
-      position: fixed; inset: 0;
-      background:
-        radial-gradient(ellipse 60% 50% at 20% 0%, rgba(0,200,255,0.07) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 60% at 80% 100%, rgba(108,99,255,0.06) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 0;
-    }
-    * { position: relative; z-index: 1; }
+    {% include "interview/_styles.html" %}
 
-    /* ── NAV ── */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(4,11,16,0.88);
-      backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      height: 60px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    nav::after {
-      content: ''; position: absolute; bottom: -1px; left: 0;
-      width: 120px; height: 1px;
-      background: linear-gradient(90deg, var(--accent), transparent);
-    }
-    .nav-logo {
-      display: flex; align-items: center; gap: 10px;
-      font-weight: 700; font-size: 16px;
-      font-family: var(--mono);
-      color: var(--accent);
-      text-shadow: 0 0 14px rgba(0,200,255,0.4);
-      letter-spacing: 1.5px;
-    }
-    .nav-logo .logo-icon {
-      width: 32px; height: 32px; border-radius: var(--radius);
-      background: rgba(0,200,255,0.1);
-      border: 1px solid rgba(0,200,255,0.3);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
-    }
-    .nav-links { display: flex; align-items: center; gap: 8px; }
-    .nav-link {
-      color: var(--text2); text-decoration: none;
-      padding: 7px 14px; border-radius: var(--radius);
-      font-size: 13px; font-family: var(--mono);
-      transition: color 0.15s;
-    }
-    .nav-link:hover { color: var(--accent); }
-    .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 9px 20px; border-radius: var(--radius);
-      font-size: 13px; font-weight: 600; cursor: pointer;
-      text-decoration: none; transition: all 0.15s;
-      font-family: var(--mono); letter-spacing: 0.5px;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, rgba(0,200,255,0.18), rgba(108,99,255,0.18));
-      color: var(--accent); border: 1px solid var(--accent);
-      box-shadow: 0 0 12px rgba(0,200,255,0.15);
-    }
-    .btn-primary:hover {
-      background: linear-gradient(135deg, rgba(0,200,255,0.28), rgba(108,99,255,0.22));
-      box-shadow: 0 0 24px rgba(0,200,255,0.3);
-    }
-    .btn-ghost {
-      background: transparent; color: var(--text2);
-      border: 1px solid var(--border);
-    }
-    .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body { font-size: 16px; line-height: 1.6; overflow-x: hidden; }
 
-    /* ── SECTIONS ── */
-    section { padding: 100px 24px; }
-    .container { max-width: 1100px; margin: 0 auto; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+    .section { padding: 96px 0 0; }
+    .section-head { max-width: 640px; margin-bottom: 40px; }
+    .section-head h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 800; }
+    .section-head p { color: var(--text2); font-size: 17px; margin-top: 12px; }
 
-    /* ── HERO ── */
-    .hero { padding-top: 140px; padding-bottom: 100px; text-align: center; }
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(0,200,255,0.08); border: 1px solid rgba(0,200,255,0.25);
-      border-radius: var(--radius); padding: 6px 16px;
-      font-size: 12px; color: var(--accent); margin-bottom: 28px;
-      font-family: var(--mono); letter-spacing: 0.5px;
-    }
-    .hero-badge .dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--green); animation: pulse 2s infinite;
-      box-shadow: 0 0 6px var(--green);
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    .hero h1 {
-      font-size: clamp(36px, 6vw, 68px);
-      font-weight: 900; line-height: 1.1;
-      letter-spacing: -1.5px; margin-bottom: 24px;
-    }
-    .hero h1 .grad {
-      background: linear-gradient(135deg, #fff 30%, var(--accent));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .hero h1 .grad2 {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .hero-sub { font-size: 18px; color: var(--text2); max-width: 540px; margin: 0 auto 40px; line-height: 1.7; }
-    .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
-    .btn-lg { padding: 14px 32px; font-size: 14px; }
-    .hero-social { display: flex; align-items: center; justify-content: center; gap: 20px; color: var(--text3); font-size: 13px; font-family: var(--mono); }
-    .hero-social span { display: flex; align-items: center; gap: 6px; }
-    .avatar-stack { display: flex; }
-    .av {
-      width: 28px; height: 28px; border-radius: var(--radius);
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700; color: #fff;
-      background: rgba(0,200,255,0.15);
-    }
-    .av:not(:first-child) { margin-left: -6px; }
+    /* ── Hero: copy on the left, a live cue card on the right ── */
+    .hero { padding: 72px 0 0; }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+    .hero h1 { font-size: clamp(40px, 6.2vw, 76px); font-weight: 800; letter-spacing: -0.04em; line-height: 1.0; }
+    .hero-sub { font-size: 19px; color: var(--text2); max-width: 46ch; margin: 24px 0 32px; }
+    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero-note { margin-top: 16px; font-size: 14px; color: var(--text3); }
 
-    /* Product preview */
-    .hero-preview { position: relative; max-width: 860px; margin: 0 auto; }
-    .preview-frame {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,200,255,0.06);
+    .demo {
+      background: var(--bg2); border: 1px solid var(--border2); border-radius: 22px;
+      box-shadow: var(--shadow-lg); overflow: hidden;
     }
-    .preview-bar {
-      background: var(--bg3); border-bottom: 1px solid var(--border);
-      padding: 10px 16px; display: flex; align-items: center; gap: 8px;
+    .demo-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 13.5px; color: var(--text2);
     }
-    .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .preview-url {
-      flex: 1; text-align: center; font-size: 11px; color: var(--text3);
-      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 3px 12px; max-width: 220px; margin: 0 auto;
-      font-family: var(--mono);
-    }
-    .preview-body { padding: 24px 28px; min-height: 260px; }
-    .preview-chip {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(0,255,157,0.08); border: 1px solid rgba(0,255,157,0.2);
-      border-radius: var(--radius); padding: 4px 10px;
-      font-size: 11px; color: var(--green); margin-bottom: 16px;
-      font-family: var(--mono);
-    }
-    .preview-transcript { display: flex; flex-direction: column; gap: 10px; }
-    .t-line { display: flex; gap: 10px; }
-    .t-speaker { font-size: 11px; color: var(--accent); font-weight: 600; min-width: 70px; padding-top: 3px; font-family: var(--mono); }
-    .t-text { font-size: 13px; color: var(--text2); background: var(--bg3); border-radius: var(--radius); padding: 8px 12px; flex: 1; }
-    .t-text.ai {
-      background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.25);
-      color: var(--text); position: relative; overflow: hidden;
-    }
-    .t-text.ai::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, var(--accent2), transparent);
-    }
-    .t-label { font-size: 10px; color: var(--accent); margin-bottom: 4px; font-weight: 700; letter-spacing: 0.5px; font-family: var(--mono); }
-    .t-label::before { content: '// '; opacity: 0.5; }
+    .demo-bar strong { color: var(--text); font-weight: 600; }
+    .demo-live { display: inline-flex; align-items: center; gap: 7px; color: var(--green); font-weight: 600; }
+    .demo-live::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    .demo-body { padding: 20px 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+    .line { max-width: 88%; }
+    .line-who { font-size: 12.5px; font-weight: 600; color: var(--text3); margin-bottom: 4px; }
+    .line-text { background: var(--bg3); border-radius: 14px; padding: 10px 14px; font-size: 15px; line-height: 1.5; color: var(--text); }
+    .line.you { align-self: flex-end; }
+    .line.you .line-who { text-align: right; }
+    .line.you .line-text { background: var(--bg4); }
 
-    /* ── LOGOS STRIP ── */
-    .logos { padding: 36px 24px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-    .logos-inner { max-width: 900px; margin: 0 auto; text-align: center; }
-    .logos p { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; font-family: var(--mono); }
-    .logos-row { display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; }
-    .logo-item { font-size: 13px; font-weight: 700; color: var(--text3); letter-spacing: 1px; font-family: var(--mono); opacity: 0.55; }
+    .cue {
+      background: var(--brand); color: var(--on-brand);
+      border-radius: 16px; padding: 16px 18px; position: relative;
+      box-shadow: 0 10px 28px rgb(255 200 61 / 0.18);
+    }
+    .cue-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .cue p { font-size: 15.5px; line-height: 1.5; font-weight: 500; }
+    .cue ul { margin: 8px 0 0 18px; font-size: 14.5px; line-height: 1.55; }
+    .cue u { text-decoration: none; background: linear-gradient(transparent 55%, rgb(23 21 46 / 0.16) 55%); padding: 0 1px; }
 
-    /* ── HOW IT WORKS ── */
-    .section-tag {
-      font-size: 11px; font-weight: 700; color: var(--accent);
-      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;
-      font-family: var(--mono);
+    /* One orchestrated moment: the conversation plays out once, then rests. */
+    @media (prefers-reduced-motion: no-preference) {
+      .demo .line, .demo .cue { opacity: 0; transform: translateY(10px); animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+      .demo .line:nth-child(1) { animation-delay: 0.25s; }
+      .demo .line:nth-child(2) { animation-delay: 1.1s; }
+      .demo .line:nth-child(3) { animation-delay: 1.9s; }
+      .demo .cue { animation-delay: 2.7s; }
     }
-    .section-tag::before { content: '// '; opacity: 0.5; }
-    .section-title { font-size: clamp(26px, 4vw, 40px); font-weight: 800; line-height: 1.2; margin-bottom: 14px; }
-    .section-sub { font-size: 16px; color: var(--text2); max-width: 500px; margin-bottom: 56px; line-height: 1.7; }
-    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-    .step {
-      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 28px; position: relative; transition: border-color 0.2s;
-      overflow: hidden;
-    }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+
+    /* ── Steps (a real sequence, so it is numbered) ── */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--border2); counter-reset: step; }
+    .step { padding: 28px 28px 0 0; counter-increment: step; }
+    .step + .step { padding-left: 28px; border-left: 1px solid var(--border); }
     .step::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, var(--accent), transparent);
-      opacity: 0; transition: opacity 0.2s;
+      content: counter(step); display: block;
+      font-family: var(--display); font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: -0.04em;
+      color: var(--brand); margin-bottom: 14px;
     }
-    .step:hover { border-color: rgba(0,200,255,0.35); }
-    .step:hover::before { opacity: 1; }
-    .step-num {
-      width: 34px; height: 34px; border-radius: var(--radius);
-      background: rgba(0,200,255,0.1); border: 1px solid rgba(0,200,255,0.3);
-      color: var(--accent); font-weight: 800; font-size: 14px;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 16px; font-family: var(--mono);
-    }
-    .step h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; font-family: var(--mono); }
-    .step p { color: var(--text2); font-size: 14px; line-height: 1.7; }
+    [data-theme="light"] .step::before { color: var(--ink); background: var(--brand); width: 52px; height: 52px; border-radius: 14px; font-size: 28px; display: flex; align-items: center; justify-content: center; }
+    .step h3 { font-size: 21px; font-weight: 700; margin-bottom: 8px; }
+    .step p { color: var(--text2); font-size: 15.5px; }
+    .step kbd { font-size: 12.5px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; padding: 1px 6px; }
 
-    /* ── FEATURES ── */
-    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
-    .feat {
-      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 26px; transition: border-color 0.2s; position: relative; overflow: hidden;
-    }
-    .feat::after {
-      content: ''; position: absolute; bottom: 0; left: 0; width: 50px; height: 1px;
-      background: var(--accent); opacity: 0; transition: opacity 0.2s;
-    }
-    .feat:hover { border-color: rgba(0,200,255,0.3); }
-    .feat:hover::after { opacity: 1; }
-    .feat-icon { font-size: 28px; margin-bottom: 14px; }
-    .feat h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; font-family: var(--mono); }
-    .feat p { color: var(--text2); font-size: 13px; line-height: 1.7; }
-    .feat-badge {
-      display: inline-block; font-size: 10px; font-weight: 700;
-      padding: 2px 8px; border-radius: var(--radius); margin-top: 12px;
-      font-family: var(--mono); letter-spacing: 0.5px;
-    }
-    .badge-new { background: rgba(0,255,157,0.08); color: var(--green); border: 1px solid rgba(0,255,157,0.2); }
-    .badge-pro { background: rgba(108,99,255,0.1); color: var(--accent2); border: 1px solid rgba(108,99,255,0.2); }
+    /* ── Features: one lead feature, the rest as a plain list ── */
+    .features { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 48px; align-items: start; }
+    .lead-feature { background: var(--bg2); border: 1px solid var(--border); border-radius: 22px; padding: 32px; }
+    .lead-feature h3 { font-size: 26px; font-weight: 800; margin-bottom: 10px; }
+    .lead-feature p { color: var(--text2); }
+    .context-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+    .context-chips span { font-size: 13.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+    .context-arrow { margin: 18px 0 12px; color: var(--text3); font-size: 14px; }
+    .context-out { font-size: 16px; line-height: 1.6; color: var(--text); }
 
-    /* ── TESTIMONIALS ── */
-    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
-    .testi {
-      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 26px; position: relative; overflow: hidden;
-    }
-    .testi::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border) 50%, transparent);
-    }
-    .testi-stars { color: var(--yellow); font-size: 13px; margin-bottom: 12px; letter-spacing: 2px; }
-    .testi-text { color: var(--text2); font-size: 13px; line-height: 1.8; margin-bottom: 18px; }
-    .testi-text::before { content: '"'; color: var(--accent); opacity: 0.4; font-size: 18px; }
-    .testi-author { display: flex; align-items: center; gap: 12px; }
-    .testi-av {
-      width: 36px; height: 36px; border-radius: var(--radius);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; color: #fff; font-size: 14px;
-      font-family: var(--mono); border: 1px solid var(--border);
-    }
-    .testi-name { font-weight: 700; font-size: 13px; font-family: var(--mono); color: var(--text); }
-    .testi-role { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+    .feature-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 28px 32px; }
+    .feature-list h3 { font-family: var(--sans); font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
+    .feature-list p { color: var(--text2); font-size: 15px; }
 
-    /* ── PRICING ── */
-    .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; max-width: 920px; margin: 0 auto; }
-    .plan {
-      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 30px; position: relative; overflow: hidden;
-    }
-    .plan::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border) 50%, transparent);
-    }
-    .plan.popular { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(0,200,255,0.15), 0 0 40px rgba(0,200,255,0.06); }
-    .plan.popular::before { background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent); }
-    .plan-badge {
-      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-      background: var(--accent); color: var(--bg);
-      font-size: 10px; font-weight: 700; padding: 3px 14px; border-radius: var(--radius);
-      white-space: nowrap; font-family: var(--mono); letter-spacing: 1px;
-    }
-    .plan-name { font-size: 12px; font-weight: 700; color: var(--text3); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono); }
-    .plan-price { display: flex; align-items: flex-end; gap: 4px; margin-bottom: 8px; }
-    .plan-amount { font-size: 44px; font-weight: 900; color: var(--text); line-height: 1; font-family: var(--mono); font-variant-numeric: tabular-nums; }
-    .plan-period { font-size: 13px; color: var(--text3); padding-bottom: 8px; font-family: var(--mono); }
-    .plan-desc { font-size: 12px; color: var(--text3); margin-bottom: 22px; font-family: var(--mono); }
-    .plan-features { list-style: none; margin-bottom: 26px; display: flex; flex-direction: column; gap: 9px; }
-    .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text2); }
-    .plan-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; font-family: var(--mono); }
-    .plan-features li.off { color: var(--text3); }
-    .plan-features li.off::before { content: '×'; color: var(--text3); }
-    .plan-cta {
-      display: block; width: 100%; padding: 11px; border-radius: var(--radius);
-      text-align: center; font-weight: 700; font-size: 13px;
-      text-decoration: none; transition: all 0.15s;
-      font-family: var(--mono); letter-spacing: 0.5px;
-    }
-    .plan-cta-primary {
-      background: linear-gradient(135deg, rgba(0,200,255,0.18), rgba(108,99,255,0.18));
-      color: var(--accent); border: 1px solid var(--accent);
-      box-shadow: 0 0 16px rgba(0,200,255,0.18);
-    }
-    .plan-cta-primary:hover { box-shadow: 0 0 28px rgba(0,200,255,0.3); }
-    .plan-cta-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); cursor: pointer; }
-    .plan-cta-ghost:hover { border-color: var(--accent); color: var(--text); }
+    /* ── Who it is for ── */
+    .uses { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .use { border-radius: 20px; padding: 26px; background: var(--bg2); border: 1px solid var(--border); }
+    .use h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .use p { color: var(--text2); font-size: 15.5px; }
+    .use:first-child { background: var(--brand); border-color: var(--brand); }
+    .use:first-child h3, .use:first-child p { color: var(--on-brand); }
 
-    /* ── CTA BAND ── */
-    .cta-band {
-      background: linear-gradient(135deg, rgba(0,200,255,0.06), rgba(108,99,255,0.06));
-      border: 1px solid rgba(0,200,255,0.18);
-      border-radius: var(--radius); padding: 64px; text-align: center; margin: 0 24px;
-      position: relative; overflow: hidden;
-    }
-    .cta-band::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
-    }
-    .cta-band h2 { font-size: clamp(24px, 4vw, 38px); font-weight: 800; margin-bottom: 14px; font-family: var(--mono); }
-    .cta-band h2::before { content: '// '; color: var(--accent); opacity: 0.5; }
-    .cta-band p { font-size: 16px; color: var(--text2); margin-bottom: 34px; }
-    .cta-band .btn-pair { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    /* ── Plans ── */
+    .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .plan { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 26px; display: flex; flex-direction: column; }
+    .plan.popular { border-color: var(--brand); box-shadow: inset 0 3px 0 var(--brand); }
+    .plan-name { font-size: 15px; font-weight: 700; color: var(--text2); }
+    .plan-price { font-family: var(--display); font-size: 44px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; margin: 6px 0 6px; font-variant-numeric: tabular-nums; }
+    .plan-price small { font-family: var(--sans); font-size: 15px; font-weight: 500; color: var(--text3); letter-spacing: 0; }
+    .plan-desc { color: var(--text2); font-size: 15px; margin-bottom: 22px; flex: 1; }
+    .plan .btn { width: 100%; }
+    .plans-more { margin-top: 20px; font-size: 15px; color: var(--text2); }
+    .plans-more a { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 
-    /* ── FOOTER ── */
-    footer { border-top: 1px solid var(--border); padding: 48px 24px; margin-top: 80px; }
-    .footer-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; }
-    .footer-logo {
-      display: flex; align-items: center; gap: 10px;
-      font-weight: 700; font-size: 15px; margin-bottom: 12px;
-      font-family: var(--mono); color: var(--accent); letter-spacing: 1px;
-    }
-    .footer-logo .logo-icon {
-      width: 28px; height: 28px; border-radius: var(--radius);
-      background: rgba(0,200,255,0.1); border: 1px solid rgba(0,200,255,0.25);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px;
-    }
-    .footer-desc { font-size: 12px; color: var(--text3); line-height: 1.7; max-width: 220px; font-family: var(--mono); }
-    .footer-col h4 {
-      font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 14px;
-      text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono);
-    }
-    .footer-col h4::before { content: '// '; opacity: 0.4; }
-    .footer-col a { display: block; font-size: 12px; color: var(--text3); text-decoration: none; margin-bottom: 8px; font-family: var(--mono); transition: color 0.15s; }
-    .footer-col a:hover { color: var(--accent); }
-    .footer-bottom {
-      max-width: 1100px; margin: 32px auto 0; padding-top: 24px;
-      border-top: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 11px; color: var(--text3); font-family: var(--mono);
-    }
+    /* ── Closing band ── */
+    .closing { margin-top: 96px; background: var(--bg3); border-radius: 28px; padding: 56px 40px; display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+    .closing h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 800; max-width: 16ch; }
+    .closing p { color: var(--text2); margin-top: 10px; max-width: 44ch; }
 
-    @media (max-width: 768px) {
-      .footer-inner { grid-template-columns: 1fr 1fr; }
-      .nav-links .nav-link { display: none; }
-      .hero h1 { letter-spacing: -0.5px; }
-      .cta-band { padding: 40px 20px; margin: 0; border-left: none; border-right: none; border-radius: 0; }
+    @media (max-width: 960px) {
+      .hero-grid, .features { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+      .steps, .uses, .plans { grid-template-columns: 1fr; }
+      .step, .step + .step { padding: 24px 0; border-left: 0; }
+      .step + .step { border-top: 1px solid var(--border); }
+    }
+    @media (max-width: 720px) {
+      .wrap { padding: 0 16px; }
+      .hero { padding-top: 40px; }
+      .section { padding-top: 72px; }
+      .hero-sub { font-size: 17px; }
+      .feature-list { grid-template-columns: 1fr; gap: 22px; }
+      .closing { padding: 36px 22px; border-radius: 22px; margin-top: 72px; }
+      .hero-ctas .btn { flex: 1 1 100%; }
+      .lead-feature { padding: 24px; }
     }
   </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-logo">
-    <span class="logo-icon">🤖</span>
-    HAPPYHELPER
-  </div>
-  <div class="nav-links">
-    <a href="#how-it-works" class="nav-link">// how it works</a>
-    <a href="#features" class="nav-link">// features</a>
-    <a href="/pricing/" class="nav-link">// pricing</a>
-    <a href="/login/" class="btn btn-ghost" style="margin-left:8px">Sign in</a>
-    <a href="/signup/" class="btn btn-primary">▶ Get started</a>
-  </div>
-</nav>
+{% include "interview/_public_nav.html" %}
 
-<!-- HERO -->
-<section class="hero">
-  <div class="container">
-    <div class="hero-badge">
-      <span class="dot"></span>
-      Real-time AI coaching — live in session
-    </div>
-    <h1>
-      <span class="grad">Ace every interview</span><br>
-      <span class="grad2">&amp; meeting with AI</span>
-    </h1>
-    <p class="hero-sub">
-      HAPPYHELPER listens, transcribes, and delivers smart answers in real time — so you always sound sharp, prepared, and confident.
-    </p>
-    <div class="hero-ctas">
-      <a href="/signup/" class="btn btn-primary btn-lg">▶ Start free — no card needed</a>
-      <a href="#how-it-works" class="btn btn-ghost btn-lg">See how it works</a>
-    </div>
-    <div class="hero-social">
-      <div class="avatar-stack">
-        <div class="av">S</div>
-        <div class="av" style="background:rgba(0,255,157,0.15);border-color:rgba(0,255,157,0.25)">J</div>
-        <div class="av" style="background:rgba(255,71,87,0.15);border-color:rgba(255,71,87,0.25)">M</div>
-        <div class="av" style="background:rgba(255,211,42,0.15);border-color:rgba(255,211,42,0.25)">K</div>
-      </div>
-      <span>★ 4.9 / 5 · Trusted by 2,000+ professionals</span>
-    </div>
-
-    <!-- Mock app preview -->
-    <div class="hero-preview" style="margin-top:56px">
-      <div class="preview-frame">
-        <div class="preview-bar">
-          <div class="preview-dot" style="background:#ff5f57"></div>
-          <div class="preview-dot" style="background:#febc2e"></div>
-          <div class="preview-dot" style="background:#28c840"></div>
-          <div class="preview-url">app.happyhelper.com/session/live</div>
+<main>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <h1>The right words, right when you need them.</h1>
+        <p class="hero-sub">HappyHelper listens to your interview or meeting, keeps a live transcript, and suggests what to say next, built from your own background.</p>
+        <div class="hero-ctas">
+          <a href="/signup/" class="btn btn-primary btn-lg">Create a free account</a>
+          <a href="#how-it-works" class="btn btn-secondary btn-lg">See how it works</a>
         </div>
-        <div class="preview-body">
-          <div class="preview-chip">
-            <span>●</span> LIVE SESSION — 12:34
+        <p class="hero-note">Free to start. No card needed.</p>
+      </div>
+
+      <div class="demo" aria-label="Example of a live session">
+        <div class="demo-bar">
+          <span><strong>Staff Platform Engineer</strong>, Northwind</span>
+          <span class="demo-live">Live</span>
+        </div>
+        <div class="demo-body">
+          <div class="line">
+            <div class="line-who">Interviewer</div>
+            <div class="line-text">Tell me about a time you led a migration under a tight deadline.</div>
           </div>
-          <div class="preview-transcript">
-            <div class="t-line">
-              <div class="t-speaker">INTERVIEW</div>
-              <div class="t-text">Tell me about a time you led a cross-functional team under tight deadlines.</div>
+          <div class="line you">
+            <div class="line-who">You</div>
+            <div class="line-text">Sure. Last year we moved forty services off a legacy bus in one quarter.</div>
+          </div>
+          <div class="line">
+            <div class="line-who">Interviewer</div>
+            <div class="line-text">How did you keep four teams aligned?</div>
+          </div>
+          <div class="cue on-brand">
+            <div class="cue-head">
+              {% include "interview/_logo.html" with size=20 wordmark=False %}
+              HappyHelper suggests
             </div>
-            <div class="t-line">
-              <div class="t-speaker" style="color:var(--text2)">YOU</div>
-              <div class="t-text">Sure, at my last role we had a product launch…</div>
-            </div>
-            <div class="t-line">
-              <div class="t-speaker" style="color:var(--accent2)">AI ✦</div>
-              <div class="t-text ai">
-                <div class="t-label">SUGGESTED ANSWER</div>
-                Use STAR framework — highlight cross-team dependency and your specific decision that unblocked the timeline. Mention measurable outcome (shipped 3 days early, 98% uptime).
-              </div>
-            </div>
+            <p>Lead with the <u>weekly cutover review</u>, then give the result.</p>
+            <ul>
+              <li>One shared burndown across all four teams</li>
+              <li>A single rollback rule everyone signed</li>
+              <li><u>40 services moved, zero Sev-1 incidents</u></li>
+            </ul>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- LOGOS -->
-<div class="logos">
-  <div class="logos-inner">
-    <p>// used by professionals at</p>
-    <div class="logos-row">
-      <span class="logo-item">GOOGLE</span>
-      <span class="logo-item">AMAZON</span>
-      <span class="logo-item">STRIPE</span>
-      <span class="logo-item">SHOPIFY</span>
-      <span class="logo-item">NOTION</span>
-      <span class="logo-item">FIGMA</span>
-    </div>
-  </div>
-</div>
-
-<!-- HOW IT WORKS -->
-<section id="how-it-works">
-  <div class="container">
-    <div class="section-tag">HOW IT WORKS</div>
-    <h2 class="section-title">Live AI coaching in 3 steps</h2>
-    <p class="section-sub">No complex setup. Open HAPPYHELPER, start a session, and get real-time suggestions as the conversation flows.</p>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">01</div>
-        <h3>Init session context</h3>
-        <p>Tell HAPPYHELPER the role, company, and your background. It primes the AI with your goals so suggestions are specific and relevant — not generic.</p>
+  <!-- How it works -->
+  <section class="section" id="how-it-works">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Three steps, then it stays out of your way</h2>
       </div>
-      <div class="step">
-        <div class="step-num">02</div>
-        <h3>Speak naturally</h3>
-        <p>Built-in Whisper transcription picks up everything in real time. See a live transcript with speaker labels — no manual note-taking required.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">03</div>
-        <h3>Receive AI answers</h3>
-        <p>The moment a question is detected, HAPPYHELPER generates a tailored answer using your background context. One keystroke (Ctrl+Enter) triggers it.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FEATURES -->
-<section id="features" style="padding-top:60px">
-  <div class="container">
-    <div class="section-tag">FEATURES</div>
-    <h2 class="section-title">Everything you need to perform at your best</h2>
-    <p class="section-sub">Built for interviews, consulting calls, discovery calls, and any high-stakes conversation.</p>
-    <div class="features-grid">
-      <div class="feat">
-        <div class="feat-icon">🎙️</div>
-        <h3>Real-time transcription</h3>
-        <p>Powered by Groq Whisper — the fastest speech-to-text available. Sub-second latency so suggestions arrive before you need to respond.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-icon">🤖</div>
-        <h3>Contextual AI answers</h3>
-        <p>HAPPYHELPER knows your resume, the job description, and the company. Answers are grounded in your actual experience — not hallucinated fluff.</p>
-        <span class="feat-badge badge-new">Most popular</span>
-      </div>
-      <div class="feat">
-        <div class="feat-icon">🗺️</div>
-        <h3>Conversation blueprint</h3>
-        <p>Before the session, generate a structured plan: anticipated questions, talking points, objection responses, and a closing strategy.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-icon">👥</div>
-        <h3>Meeting mode</h3>
-        <p>Multi-speaker tracking records who said what. Perfect for client calls, 1:1s, and team standups. Export full meeting summaries in one click.</p>
-        <span class="feat-badge badge-pro">Pro</span>
-      </div>
-      <div class="feat">
-        <div class="feat-icon">🔒</div>
-        <h3>Private by design</h3>
-        <p>Your audio never leaves your device unencrypted. Sessions and transcripts live only in your own database — we see nothing.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-icon">🧩</div>
-        <h3>Browser overlay</h3>
-        <p>The Chrome extension shows AI suggestions in a discreet overlay visible only on your screen — invisible to your interviewer or video call participants.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- TESTIMONIALS -->
-<section style="padding-top:80px">
-  <div class="container">
-    <div class="section-tag">TESTIMONIALS</div>
-    <h2 class="section-title">What our users say</h2>
-    <div class="testimonials-grid" style="margin-top:40px">
-      <div class="testi">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">I landed a senior engineer role at a FAANG after two rounds with HAPPYHELPER. The STAR framework suggestions came exactly when I blanked. Game changer.</p>
-        <div class="testi-author">
-          <div class="testi-av" style="background:rgba(0,200,255,0.12);border-color:rgba(0,200,255,0.25);color:var(--accent)">S</div>
-          <div>
-            <div class="testi-name">Sarah K.</div>
-            <div class="testi-role">Senior Software Engineer</div>
-          </div>
+      <div class="steps">
+        <div class="step">
+          <h3>Set the scene</h3>
+          <p>Add the role, the company and your background. Paste the job description if you have one. Suggestions are drawn from this, so they sound like you.</p>
         </div>
-      </div>
-      <div class="testi">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">I use it for every discovery call now. Having the conversation blueprint ready + live AI suggestions means I never miss a follow-up question.</p>
-        <div class="testi-author">
-          <div class="testi-av" style="background:rgba(0,255,157,0.1);border-color:rgba(0,255,157,0.2);color:var(--green)">J</div>
-          <div>
-            <div class="testi-name">James R.</div>
-            <div class="testi-role">Account Executive, SaaS</div>
-          </div>
+        <div class="step">
+          <h3>Start the session</h3>
+          <p>HappyHelper transcribes the conversation as it happens and labels who is speaking. Nothing to type, no notes to take.</p>
         </div>
-      </div>
-      <div class="testi">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">The meeting summary export alone saves me 45 minutes per client call. My notes used to be a mess — now they're structured and searchable.</p>
-        <div class="testi-author">
-          <div class="testi-av" style="background:rgba(255,211,42,0.1);border-color:rgba(255,211,42,0.2);color:var(--yellow)">M</div>
-          <div>
-            <div class="testi-name">Maya T.</div>
-            <div class="testi-role">Product Manager</div>
-          </div>
+        <div class="step">
+          <h3>Ask for a cue</h3>
+          <p>Press <kbd>Ctrl</kbd> <kbd>Enter</kbd> when a question lands, or let Auto AI answer as questions come in. The suggestion appears beside the transcript.</p>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- PRICING TEASER -->
-<section id="pricing" style="padding-top:80px">
-  <div class="container" style="text-align:center">
-    <div class="section-tag">PRICING</div>
-    <h2 class="section-title">Start free, upgrade when you're ready</h2>
-    <p class="section-sub" style="margin:0 auto 48px">No credit card required. Free plan never expires.</p>
-    <div class="plans">
-      <div class="plan">
-        <div class="plan-name">FREE</div>
-        <div class="plan-price"><span class="plan-amount">$0</span><span class="plan-period">/mo</span></div>
-        <div class="plan-desc">// perfect for occasional interview prep</div>
-        <ul class="plan-features">
-          <li>5 sessions / month</li>
-          <li>Live transcription</li>
-          <li>AI answers (GPT-3.5)</li>
-          <li>Session history (7 days)</li>
-          <li class="off">Meeting mode</li>
-          <li class="off">Conversation blueprint</li>
-          <li class="off">Export &amp; summaries</li>
+  <!-- Features -->
+  <section class="section" id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Built for the moment you blank</h2>
+        <p>Everything here exists to get a useful sentence in front of you within a second or two of the question.</p>
+      </div>
+      <div class="features">
+        <div class="lead-feature">
+          <h3>Answers that sound like you</h3>
+          <p>Each suggestion is assembled from what you gave it, so you get your own projects and numbers back, in order.</p>
+          <div class="context-chips">
+            <span>Your background</span><span>Job description</span><span>Prep notes</span><span>Live transcript</span>
+          </div>
+          <div class="context-arrow">becomes</div>
+          <p class="context-out"><span class="hh-mark-text">“We cut the release cycle from two weeks to two days. I owned the pipeline redesign.”</span></p>
+        </div>
+        <ul class="feature-list">
+          <li>
+            <h3>Live transcription</h3>
+            <p>Speech to text through Groq Whisper, fast enough to keep up with the conversation.</p>
+          </li>
+          <li>
+            <h3>Conversation plan</h3>
+            <p>Before the call, generate likely questions, talking points and a closing.</p>
+          </li>
+          <li>
+            <h3>Meeting mode</h3>
+            <p>Tracks who said what across several speakers and writes the summary afterwards.</p>
+          </li>
+          <li>
+            <h3>Answer templates</h3>
+            <p>Choose the shape of the answer: STAR, bullet points, step by step, or your own prompt.</p>
+          </li>
+          <li>
+            <h3>Desktop overlay</h3>
+            <p>A small always-on-top window for Mac and Windows that stays out of screen shares.</p>
+          </li>
+          <li>
+            <h3>Review and export</h3>
+            <p>Every session keeps its transcript and answers. Export to text or Markdown, or delete it.</p>
+          </li>
         </ul>
-        <a href="/signup/" class="plan-cta plan-cta-ghost">Get started free</a>
-      </div>
-      <div class="plan popular">
-        <div class="plan-badge">MOST POPULAR</div>
-        <div class="plan-name">PRO</div>
-        <div class="plan-price"><span class="plan-amount">$19</span><span class="plan-period">/mo</span></div>
-        <div class="plan-desc">// for active job seekers &amp; sales pros</div>
-        <ul class="plan-features">
-          <li>Unlimited sessions</li>
-          <li>Live transcription</li>
-          <li>AI answers (GPT-4o)</li>
-          <li>Unlimited history</li>
-          <li>Meeting mode + diarization</li>
-          <li>Conversation blueprint</li>
-          <li>Export &amp; summaries</li>
-        </ul>
-        <a href="/signup/" class="plan-cta plan-cta-primary">▶ Start Pro free for 14 days</a>
-      </div>
-      <div class="plan">
-        <div class="plan-name">TEAM</div>
-        <div class="plan-price"><span class="plan-amount">$49</span><span class="plan-period">/mo</span></div>
-        <div class="plan-desc">// for recruiting teams &amp; consulting firms</div>
-        <ul class="plan-features">
-          <li>Everything in Pro</li>
-          <li>Up to 10 seats</li>
-          <li>Shared session library</li>
-          <li>Team analytics dashboard</li>
-          <li>Priority support</li>
-          <li>Custom AI prompts</li>
-          <li>SSO / SAML (coming soon)</li>
-        </ul>
-        <a href="/signup/" class="plan-cta plan-cta-ghost">Contact sales</a>
       </div>
     </div>
-    <p style="margin-top:24px;font-size:12px;color:var(--text3);font-family:var(--mono)">
-      All plans include a <strong style="color:var(--text2)">14-day free trial</strong> of Pro features. Cancel anytime.
-      <a href="/pricing/" style="color:var(--accent);text-decoration:none;margin-left:8px">// see full comparison →</a>
-    </p>
-  </div>
-</section>
+  </section>
 
-<!-- CTA BAND -->
-<section style="padding:60px 0">
-  <div class="cta-band">
-    <h2>Ready to walk in prepared?</h2>
-    <p>Join thousands of professionals who use HAPPYHELPER to nail interviews and meetings.</p>
-    <div class="btn-pair">
-      <a href="/signup/" class="btn btn-primary btn-lg">▶ Create your free account</a>
-      <a href="/login/" class="btn btn-ghost btn-lg">Sign in</a>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-inner">
-    <div class="footer-brand">
-      <div class="footer-logo">
-        <span class="logo-icon">🤖</span>
-        HAPPYHELPER
+  <!-- Who it is for -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>For conversations where the stakes are high</h2>
       </div>
-      <p class="footer-desc">// AI-powered coaching for interviews, sales calls, and meetings. Always prepared, never caught off guard.</p>
+      <div class="uses">
+        <div class="use">
+          <h3>Interviews</h3>
+          <p>Behavioural, system design and technical rounds. Get structure when a question catches you off guard.</p>
+        </div>
+        <div class="use">
+          <h3>Sales and discovery calls</h3>
+          <p>Go in with a plan, and keep the follow-up questions coming while you listen.</p>
+        </div>
+        <div class="use">
+          <h3>Team and client meetings</h3>
+          <p>Capture decisions, risks and action items by speaker, then send the summary.</p>
+        </div>
+      </div>
     </div>
-    <div class="footer-col">
-      <h4>Product</h4>
-      <a href="#features">Features</a>
-      <a href="/pricing/">Pricing</a>
-      <a href="#how-it-works">How it works</a>
+  </section>
+
+  <!-- Plans -->
+  <section class="section" id="pricing">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Start free, upgrade when it earns it</h2>
+      </div>
+      <div class="plans">
+        <div class="plan">
+          <div class="plan-name">Free</div>
+          <div class="plan-price">$0</div>
+          <p class="plan-desc">Try it on a real conversation before you pay for anything.</p>
+          <a href="/signup/" class="btn btn-secondary">Create a free account</a>
+        </div>
+        <div class="plan popular">
+          <div class="plan-name">Pro</div>
+          <div class="plan-price">$19 <small>per month</small></div>
+          <p class="plan-desc">For an active job search or a full calendar of calls.</p>
+          <a href="/pricing/" class="btn btn-primary">See what Pro includes</a>
+        </div>
+        <div class="plan">
+          <div class="plan-name">Team</div>
+          <div class="plan-price">$49 <small>per month</small></div>
+          <p class="plan-desc">Shared sessions and templates for recruiting and consulting teams.</p>
+          <a href="/pricing/" class="btn btn-secondary">See what Team includes</a>
+        </div>
+      </div>
+      <p class="plans-more"><a href="/pricing/">Compare every feature by plan</a></p>
     </div>
-    <div class="footer-col">
-      <h4>Account</h4>
-      <a href="/login/">Sign in</a>
-      <a href="/signup/">Sign up</a>
-      <a href="/profile/">Profile</a>
-      <a href="/settings/">Settings</a>
-    </div>
-    <div class="footer-col">
-      <h4>Support</h4>
-      <a href="#">Documentation</a>
-      <a href="#">Privacy policy</a>
-      <a href="#">Terms of service</a>
-    </div>
+  </section>
+
+  <!-- Closing -->
+  <div class="wrap">
+    <section class="closing">
+      <div>
+        <h2>Walk in prepared.</h2>
+        <p>Set up your first session in a couple of minutes.</p>
+      </div>
+      <a href="/signup/" class="btn btn-primary btn-lg">Create a free account</a>
+    </section>
   </div>
-  <div class="footer-bottom">
-    <span>© 2026 HAPPYHELPER. All rights reserved.</span>
-    <span>// built with ☕ and AI</span>
-  </div>
-</footer>
+</main>
+
+{% include "interview/_public_footer.html" %}
 
 </body>
 </html>

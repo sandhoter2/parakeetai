@@ -1,203 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up — HAPPYHELPER</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg:     #03070c;
-      --bg2:    #071018;
-      --bg3:    #0e1c2a;
-      --border: rgba(255, 255, 255, 0.08);
-      --border2:rgba(0, 240, 255, 0.25);
-      --accent: #00f0ff;
-      --accent2:#818cf8;
-      --green:  #10b981;
-      --red:    #f43f5e;
-      --yellow: #fbbf24;
-      --text:   #f8fafc;
-      --text2:  #94a3b8;
-      --text3:  #475569;
-      --mono:   'JetBrains Mono', monospace;
-      --sans:   'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    body {
-      font-family: var(--sans);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      line-height: 1.6;
-      position: relative;
-      overflow: hidden;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background-image: radial-gradient(circle, rgba(0,200,255,0.055) 1px, transparent 1px);
-      background-size: 28px 28px;
-      pointer-events: none; z-index: 0;
-    }
-    body::after {
-      content: '';
-      position: fixed; inset: 0;
-      background:
-        radial-gradient(ellipse 55% 45% at 15% 15%, rgba(0,200,255,0.07) 0%, transparent 60%),
-        radial-gradient(ellipse 45% 55% at 85% 85%, rgba(108,99,255,0.06) 0%, transparent 60%);
-      pointer-events: none; z-index: 0;
-    }
-    .wrap {
-      width: 100%; max-width: 420px; padding: 24px;
-      position: relative; z-index: 1;
-    }
-    .brand { text-align: center; margin-bottom: 32px; }
-    .brand-mark-wrap {
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 14px;
-    }
-    .brand-mark {
-      width: 64px; height: 64px; border-radius: 14px;
-      background: linear-gradient(135deg, rgba(0,240,255,0.14) 0%, rgba(129,140,248,0.18) 100%);
-      border: 1px solid var(--accent);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 32px;
-      box-shadow: 0 0 24px var(--accent-glow), inset 0 0 12px var(--accent-dim);
-    }
-    .brand-name {
-      font-size: 22px; font-weight: 800; letter-spacing: 2px;
-      font-family: var(--mono);
-      background: linear-gradient(135deg, #ffffff 40%, var(--accent) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .brand-sub {
-      font-size: 11px; color: var(--text2); margin-top: 5px;
-      font-family: var(--mono); letter-spacing: 0.8px;
-    }
-    .card {
-      background: rgba(7, 16, 24, 0.88);
-      border: 1px solid var(--border);
-      border-radius: 16px; padding: 34px;
-      box-shadow: 0 16px 50px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,240,255,0.06) inset;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      position: relative; overflow: hidden;
-    }
-    .card::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--green) 50%, transparent);
-    }
-    .card-title {
-      font-size: 16px; font-weight: 700; margin-bottom: 4px;
-      font-family: var(--mono); color: var(--accent);
-    }
-    .card-title::before { content: '// '; opacity: 0.5; }
-    .card-sub {
-      font-size: 12px; color: var(--text3); margin-bottom: 24px;
-      font-family: var(--mono);
-    }
-    .form-group { margin-bottom: 18px; }
-    .form-group label {
-      display: block; font-size: 10px; font-weight: 600; color: var(--text3);
-      margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;
-      font-family: var(--mono);
-    }
-    .form-control {
-      width: 100%; background: rgba(0,200,255,0.03);
-      border: 1px solid var(--border); border-radius: 4px;
-      padding: 10px 14px; color: var(--text); font-size: 14px;
-      outline: none; transition: border-color 0.15s, box-shadow 0.15s;
-      font-family: inherit;
-    }
-    .form-control:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(0,200,255,0.12);
-    }
-    .form-control::placeholder { color: var(--text3); }
-    .hint-text { font-size: 10px; color: var(--text3); margin-top: 5px; font-family: var(--mono); }
-    .error-box {
-      background: rgba(255,71,87,0.07); border: 1px solid rgba(255,71,87,0.25);
-      border-radius: 4px; padding: 10px 14px; color: var(--red);
-      font-size: 12px; margin-bottom: 18px; white-space: pre-line;
-      font-family: var(--mono);
-    }
-    .btn-signup {
-      width: 100%; padding: 12px;
-      background: linear-gradient(135deg, rgba(0,255,157,0.15), rgba(0,200,255,0.1));
-      color: var(--green); border: 1px solid var(--green);
-      border-radius: 4px; font-size: 13px; font-weight: 700;
-      cursor: pointer; transition: all 0.2s; margin-top: 4px;
-      letter-spacing: 1.5px; font-family: var(--mono); text-transform: uppercase;
-      box-shadow: 0 0 12px rgba(0,255,157,0.12);
-    }
-    .btn-signup:hover {
-      box-shadow: 0 0 24px rgba(0,255,157,0.25);
-      background: linear-gradient(135deg, rgba(0,255,157,0.22), rgba(0,200,255,0.15));
-    }
-    .btn-signup:active { transform: scale(0.99); }
-    .divider { height: 1px; background: var(--border); margin: 24px 0; }
-    .hint { text-align: center; font-size: 12px; color: var(--text3); font-family: var(--mono); }
-    .hint a { color: var(--accent); font-weight: 600; text-decoration: none; }
-    .hint a:hover { text-decoration: underline; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="brand">
-      <div class="brand-mark-wrap">
-        <div class="brand-mark">🤖</div>
-      </div>
-      <div class="brand-name">HAPPYHELPER</div>
-      <div class="brand-sub">// create your private workspace</div>
-    </div>
+{% extends "interview/auth_base.html" %}
+{% block title %}Create an account — HappyHelper{% endblock %}
+{% block statement %}Walk in prepared.{% endblock %}
 
-    <div class="card">
-      <div class="card-title">CREATE ACCOUNT</div>
-      <div class="card-sub">your sessions and data are private to you</div>
+{% block form %}
+<h1>Create an account</h1>
+<p class="sub">Free to start. Your sessions are visible only to you.</p>
 
-      {% if error %}
-      <div class="error-box"><span>⚠ </span>{{ error }}</div>
-      {% endif %}
+{% if error %}
+<div class="error-box" role="alert">{{ error }}</div>
+{% endif %}
 
-      <form method="post">
-        {% csrf_token %}
+<form method="post">
+  {% csrf_token %}
 
-        <div class="form-group">
-          <label for="id_username">Username</label>
-          <input type="text" id="id_username" name="username" class="form-control"
-                 placeholder="choose a username" autocomplete="username" autofocus
-                 value="{{ form.data.username|default:'' }}">
-        </div>
-
-        <div class="form-group">
-          <label for="id_password1">Password</label>
-          <input type="password" id="id_password1" name="password1" class="form-control"
-                 placeholder="create a strong password" autocomplete="new-password">
-          <div class="hint-text">// min 8 chars, not entirely numeric</div>
-        </div>
-
-        <div class="form-group">
-          <label for="id_password2">Confirm Password</label>
-          <input type="password" id="id_password2" name="password2" class="form-control"
-                 placeholder="repeat your password" autocomplete="new-password">
-        </div>
-
-        <button type="submit" class="btn-signup">▶ Create Account</button>
-      </form>
-
-      <div class="divider"></div>
-      <div class="hint">Already have an account? <a href="/login/">Sign in</a></div>
-    </div>
+  <div class="form-group">
+    <label for="id_username">Username</label>
+    <input type="text" id="id_username" name="username" class="form-control"
+           autocomplete="username" autofocus value="{{ form.data.username|default:'' }}">
   </div>
-</body>
-</html>
+
+  <div class="form-group">
+    <label for="id_password1">Password</label>
+    <input type="password" id="id_password1" name="password1" class="form-control"
+           autocomplete="new-password" aria-describedby="pw-hint">
+    <div class="form-hint" id="pw-hint">At least 8 characters, and not only numbers.</div>
+  </div>
+
+  <div class="form-group">
+    <label for="id_password2">Confirm password</label>
+    <input type="password" id="id_password2" name="password2" class="form-control"
+           autocomplete="new-password">
+  </div>
+
+  <button type="submit" class="btn btn-primary">Create account</button>
+</form>
+
+<p class="auth-alt">Already have an account? <a href="/login/">Sign in</a></p>
+{% endblock %}

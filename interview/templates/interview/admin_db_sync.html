@@ -1,50 +1,44 @@
 {% extends "interview/base.html" %}
-{% block title %}DB Sync — Admin Portal{% endblock %}
+{% block title %}Database sync — HappyHelper{% endblock %}
 
 {% block content %}
 <style>
-  .sync-page { max-width: 960px; margin: 32px auto; padding: 0 16px; }
-  .sync-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-  .sync-header h1 { font-size: 1.4rem; color: var(--accent); }
-  .badge { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
-  .badge-on  { background: rgba(0,255,157,.12); color: var(--green); border: 1px solid rgba(0,255,157,.3); }
-  .badge-off { background: rgba(255,71,87,.12);  color: var(--red);   border: 1px solid rgba(255,71,87,.3); }
-  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; }
-  .card h2 { font-size: 0.9rem; color: var(--text2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; }
-  .actions { display: flex; gap: 12px; flex-wrap: wrap; }
-  .btn { padding: 9px 20px; border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: opacity .15s; }
-  .btn:hover { opacity: .85; }
-  .btn:disabled { opacity: .4; cursor: not-allowed; }
-  .btn-primary { background: var(--accent); color: #000; }
-  .btn-warn    { background: var(--yellow); color: #000; }
-  .btn-danger  { background: var(--red); color: #fff; }
-  .msg { padding: 10px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 0.85rem; }
-  .msg-success { background: rgba(0,255,157,.1); border: 1px solid rgba(0,255,157,.3); color: var(--green); }
-  .msg-error   { background: rgba(255,71,87,.1);  border: 1px solid rgba(255,71,87,.3);  color: var(--red); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-  th { text-align: left; padding: 8px 10px; color: var(--text2); border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: .06em; }
-  td { padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  .status-pill { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
-  .s-success { background: rgba(0,255,157,.12); color: var(--green); }
-  .s-error   { background: rgba(255,71,87,.12);  color: var(--red); }
-  .s-running { background: rgba(0,200,255,.12);  color: var(--accent); }
-  .dir-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; background: var(--bg4); color: var(--text2); }
+  .sync-page { max-width: 960px; margin: 0 auto; padding: 32px 24px 48px; }
+  .sync-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .sync-header h1 { font-size: 30px; font-weight: 800; }
+  .badge { text-transform: none; }
+  .badge-on  { background: rgb(var(--green-rgb) / .12); color: var(--green); border: 1px solid rgb(var(--green-rgb) / .3); }
+  .badge-off { background: rgb(var(--red-rgb) / .12);  color: var(--red);   border: 1px solid rgb(var(--red-rgb) / .3); }
+  .card { margin-bottom: 16px; }
+  .card h2 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .msg { padding: 10px 16px; border-radius: var(--radius); margin-bottom: 16px; font-size: 14px; }
+  .msg-success { background: rgb(var(--green-rgb) / .1); border: 1px solid rgb(var(--green-rgb) / .3); color: var(--green); }
+  .msg-error   { background: rgb(var(--red-rgb) / .1);  border: 1px solid rgb(var(--red-rgb) / .3);  color: var(--red); }
+  .sync-page table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .sync-page th { text-align: left; padding: 9px 10px; color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 600; font-size: 12.5px; }
+  .sync-page td { padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  .sync-page tr:last-child td { border-bottom: none; }
+  .status-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .s-success { background: rgb(var(--green-rgb) / .12); color: var(--green); }
+  .s-error   { background: rgb(var(--red-rgb) / .12);  color: var(--red); }
+  .s-running { background: rgb(var(--accent-rgb) / .12);  color: var(--accent); }
+  .dir-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; background: var(--bg3); color: var(--text2); }
   .empty { text-align: center; color: var(--text3); padding: 40px 0; }
   .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 8px; }
-  .info-item label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text3); display: block; margin-bottom: 4px; }
-  .info-item span  { font-size: 0.88rem; color: var(--text); font-weight: 500; }
+  .info-item label { font-size: 12.5px; color: var(--text3); display: block; margin-bottom: 4px; }
+  .info-item span  { font-size: 14px; color: var(--text); font-weight: 500; }
 </style>
 
 <div class="sync-page">
   <div class="sync-header">
-    <h1>🔄 DB Sync Portal</h1>
+    <h1>Database sync</h1>
     {% if mysql_enabled %}
-      <span class="badge badge-on">MySQL Connected</span>
+      <span class="badge badge-on">MySQL connected</span>
     {% else %}
-      <span class="badge badge-off">MySQL Disabled</span>
+      <span class="badge badge-off">MySQL not configured</span>
     {% endif %}
-    <a href="{% url 'home' %}" style="margin-left:auto;color:var(--text2);font-size:.83rem;text-decoration:none;">← Back to Home</a>
+    
   </div>
 
   {% if messages %}
@@ -62,7 +56,7 @@
   {% endif %}
 
   <div class="card">
-    <h2>Manual Sync</h2>
+    <h2>Manual sync</h2>
     <div style="margin-bottom:12px;font-size:.82rem;color:var(--text2);">
       <strong>Backup</strong> dumps the current SQLite database to MySQL.
       <strong>Restore</strong> pulls the MySQL backup into SQLite (overwrites current data).
@@ -71,17 +65,17 @@
       {% csrf_token %}
       <div class="actions">
         <button class="btn btn-primary" name="action" value="backup" {% if not mysql_enabled %}disabled{% endif %}>
-          ⬆ Backup SQLite → MySQL
+          Back up SQLite to MySQL
         </button>
         <button class="btn btn-danger" name="action" value="restore" {% if not mysql_enabled %}disabled{% endif %}>
-          ⬇ Restore MySQL → SQLite
+          Restore MySQL into SQLite
         </button>
       </div>
     </form>
   </div>
 
   <div class="card">
-    <h2>Sync Log (last 50)</h2>
+    <h2>Sync log (last 50)</h2>
     {% if logs %}
       <table>
         <thead>

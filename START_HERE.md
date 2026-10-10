@@ -1,6 +1,6 @@
 # HappyHelper — Start Here for AI Agents
 
-> Last updated: 2026-10-04
+> Last updated: 2026-10-10
 
 ## What is this?
 
@@ -74,7 +74,7 @@ The `.env` file in the repo is git-crypt encrypted — `settings.py` wraps `load
 - Dedicated pricing page (`pricing.html`) with 3 tiers (Free/$0, Pro/$19, Team/$49), feature comparison table, FAQ, annual/monthly toggle
 - `home` view updated: unauthenticated → `landing.html`, authenticated → `home.html`
 - `/pricing/` route added
-- Dark theme with CSS variables, HappyHelper branding (😊 emoji, purple gradients)
+- Design system in `interview/templates/interview/_styles.html`: one set of tokens for dark and light, shared by every page. Logo in `_logo.html`, files in `docs/brand/`. See the Design system section of `README.md` before adding colours or fonts.
 
 ### Pending / Next tasks 🔲
 
@@ -104,7 +104,7 @@ The `.env` file in the repo is git-crypt encrypted — `settings.py` wraps `load
 #### Priority 5 — Polish
 - [ ] `404.html` and `500.html` error pages
 - [ ] Email verification on signup (optional, Django's `send_mail`)
-- [ ] Responsive nav (hamburger menu for mobile)
+- [x] Responsive nav (links fold into the account menu on phones)
 - [ ] Meta tags / OG tags for landing page SEO
 
 ## How to run locally

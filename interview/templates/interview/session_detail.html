@@ -1,130 +1,84 @@
 {% extends "interview/base.html" %}
-{% block title %}{{ session.title }} — Review{% endblock %}
+{% block title %}{{ session.title }} — HappyHelper{% endblock %}
 
 {% block extra_style %}
-/* ── Review page robot theme ── */
 .detail-header {
   display: flex; align-items: flex-start; justify-content: space-between;
-  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
-  padding-bottom: 20px; border-bottom: 1px solid var(--border);
-  position: relative;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
 }
-.detail-header::after {
-  content: ''; position: absolute; bottom: -1px; left: 0;
-  width: 80px; height: 1px; background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
-}
-.detail-header .page-tag {
-  font-family: var(--mono); font-size: 10px; color: var(--accent);
-  text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.7;
-  margin-bottom: 4px;
-}
-.detail-header h1 {
-  font-size: 22px; font-weight: 700; margin-bottom: 4px;
-  font-family: var(--mono);
-}
-.detail-header .meta { color: var(--text2); font-size: 13px; font-family: var(--mono); }
+.detail-header .crumb { font-size: 13.5px; color: var(--text2); margin-bottom: 8px; display: inline-block; }
+.detail-header .crumb:hover { color: var(--text); }
+.detail-header h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+.detail-header .meta { color: var(--text2); font-size: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.detail-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
-/* ── Stat chips — terminal readout style ── */
-.stats-row { display: flex; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; }
-.stat-chip {
-  padding: 14px 20px; background: var(--bg2);
-  border: 1px solid var(--border); border-radius: var(--radius);
-  text-align: center; min-width: 110px; position: relative; overflow: hidden;
-  font-family: var(--mono); box-shadow: var(--shadow-sm); transition: all 0.2s ease;
+/* Figures for the session, as one quiet strip */
+.stats-row {
+  display: flex; gap: 0; margin-bottom: 24px; flex-wrap: wrap;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
 }
-.stat-chip:hover { border-color: var(--border2); transform: translateY(-1px); }
-.stat-chip::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
-}
-.stat-chip .v {
-  font-size: 24px; font-weight: 800; color: var(--accent);
-  text-shadow: 0 0 14px var(--accent-glow); font-variant-numeric: tabular-nums;
-}
-.stat-chip .l { font-size: 10px; color: var(--text3); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+.stat-chip { padding: 16px 24px; min-width: 130px; }
+.stat-chip + .stat-chip { border-left: 1px solid var(--border); }
+.stat-chip .v { font-family: var(--display); font-size: 26px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
+.stat-chip .l { font-size: 13px; color: var(--text2); margin-top: 2px; }
 
-/* ── Section title ── */
 .section-title {
-  font-size: 12px; font-weight: 700; color: var(--accent); font-family: var(--mono);
-  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
-  display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--display); font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: var(--text);
+  margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
-.section-title::before { content: '// '; opacity: 0.6; }
+.section-title .count { font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--text3); margin-right: auto; }
+.context-text { font-size: 14px; color: var(--text2); white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
 
-/* ── Transcript entries ── */
-.transcript-list { display: flex; flex-direction: column; gap: 8px; max-height: 540px; overflow-y: auto; padding-right: 4px; }
-.t-entry {
-  padding: 12px 16px; border-radius: 6px;
-  background: var(--bg2); border: 1px solid var(--border);
-  border-left: 3px solid var(--accent); box-shadow: var(--shadow-sm);
-  transition: all 0.15s ease;
-}
-.t-entry:hover { border-color: var(--border2); }
-.t-entry.system { border-left-color: var(--yellow); }
+/* Transcript */
+.transcript-list { display: flex; flex-direction: column; gap: 14px; max-height: 620px; overflow-y: auto; padding-right: 6px; }
+.t-entry { padding: 0 0 0 14px; border-left: 3px solid var(--border2); }
+.t-entry.microphone { border-left-color: var(--brand); }
 .t-entry.note { border-left-color: var(--accent2); }
 .t-label {
-  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
-  color: var(--accent); margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between;
-  font-family: var(--mono);
+  font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
 }
-.t-entry.system .t-label { color: var(--yellow); }
-.t-entry.note .t-label { color: var(--accent2); }
-.t-time { font-size: 10px; color: var(--text3); font-weight: 400; }
-.t-text { font-size: 13px; line-height: 1.6; }
+.t-time { font-size: 12px; color: var(--text3); font-weight: 400; font-variant-numeric: tabular-nums; }
+.t-text { font-size: 15px; line-height: 1.55; color: var(--text); }
 
-/* ── AI answer entries ── */
-.ai-list { display: flex; flex-direction: column; gap: 14px; max-height: 540px; overflow-y: auto; padding-right: 4px; }
-.ai-entry {
-  padding: 16px 18px; border-radius: 8px;
-  background: var(--bg2); border: 1px solid var(--border);
-  position: relative; box-shadow: var(--shadow-sm); transition: all 0.2s ease;
-}
-.ai-entry:hover { border-color: rgba(129, 140, 248, 0.4); box-shadow: var(--shadow-md); }
-.ai-entry::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, var(--accent2), transparent);
-}
-.ai-q {
-  font-size: 12px; color: var(--text2); margin-bottom: 12px;
-  font-family: var(--mono); padding: 6px 10px; background: var(--bg3);
-  border-radius: 4px; border-left: 2px solid var(--accent2);
-}
-.ai-q::before { content: '> '; color: var(--accent2); }
-.ai-a { font-size: 13px; line-height: 1.7; white-space: pre-wrap; color: var(--text); }
+/* Suggested answers */
+.ai-list { display: flex; flex-direction: column; gap: 14px; max-height: 620px; overflow-y: auto; padding-right: 6px; }
+.ai-entry { padding: 16px 18px; border-radius: 14px; background: var(--bg3); }
+.ai-q { font-size: 13.5px; font-weight: 600; color: var(--text2); margin-bottom: 10px; }
+.ai-a { font-size: 14.5px; line-height: 1.65; white-space: pre-wrap; color: var(--text); }
 .ai-entry-actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
 
-.empty { color: var(--text3); font-size: 13px; padding: 28px 0; font-family: var(--mono); }
-.empty::before { content: '// '; opacity: 0.5; }
-.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-@media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
-{% endblock %}
-
-{% block navbar_actions %}
-<a href="/" class="btn btn-secondary btn-sm">← Sessions</a>
+.empty { color: var(--text3); font-size: 14px; padding: 24px 0; }
+.detail-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.context-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 860px) {
+  .detail-grid, .context-grid { grid-template-columns: minmax(0, 1fr); }
+  .detail-header h1 { font-size: 26px; }
+  .stat-chip { flex: 1 1 50%; min-width: 0; padding: 14px 16px; }
+  .stat-chip + .stat-chip { border-left: 0; }
+}
 {% endblock %}
 
 {% block content %}
 <div class="container">
   <div class="detail-header">
     <div>
-      <div class="page-tag">🤖 session review</div>
+      <a href="/" class="crumb">← All sessions</a>
       <h1>{{ session.title }}</h1>
       <div class="meta">
-        {% if session.company %}<strong style="color:var(--accent2)">{{ session.company }}</strong> · {% endif %}
-        {{ session.created_at|date:"M j, Y g:i A" }}
-        · <span class="badge badge-{{ session.status }}">{{ session.status }}</span>
-        {% if session.ended_at %} · Ended {{ session.ended_at|date:"g:i A" }}{% endif %}
+        {% if session.status == "active" %}<span class="badge badge-active">Live</span>{% elif session.status == "pending" %}<span class="badge badge-pending">Not started</span>{% else %}<span class="badge badge-ended">Ended</span>{% endif %}
+        {% if session.company %}<span>{{ session.company }}</span>{% endif %}
+        <span>{{ session.created_at|date:"M j, Y, g:i A" }}{% if session.ended_at %} to {{ session.ended_at|date:"g:i A" }}{% endif %}</span>
       </div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <div class="detail-actions">
       {% if session.status != "ended" %}
-      <a href="/session/{{ session.id }}/" class="btn btn-primary btn-sm">▶ Resume</a>
+      <a href="/session/{{ session.id }}/" class="btn btn-primary btn-sm">Resume</a>
       {% endif %}
-      <button class="btn btn-secondary btn-sm" onclick="exportSession('txt')">⬇ Export TXT</button>
-      <button class="btn btn-secondary btn-sm" onclick="exportSession('md')">⬇ Export MD</button>
-      <button class="btn btn-secondary btn-sm" onclick="openModal('editModal')">✏️ Edit</button>
-      <button class="btn btn-danger btn-sm" onclick="deleteSessionAndRedirect('{{ session.id }}', '{{ session.title|escapejs }}')">🗑 Delete</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportSession('txt')">Export text</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportSession('md')">Export Markdown</button>
+      <button class="btn btn-secondary btn-sm" onclick="openModal('editModal')">Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSessionAndRedirect('{{ session.id }}', '{{ session.title|escapejs }}')">Delete</button>
     </div>
   </div>
 
@@ -132,11 +86,11 @@
   <div class="stats-row">
     <div class="stat-chip">
       <div class="v">{{ transcripts.count }}</div>
-      <div class="l">Transcript entries</div>
+      <div class="l">Transcript lines</div>
     </div>
     <div class="stat-chip">
       <div class="v">{{ ai_messages.count }}</div>
-      <div class="l">AI answers</div>
+      <div class="l">Answers suggested</div>
     </div>
     <div class="stat-chip">
       <div class="v" id="wordCount">—</div>
@@ -145,24 +99,24 @@
     {% if session.ended_at %}
     <div class="stat-chip">
       <div class="v" id="duration">—</div>
-      <div class="l">Duration</div>
+      <div class="l">Length</div>
     </div>
     {% endif %}
   </div>
 
   {% if session.job_description or session.extra_context %}
   <div class="card" style="margin-bottom:20px">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="context-grid">
       {% if session.job_description %}
       <div>
-        <div class="section-title">JOB DESCRIPTION</div>
-        <div style="font-size:13px;color:var(--text2);white-space:pre-wrap;max-height:200px;overflow-y:auto">{{ session.job_description }}</div>
+        <div class="section-title">Job description</div>
+        <div class="context-text">{{ session.job_description }}</div>
       </div>
       {% endif %}
       {% if session.extra_context %}
       <div>
-        <div class="section-title">YOUR BACKGROUND</div>
-        <div style="font-size:13px;color:var(--text2);white-space:pre-wrap;max-height:200px;overflow-y:auto">{{ session.extra_context }}</div>
+        <div class="section-title">Your background</div>
+        <div class="context-text">{{ session.extra_context }}</div>
       </div>
       {% endif %}
     </div>
@@ -172,8 +126,8 @@
   <div class="detail-grid">
     <div class="card">
       <div class="section-title">
-        TRANSCRIPT <span style="opacity:0.5">({{ transcripts.count }})</span>
-        <button class="btn btn-ghost btn-xs" onclick="copyTranscript()">📋 Copy</button>
+        Transcript <span class="count">{{ transcripts.count }} line{{ transcripts.count|pluralize }}</span>
+        <button class="btn btn-secondary btn-xs" onclick="copyTranscript()">Copy</button>
       </div>
       {% if transcripts %}
       <div class="transcript-list" id="transcriptList">
@@ -188,30 +142,30 @@
         {% endfor %}
       </div>
       {% else %}
-      <div class="empty">no transcript entries</div>
+      <div class="empty">Nothing was transcribed in this session.</div>
       {% endif %}
     </div>
 
     <div class="card">
       <div class="section-title">
-        AI ANSWERS <span style="opacity:0.5">({{ ai_messages.count }})</span>
-        <button class="btn btn-ghost btn-xs" onclick="copyAllAI()">📋 Copy</button>
+        Suggested answers <span class="count">{{ ai_messages.count }}</span>
+        <button class="btn btn-secondary btn-xs" onclick="copyAllAI()">Copy</button>
       </div>
       {% if ai_messages %}
       <div class="ai-list">
         {% for msg in ai_messages %}
         <div class="ai-entry">
-          {% if msg.trigger_text %}<div class="ai-q">Q: {{ msg.trigger_text }}</div>{% endif %}
+          {% if msg.trigger_text %}<div class="ai-q">{{ msg.trigger_text }}</div>{% endif %}
           <div class="ai-a" id="ai-{{ msg.id }}">{{ msg.content }}</div>
           <div class="ai-entry-actions">
-            <button class="btn btn-ghost btn-xs" onclick="copyText(document.getElementById('ai-{{ msg.id }}').textContent, 'Answer')">📋 Copy</button>
-            <span style="font-size:11px;color:var(--text3);margin-left:auto">{{ msg.created_at|date:"g:i A" }}</span>
+            <button class="btn btn-ghost btn-xs" onclick="copyText(document.getElementById('ai-{{ msg.id }}').textContent, 'Answer')">Copy</button>
+            <span style="font-size:12px;color:var(--text3);margin-left:auto">{{ msg.created_at|date:"g:i A" }}</span>
           </div>
         </div>
         {% endfor %}
       </div>
       {% else %}
-      <div class="empty">no AI answers yet</div>
+      <div class="empty">No answers were suggested in this session.</div>
       {% endif %}
     </div>
   </div>
@@ -220,13 +174,13 @@
 <!-- Edit Modal -->
 <div class="modal-overlay" id="editModal">
   <div class="modal">
-    <div class="modal-title">✏️ Edit Session</div>
+    <div class="modal-title">Edit session</div>
     <div class="form-group">
-      <label>Job Title</label>
+      <label for="editTitle">Title</label>
       <input type="text" class="form-control" id="editTitle" value="{{ session.title }}">
     </div>
     <div class="form-group">
-      <label>Company</label>
+      <label for="editCompany">Company</label>
       <input type="text" class="form-control" id="editCompany" value="{{ session.company }}">
     </div>
     <div class="modal-footer">
