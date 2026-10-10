@@ -174,7 +174,7 @@ def live_session(request, session_id):
 
 @login_required
 def session_detail(request, session_id):
-    session = get_object_or_404(InterviewSession, id=session_id)
+    session = get_object_or_404(InterviewSession, id=session_id, owner=request.user)
     transcripts = session.transcripts.all()
     ai_messages = session.ai_messages.all()
     return render(
@@ -1497,7 +1497,8 @@ def api_session_context(request, session_id):
     if not profile and not request.user.is_authenticated:
         return JsonResponse({"error": "unauthorized"}, status=401)
 
-    session = get_object_or_404(InterviewSession, id=session_id)
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
 
     if request.method == "GET":
         return JsonResponse({
