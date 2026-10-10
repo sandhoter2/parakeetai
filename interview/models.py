@@ -115,6 +115,70 @@ class InterviewSession(models.Model):
         return f"{self.title} @ {self.company}" if self.company else self.title
 
 
+class Task(models.Model):
+    STATUS_TODO = "todo"
+    STATUS_IN_PROGRESS = "in_progress"
+    STATUS_IN_REVIEW = "in_review"
+    STATUS_DONE = "done"
+    STATUS_BLOCKED = "blocked"
+    STATUS_CHOICES = [
+        (STATUS_TODO, "To Do"),
+        (STATUS_IN_PROGRESS, "In Progress"),
+        (STATUS_IN_REVIEW, "In Review"),
+        (STATUS_DONE, "Done"),
+        (STATUS_BLOCKED, "Blocked"),
+    ]
+
+    PRIORITY_LOW = "low"
+    PRIORITY_MEDIUM = "medium"
+    PRIORITY_HIGH = "high"
+    PRIORITY_CRITICAL = "critical"
+    PRIORITY_CHOICES = [
+        (PRIORITY_LOW, "Low"),
+        (PRIORITY_MEDIUM, "Medium"),
+        (PRIORITY_HIGH, "High"),
+        (PRIORITY_CRITICAL, "Critical"),
+    ]
+
+    CATEGORY_FEATURE = "feature"
+    CATEGORY_BUG = "bug"
+    CATEGORY_IMPROVEMENT = "improvement"
+    CATEGORY_INFRA = "infra"
+    CATEGORY_DOCS = "docs"
+    CATEGORY_SECURITY = "security"
+    CATEGORY_CHOICES = [
+        (CATEGORY_FEATURE, "Feature"),
+        (CATEGORY_BUG, "Bug"),
+        (CATEGORY_IMPROVEMENT, "Improvement"),
+        (CATEGORY_INFRA, "Infrastructure"),
+        (CATEGORY_DOCS, "Documentation"),
+        (CATEGORY_SECURITY, "Security"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_TODO)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default=PRIORITY_MEDIUM)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default=CATEGORY_FEATURE)
+    assignee = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name="assigned_tasks"
+    )
+    created_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name="created_tasks"
+    )
+    due_date = models.DateField(null=True, blank=True)
+    order = models.PositiveIntegerField(default=0, help_text="Sort order within the column.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["order", "-created_at"]
+
+    def __str__(self):
+        return self.title
+
+
 class TranscriptEntry(models.Model):
     TYPE_MIC = "microphone"
     TYPE_SYSTEM = "system"

@@ -1,8 +1,14 @@
+import datetime
+
 from django.contrib import admin
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
+from django.urls import path
+from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.timezone import localtime
 
-from .models import AIMessage, InterviewSession, TranscriptEntry, UserProfile
+from .models import AIMessage, InterviewSession, Task, TranscriptEntry, UserProfile
 
 
 @admin.register(UserProfile)
@@ -110,6 +116,111 @@ class TranscriptEntryAdmin(admin.ModelAdmin):
     def content_preview(self, obj):
         return obj.content[:80] + "…" if len(obj.content) > 80 else obj.content
     content_preview.short_description = "Content"
+
+
+COLUMNS = [
+    {"key": "todo",        "label": "To Do",       "color": "#3b82f6", "icon": "📋", "empty_icon": "📭"},
+    {"key": "in_progress", "label": "In Progress",  "color": "#f59e0b", "icon": "⚡", "empty_icon": "💤"},
+    {"key": "in_review",   "label": "In Review",    "color": "#8b5cf6", "icon": "🔍", "empty_icon": "👁"},
+    {"key": "done",        "label": "Done",         "color": "#10b981", "icon": "✅", "empty_icon": "🎉"},
+    {"key": "blocked",     "label": "Blocked",      "color": "#ef4444", "icon": "🚫", "empty_icon": "✨"},
+]
+
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    list_display = ("title", "status_badge", "priority_badge", "category_tag", "assignee", "due_date", "created_at")
+    list_filter = ("status", "priority", "category", "assignee")
+    search_fields = ("title", "description")
+    readonly_fields = ("id", "created_at", "updated_at")
+    ordering = ("order", "-created_at")
+    list_per_page = 50
+    date_hierarchy = "created_at"
+    change_list_template = "admin/interview/task_change_list.html"
+
+    fieldsets = (
+        ("Task", {"fields": ("id", "title", "description")}),
+        ("Classification", {"fields": ("status", "priority", "category")}),
+        ("Assignment", {"fields": ("assignee", "created_by", "due_date", "order")}),
+        ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+    )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [path("board/", self.admin_site.admin_view(self.board_view), name="task_board")]
+        return custom + urls
+
+    def board_view(self, request):
+        priority_filter = request.GET.get("priority")
+        cat_filter = request.GET.get("cat")
+
+        qs = Task.objects.select_related("assignee", "created_by").all()
+        if priority_filter:
+            qs = qs.filter(priority=priority_filter)
+        if cat_filter:
+            qs = qs.filter(category=cat_filter)
+
+        today = datetime.date.today()
+        tasks_by_status = {c["key"]: [] for c in COLUMNS}
+        for task in qs:
+            task.is_overdue = bool(task.due_date and task.due_date < today and task.status != Task.STATUS_DONE)
+            if task.status in tasks_by_status:
+                tasks_by_status[task.status].append(task)
+
+        columns = [{**c, "tasks": tasks_by_status[c["key"]]} for c in COLUMNS]
+
+        counts = {c["key"]: Task.objects.filter(status=c["key"]).count() for c in COLUMNS}
+        cat_counts = {cat: Task.objects.filter(category=cat).count()
+                      for cat, _ in Task.CATEGORY_CHOICES}
+
+        ctx = {
+            **self.admin_site.each_context(request),
+            "title": "Task Board",
+            "columns": columns,
+            "counts": counts,
+            "category_counts": cat_counts,
+            "total_tasks": Task.objects.count(),
+        }
+        return render(request, "admin/interview/task_board.html", ctx)
+
+    def status_badge(self, obj):
+        colors = {
+            "todo": "#3b82f6", "in_progress": "#f59e0b",
+            "in_review": "#8b5cf6", "done": "#10b981", "blocked": "#ef4444",
+        }
+        icons = {"todo": "📋", "in_progress": "⚡", "in_review": "🔍", "done": "✅", "blocked": "🚫"}
+        c = colors.get(obj.status, "#94a3b8")
+        return format_html(
+            '<span style="background:{}22;color:{};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">{} {}</span>',
+            c, c, icons.get(obj.status, ""), obj.get_status_display()
+        )
+    status_badge.short_description = "Status"
+
+    def priority_badge(self, obj):
+        colors = {"low": "#4ade80", "medium": "#fbbf24", "high": "#f97316", "critical": "#ef4444"}
+        c = colors.get(obj.priority, "#94a3b8")
+        return format_html(
+            '<span style="color:{};font-weight:700;font-size:11px">● {}</span>',
+            c, obj.get_priority_display()
+        )
+    priority_badge.short_description = "Priority"
+
+    def category_tag(self, obj):
+        colors = {
+            "feature": "#60a5fa", "bug": "#f87171", "improvement": "#4ade80",
+            "infra": "#fbbf24", "docs": "#a78bfa", "security": "#f472b6",
+        }
+        c = colors.get(obj.category, "#94a3b8")
+        return format_html(
+            '<span style="background:{}20;color:{};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">{}</span>',
+            c, c, obj.get_category_display()
+        )
+    category_tag.short_description = "Category"
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["board_url"] = "../board/"
+        return super().changelist_view(request, extra_context=extra_context)
 
 
 @admin.register(AIMessage)

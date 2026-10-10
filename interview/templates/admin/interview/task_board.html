@@ -1,0 +1,387 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}ParakeetAI — Task Board{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+:root {
+  --col-todo: #3b82f6;
+  --col-inprogress: #f59e0b;
+  --col-inreview: #8b5cf6;
+  --col-done: #10b981;
+  --col-blocked: #ef4444;
+  --bg-dark: #0f172a;
+  --bg-card: #1e293b;
+  --bg-col: #151e2e;
+  --text-main: #e2e8f0;
+  --text-muted: #64748b;
+  --border: #1e293b;
+}
+body { background: var(--bg-dark) !important; color: var(--text-main) !important; }
+#content { background: var(--bg-dark) !important; }
+#content-main { padding: 0 !important; }
+#header { background: #0a1628 !important; }
+
+.board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid #1e293b;
+  background: #0a1628;
+}
+.board-title {
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 2px;
+}
+.board-subtitle { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+
+.board-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.btn-add {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+.btn-add:hover { background: #2563eb; color: #fff; }
+.btn-list {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: 'Courier New', monospace;
+}
+.btn-list:hover { color: #e2e8f0; border-color: #334155; }
+
+.stats-bar {
+  display: flex;
+  gap: 24px;
+  padding: 12px 24px;
+  background: #0d1829;
+  border-bottom: 1px solid #1e293b;
+  flex-wrap: wrap;
+}
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+.stat-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+.stat-count { font-weight: 700; font-size: 16px; }
+.stat-label { color: var(--text-muted); }
+
+.board-wrap {
+  display: flex;
+  gap: 16px;
+  padding: 20px 24px;
+  overflow-x: auto;
+  min-height: calc(100vh - 200px);
+  align-items: flex-start;
+}
+
+.column {
+  flex: 0 0 260px;
+  background: var(--bg-col);
+  border-radius: 10px;
+  border: 1px solid #1e293b;
+  overflow: hidden;
+}
+.col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 2px solid;
+  background: rgba(0,0,0,0.2);
+}
+.col-name {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.col-count {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+}
+
+.col-body { padding: 10px 10px 16px; display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+
+.card {
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 12px 14px;
+  border: 1px solid #1e293b;
+  transition: border-color 0.15s, transform 0.1s;
+  cursor: pointer;
+  position: relative;
+}
+.card:hover { border-color: #334155; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.tag-feature { background: #1d4ed820; color: #60a5fa; border: 1px solid #1d4ed840; }
+.tag-bug { background: #7f1d1d20; color: #f87171; border: 1px solid #7f1d1d40; }
+.tag-improvement { background: #14532d20; color: #4ade80; border: 1px solid #14532d40; }
+.tag-infra { background: #78350f20; color: #fbbf24; border: 1px solid #78350f40; }
+.tag-docs { background: #312e8120; color: #a78bfa; border: 1px solid #31298140; }
+.tag-security { background: #831843 20; color: #f472b6; border: 1px solid #83184340; }
+
+.priority-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.p-low { background: #4ade80; }
+.p-medium { background: #fbbf24; }
+.p-high { background: #f97316; }
+.p-critical { background: #ef4444; box-shadow: 0 0 6px #ef444480; }
+
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  line-height: 1.4;
+  margin-bottom: 10px;
+  font-family: 'Courier New', monospace;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #1e293b;
+}
+.card-assignee {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #1d4ed8;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff; font-family: 'Courier New', monospace;
+}
+.card-due {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+}
+.card-due.overdue { color: #ef4444; }
+
+.card-edit {
+  position: absolute;
+  top: 8px; right: 8px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  color: #64748b;
+  text-decoration: none;
+  font-size: 12px;
+}
+.card:hover .card-edit { opacity: 1; }
+
+.empty-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  color: #334155;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  text-align: center;
+  gap: 8px;
+}
+.empty-icon { font-size: 24px; opacity: 0.4; }
+
+/* filter bar */
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  padding: 10px 24px;
+  background: #0a1628;
+  border-bottom: 1px solid #1e293b;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-label { color: #475569; font-size: 11px; font-family: 'Courier New', monospace; }
+.filter-btn {
+  background: transparent;
+  border: 1px solid #1e293b;
+  color: #64748b;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  text-decoration: none;
+  transition: all 0.1s;
+}
+.filter-btn:hover, .filter-btn.active { color: #e2e8f0; border-color: #3b82f6; background: #3b82f610; }
+
+#breadcrumbs { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="board-header">
+  <div>
+    <div class="board-title">// PARAKEETAI TASK BOARD</div>
+    <div class="board-subtitle">Project management · Jira-style kanban · {{ total_tasks }} tasks total</div>
+  </div>
+  <div class="board-actions">
+    <a href="{% url 'admin:interview_task_changelist' %}" class="btn-list">☰ LIST VIEW</a>
+    <a href="{% url 'admin:interview_task_add' %}" class="btn-add">+ ADD TASK</a>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-dot" style="background:#3b82f6"></div>
+    <span class="stat-count" style="color:#3b82f6">{{ counts.todo }}</span>
+    <span class="stat-label">TODO</span>
+  </div>
+  <div class="stat-item">
+    <div class="stat-dot" style="background:#f59e0b"></div>
+    <span class="stat-count" style="color:#f59e0b">{{ counts.in_progress }}</span>
+    <span class="stat-label">IN PROGRESS</span>
+  </div>
+  <div class="stat-item">
+    <div class="stat-dot" style="background:#8b5cf6"></div>
+    <span class="stat-count" style="color:#8b5cf6">{{ counts.in_review }}</span>
+    <span class="stat-label">IN REVIEW</span>
+  </div>
+  <div class="stat-item">
+    <div class="stat-dot" style="background:#10b981"></div>
+    <span class="stat-count" style="color:#10b981">{{ counts.done }}</span>
+    <span class="stat-label">DONE</span>
+  </div>
+  <div class="stat-item">
+    <div class="stat-dot" style="background:#ef4444"></div>
+    <span class="stat-count" style="color:#ef4444">{{ counts.blocked }}</span>
+    <span class="stat-label">BLOCKED</span>
+  </div>
+  <div class="stat-item" style="margin-left:auto">
+    {% for cat, cnt in category_counts.items %}
+    {% if cnt %}<span style="color:#475569;font-size:11px;font-family:monospace">{{ cat }}: {{ cnt }}</span>{% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">PRIORITY:</span>
+  <a href="?" class="filter-btn {% if not request.GET.priority %}active{% endif %}">ALL</a>
+  <a href="?priority=critical" class="filter-btn {% if request.GET.priority == 'critical' %}active{% endif %}" style="color:#ef4444;border-color:#ef444440">🔴 CRITICAL</a>
+  <a href="?priority=high" class="filter-btn {% if request.GET.priority == 'high' %}active{% endif %}" style="color:#f97316;border-color:#f9731640">🟠 HIGH</a>
+  <a href="?priority=medium" class="filter-btn {% if request.GET.priority == 'medium' %}active{% endif %}">🟡 MEDIUM</a>
+  <a href="?priority=low" class="filter-btn {% if request.GET.priority == 'low' %}active{% endif %}">🟢 LOW</a>
+  &nbsp;|&nbsp;
+  <span class="filter-label">CATEGORY:</span>
+  <a href="?cat=bug" class="filter-btn {% if request.GET.cat == 'bug' %}active{% endif %}">🐛 BUG</a>
+  <a href="?cat=feature" class="filter-btn {% if request.GET.cat == 'feature' %}active{% endif %}">✨ FEATURE</a>
+  <a href="?cat=improvement" class="filter-btn {% if request.GET.cat == 'improvement' %}active{% endif %}">⬆ IMPROVE</a>
+  <a href="?cat=infra" class="filter-btn {% if request.GET.cat == 'infra' %}active{% endif %}">⚙ INFRA</a>
+  <a href="?cat=security" class="filter-btn {% if request.GET.cat == 'security' %}active{% endif %}">🔒 SECURITY</a>
+</div>
+
+<div class="board-wrap">
+
+  {% for col in columns %}
+  <div class="column">
+    <div class="col-header" style="border-color:{{ col.color }}">
+      <span class="col-name" style="color:{{ col.color }}">{{ col.icon }} {{ col.label }}</span>
+      <span class="col-count" style="color:{{ col.color }}">{{ col.tasks|length }}</span>
+    </div>
+    <div class="col-body">
+      {% if col.tasks %}
+        {% for task in col.tasks %}
+        <div class="card" onclick="window.location='{% url "admin:interview_task_change" task.id %}'">
+          <a class="card-edit" href="{% url 'admin:interview_task_change' task.id %}" onclick="event.stopPropagation()">✏</a>
+          <div class="card-meta">
+            <div class="priority-dot p-{{ task.priority }}"></div>
+            <span class="tag tag-{{ task.category }}">{{ task.category }}</span>
+          </div>
+          <div class="card-title">{{ task.title }}</div>
+          {% if task.description %}
+          <div style="font-size:11px;color:#475569;margin-bottom:8px;line-height:1.5;font-family:monospace">
+            {{ task.description|truncatechars:80 }}
+          </div>
+          {% endif %}
+          <div class="card-footer">
+            <span class="card-assignee">
+              {% if task.assignee %}
+                <span class="avatar">{{ task.assignee.username|first|upper }}</span>
+                {{ task.assignee.username }}
+              {% else %}
+                <span style="color:#334155">unassigned</span>
+              {% endif %}
+            </span>
+            {% if task.due_date %}
+            <span class="card-due {% if task.is_overdue %}overdue{% endif %}">
+              📅 {{ task.due_date|date:"M d" }}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-col">
+          <div class="empty-icon">{{ col.empty_icon }}</div>
+          <div>No {{ col.label|lower }} tasks</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+</div>
+{% endblock %}

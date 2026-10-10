@@ -32,4 +32,8 @@ python manage.py migrate --no-input
 # ── 3. Seed default templates for any user who has none ──────────────────────
 echo ">>> Seeding missing templates ..."
 python manage.py seed_templates
+
+# ── 4. Seed initial Jira board tasks (no-op if already seeded) ───────────────
+echo ">>> Seeding task board ..."
+python manage.py seed_tasks
 echo "    Done."

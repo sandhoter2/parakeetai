@@ -1,0 +1,9 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools-items %}
+  <li>
+    <a href="{{ board_url }}" class="viewsitelink" style="background:#1e293b;color:#38bdf8;border:1px solid #334155;padding:6px 14px;border-radius:6px;font-family:monospace;font-size:12px;font-weight:700;letter-spacing:1px;text-decoration:none">
+      ⊞ BOARD VIEW
+    </a>
+  </li>
+  {{ block.super }}
+{% endblock %}
