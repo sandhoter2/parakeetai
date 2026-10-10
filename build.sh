@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # build.sh — runs on every Render deployment
-# Flow: install → collectstatic → check DB → migrate → seed templates
+# Flow: install → collectstatic → check DB → migrate → superuser → seed
 set -o errexit
 
 pip install -r requirements.txt
@@ -21,19 +21,38 @@ except Exception as e:
     sys.exit(1)
 PYCHECK
 
-# ── 2. Create superuser before migrations so backfill (0013) finds the admin ──
-echo ">>> Creating superuser (if not exists) ..."
-python manage.py createsuperuser --noinput || true
-
-# ── 3. Run migrations (creates tables; 0010 seeds templates for existing users) ──
+# ── 2. Run migrations (must happen before superuser creation) ─────────────────
 echo ">>> Running migrations ..."
 python manage.py migrate --no-input
 
-# ── 3. Seed default templates for any user who has none ──────────────────────
+# ── 3. Create or update superuser ────────────────────────────────────────────
+echo ">>> Creating/updating superuser ..."
+python - <<'PYSU'
+import os, django
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "local_parakeet.settings")
+django.setup()
+from django.contrib.auth.models import User
+username = os.environ.get("DJANGO_SUPERUSER_USERNAME", "superadmin")
+password = os.environ.get("DJANGO_SUPERUSER_PASSWORD", "")
+email = os.environ.get("DJANGO_SUPERUSER_EMAIL", "")
+if not password:
+    print("    DJANGO_SUPERUSER_PASSWORD not set — skipping.")
+else:
+    u, created = User.objects.get_or_create(username=username)
+    u.set_password(password)
+    u.is_staff = True
+    u.is_superuser = True
+    if email:
+        u.email = email
+    u.save()
+    print(f"    Superuser '{username}' {'created' if created else 'updated'}.")
+PYSU
+
+# ── 4. Seed default templates for any user who has none ──────────────────────
 echo ">>> Seeding missing templates ..."
 python manage.py seed_templates
 
-# ── 4. Seed initial Jira board tasks (no-op if already seeded) ───────────────
+# ── 5. Seed initial Jira board tasks (no-op if already seeded) ───────────────
 echo ">>> Seeding task board ..."
 python manage.py seed_tasks
 echo "    Done."
