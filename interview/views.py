@@ -116,7 +116,9 @@ def signup_view(request):
 def home(request):
     if not request.user.is_authenticated:
         return render(request, "interview/landing.html")
-    sessions = InterviewSession.objects.filter(owner=request.user)
+    sessions = InterviewSession.objects.filter(
+        Q(owner=request.user) | Q(owner__isnull=True)
+    )
     active_count = sessions.filter(status=InterviewSession.STATUS_ACTIVE).count()
     ended_count = sessions.filter(status=InterviewSession.STATUS_ENDED).count()
     return render(request, "interview/home.html", {
