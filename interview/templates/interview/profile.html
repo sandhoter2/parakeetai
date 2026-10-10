@@ -2,55 +2,77 @@
 {% block title %}Profile — PARAKEETAI{% endblock %}
 
 {% block extra_style %}
-.profile-wrap { max-width: 680px; margin: 36px auto; }
-.profile-wrap .page-tag { font-family: var(--mono); font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.7; margin-bottom: 4px; }
-.profile-wrap h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; font-family: var(--mono); }
+.profile-wrap { max-width: 720px; margin: 36px auto; }
+.profile-wrap .page-tag { font-family: var(--mono); font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.85; margin-bottom: 6px; font-weight: 700; }
+.profile-wrap h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; font-family: var(--mono); letter-spacing: -0.5px; }
+.profile-header-card {
+  display: flex; align-items: center; gap: 20px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 20px 24px; margin-bottom: 28px; box-shadow: var(--shadow-sm); position: relative;
+}
+.profile-header-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border2) 50%, transparent); opacity: 0.5;
+}
 .profile-avatar {
-  width: 64px; height: 64px; border-radius: 4px;
-  background: linear-gradient(135deg, rgba(0,200,255,0.15) 0%, rgba(108,99,255,0.2) 100%);
-  border: 1px solid var(--accent); box-shadow: 0 0 12px rgba(0,200,255,0.2);
+  width: 68px; height: 68px; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0,240,255,0.2) 0%, rgba(129,140,248,0.25) 100%);
+  border: 2px solid var(--accent); box-shadow: 0 0 20px var(--accent-glow);
   display: flex; align-items: center; justify-content: center;
-  font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 16px;
-}
-.profile-section { margin-bottom: 32px; }
-.profile-section-title {
-  font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase;
-  letter-spacing: 1px; margin-bottom: 16px; padding-bottom: 8px;
-  border-bottom: 1px solid var(--border); font-family: var(--mono);
-}
-.profile-section-title::before { content: '// '; opacity: 0.5; }
-.form-half { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.form-actions { display: flex; gap: 12px; margin-top: 28px; }
-.msg-banner { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-.msg-success { background: #0f2a1e; border: 1px solid #34d39940; color: var(--green); }
-.msg-error   { background: #2a0f0f; border: 1px solid #f8717140; color: var(--red); }
-
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
-.stat-card {
-  background: rgba(0,200,255,0.04); border: 1px solid rgba(0,200,255,0.18);
-  border-radius: 4px; padding: 16px; text-align: center; position: relative; overflow: hidden;
+  font-size: 28px; font-weight: 800; color: var(--accent); flex-shrink: 0;
   font-family: var(--mono);
 }
+.profile-meta-info h2 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.profile-meta-info p { color: var(--text2); font-size: 13px; font-family: var(--mono); margin: 0; }
+.profile-plan-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 700;
+  background: var(--accent-dim); border: 1px solid var(--border2); color: var(--accent);
+  text-transform: uppercase; font-family: var(--mono); letter-spacing: 0.8px; margin-top: 6px;
+}
+.profile-section {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm);
+}
+.profile-section-title {
+  font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 18px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border); font-family: var(--mono);
+}
+.profile-section-title::before { content: '// '; opacity: 0.6; }
+.form-half { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-actions { display: flex; gap: 12px; margin-top: 28px; }
+.msg-banner { padding: 12px 18px; border-radius: 8px; font-size: 13px; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.msg-success { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--green); }
+.msg-error   { background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); color: var(--red); }
+
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+.stat-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; text-align: center; position: relative; overflow: hidden;
+  font-family: var(--mono); transition: all 0.2s ease;
+}
+.stat-card:hover { border-color: var(--border2); transform: translateY(-1px); }
 .stat-card::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
   background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
 }
-.stat-num { font-size: 26px; font-weight: 800; color: var(--accent); text-shadow: 0 0 12px rgba(0,200,255,0.4); font-variant-numeric: tabular-nums; }
-.stat-label { font-size: 10px; color: var(--text3); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.6px; }
+.stat-num { font-size: 26px; font-weight: 800; color: var(--accent); text-shadow: 0 0 12px var(--accent-glow); font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 10px; color: var(--text3); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
 
 .token-box {
-  background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
-  padding: 16px 18px; margin-top: 16px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 18px 20px; margin-top: 14px;
 }
-.token-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.token-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
 .token-value {
-  flex: 1; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px;
+  flex: 1; font-family: var(--mono); font-size: 12px;
   background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
-  padding: 8px 10px; color: var(--text2); letter-spacing: 0.5px; word-break: break-all;
-  user-select: all;
+  padding: 10px 12px; color: var(--accent); letter-spacing: 0.5px; word-break: break-all;
+  user-select: all; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
 }
-.token-hint { font-size: 12px; color: var(--text3); margin-top: 8px; line-height: 1.5; }
-.token-hint code { background: var(--bg3); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+.token-hint { font-size: 12px; color: var(--text3); margin-top: 10px; line-height: 1.5; }
+.token-hint code { background: var(--bg2); padding: 2px 6px; border-radius: 4px; font-size: 11px; color: var(--accent2); border: 1px solid var(--border); }
 {% endblock %}
 
 {% block navbar_actions %}
@@ -61,12 +83,17 @@
 <div class="container">
   <div class="profile-wrap">
 
-    <div class="profile-avatar">{{ request.user.username|first|upper }}</div>
-    <div class="page-tag">🤖 parakeetai</div>
-    <h1>// PROFILE</h1>
-    <p style="color:var(--text2);margin-bottom:28px;font-size:14px">
-      @{{ request.user.username }}{% if request.user.email %} · {{ request.user.email }}{% endif %}
-    </p>
+    <div class="profile-header-card">
+      <div class="profile-avatar">{{ request.user.username|first|upper }}</div>
+      <div class="profile-meta-info" style="flex:1">
+        <div class="page-tag">AI COPILOT USER</div>
+        <h2>@{{ request.user.username }}</h2>
+        <p>{{ request.user.email|default:"No email associated" }}</p>
+        <span class="profile-plan-pill">
+          Plan: {{ profile.get_plan_display|default:"Free Tier" }}
+        </span>
+      </div>
+    </div>
 
     {% if msg %}
     <div class="msg-banner msg-{{ msg.0 }}">

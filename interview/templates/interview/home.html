@@ -2,251 +2,225 @@
 {% block title %}Sessions — PARAKEETAI{% endblock %}
 
 {% block extra_style %}
-/* ── DOWNLOAD BANNER — robot terminal block ────────────── */
+/* ── DOWNLOAD BANNER — glassmorphic companion banner ── */
 .download-banner {
   display: flex; align-items: center; gap: 20px;
   background: var(--bg2);
-  border: 1px solid var(--border2); border-radius: 6px;
-  border-left: 3px solid var(--accent);
-  padding: 14px 18px; margin-bottom: 20px; flex-wrap: wrap;
-  position: relative;
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 16px 22px; margin-bottom: 24px; flex-wrap: wrap;
+  position: relative; overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
 }
-.download-banner-icon { font-size: 28px; flex-shrink: 0; }
-.download-banner-text { flex: 1; min-width: 200px; }
+.download-banner::before {
+  content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent2) 100%);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.download-banner:hover {
+  border-color: var(--border2);
+  box-shadow: var(--shadow-md);
+}
+.download-banner-icon {
+  font-size: 30px; flex-shrink: 0;
+  width: 48px; height: 48px; border-radius: var(--radius);
+  background: var(--accent-dim); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+}
+.download-banner-text { flex: 1; min-width: 220px; }
 .download-banner-text h3 {
-  font-size: 13px; font-weight: 700; margin-bottom: 3px; color: var(--text);
+  font-size: 14px; font-weight: 700; margin-bottom: 3px; color: var(--text);
   font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
 }
-.download-banner-text p { font-size: 12px; color: var(--text2); }
-.download-banner-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.download-banner-text p { font-size: 13px; color: var(--text2); line-height: 1.4; }
+.download-banner-btns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .dl-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 7px 14px; border-radius: 4px; font-size: 11px; font-weight: 700;
-  cursor: pointer; border: 1px solid; text-decoration: none; transition: all 0.15s;
-  white-space: nowrap; font-family: var(--mono); text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 700;
+  cursor: pointer; border: 1px solid; text-decoration: none !important; transition: all 0.2s ease;
+  white-space: nowrap; font-family: var(--sans);
 }
+.dl-btn:hover { transform: translateY(-1px); }
 .dl-btn-mac {
   background: var(--accent-dim); color: var(--accent);
   border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
 }
-.dl-btn-mac:hover { background: var(--accent); color: var(--bg); text-decoration: none; box-shadow: 0 0 14px var(--accent-glow); }
+.dl-btn-mac:hover {
+  background: var(--accent); color: #03070c;
+  box-shadow: 0 0 20px var(--accent-glow);
+}
 .dl-btn-win {
-  background: rgba(0,255,157,0.06); color: var(--green);
-  border-color: rgba(0,255,157,0.4);
+  background: rgba(16, 185, 129, 0.08); color: var(--green);
+  border-color: rgba(16, 185, 129, 0.4);
 }
-.dl-btn-win:hover { background: var(--green); color: var(--bg); text-decoration: none; }
-.dl-btn-os-hint { font-size: 9px; font-weight: 400; opacity: 0.6; display: block; margin-top: 1px; }
-body.os-mac .dl-btn-mac,
-body.os-win .dl-btn-win { box-shadow: 0 0 0 2px currentColor; }
+.dl-btn-win:hover {
+  background: var(--green); color: #03070c;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+}
+.dl-btn-os-hint { font-size: 10px; font-weight: 500; opacity: 0.75; display: block; margin-top: 1px; }
+
+/* ── TELEMETRY HUD STATS BAR ── */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+.stat:hover {
+  border-color: var(--border2);
+  transform: translateY(-1px);
+}
+.stat::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
+  opacity: 0.4;
+}
+.stat-val {
+  font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--accent);
+  line-height: 1.1; font-family: var(--mono);
+}
+.stat-val.green { color: var(--green); }
+.stat-val.purple { color: var(--accent2); }
+.stat-label {
+  font-size: 11px; color: var(--text3); margin-top: 4px; font-weight: 600;
+  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.8px;
+  display: flex; align-items: center; gap: 6px;
+}
 
 .page-header {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 20px; gap: 16px; flex-wrap: wrap;
 }
 .page-header h1 {
-  font-size: 18px; font-weight: 800; letter-spacing: 1px;
+  font-size: 20px; font-weight: 800; letter-spacing: 0.8px;
   color: var(--text); font-family: var(--mono); text-transform: uppercase;
 }
-.page-header h1 span { color: var(--accent); }
-.page-header p { font-size: 11px; color: var(--text3); margin-top: 3px; font-family: var(--mono); }
+.page-header h1 span {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.page-header p { font-size: 12px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
 
 .toolbar {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
 }
 .search-wrap {
-  flex: 1; min-width: 220px; max-width: 360px;
+  flex: 1; min-width: 220px; max-width: 380px;
   display: flex; align-items: center;
-  background: var(--bg2); border: 1px solid var(--border2); border-radius: 4px;
-  padding: 0 12px; gap: 8px; transition: border-color 0.15s, box-shadow 0.15s;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 0 14px; gap: 10px; transition: all 0.18s ease;
+  box-shadow: var(--shadow-sm);
 }
-.search-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+.search-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
 .search-wrap input {
   flex: 1; background: transparent; border: none; outline: none;
-  color: var(--text); font-size: 12px; padding: 8px 0; font-family: var(--mono);
+  color: var(--text); font-size: 13px; padding: 10px 0; font-family: inherit;
 }
 .search-wrap input::placeholder { color: var(--text3); }
 
 .filter-tabs {
-  display: flex; gap: 2px;
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 2px;
+  display: flex; gap: 3px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 3px;
 }
 .filter-tab {
-  padding: 4px 12px; border-radius: 3px; font-size: 10px; font-weight: 700;
+  padding: 6px 14px; border-radius: 4px; font-size: 11px; font-weight: 700;
   cursor: pointer; border: none; color: var(--text3);
-  transition: all 0.15s; background: transparent;
+  transition: all 0.15s ease; background: transparent;
   font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
 }
 .filter-tab.active {
-  color: var(--accent); background: var(--accent-dim); font-weight: 700;
+  color: var(--accent); background: var(--accent-dim);
+  box-shadow: inset 0 0 0 1px var(--border2);
 }
-.filter-tab:hover:not(.active) { color: var(--text2); }
+.filter-tab:hover:not(.active) { color: var(--text); background: var(--bg3); }
 
-.view-toggle { display: flex; gap: 2px; margin-left: auto; }
+.view-toggle { display: flex; gap: 3px; margin-left: auto; }
 .view-btn {
-  width: 30px; height: 30px; border-radius: 3px; border: 1px solid var(--border);
+  width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border);
   background: var(--bg2); color: var(--text3); cursor: pointer; display: flex;
-  align-items: center; justify-content: center; font-size: 13px; transition: all 0.15s;
+  align-items: center; justify-content: center; font-size: 14px; transition: all 0.15s ease;
 }
-.view-btn.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
-
-/* ── TABLE VIEW ─────────────────────────────────────────── */
-.sessions-table-wrap { overflow-x: auto; }
-.sessions-table {
-  width: 100%; border-collapse: separate; border-spacing: 0 3px;
-}
-.sessions-table thead th {
-  font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase;
-  letter-spacing: 1px; padding: 4px 12px; text-align: left; white-space: nowrap;
-  font-family: var(--mono);
-}
-.sessions-table thead th:last-child { text-align: right; }
-
-.trow {
-  background: var(--bg2); border: 1px solid var(--border);
-  transition: border-color 0.1s; cursor: pointer;
-}
-.trow:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.trow td {
-  padding: 12px 12px; font-size: 13px; vertical-align: middle;
-}
-.trow td:first-child { border-radius: 4px 0 0 4px; }
-.trow td:last-child { border-radius: 0 4px 4px 0; }
-
-.session-icon {
-  width: 34px; height: 34px; border-radius: 4px; background: var(--bg3);
-  display: flex; align-items: center; justify-content: center; font-size: 14px;
-  flex-shrink: 0; border: 1px solid var(--border2);
-  font-family: var(--mono); font-weight: 700; color: var(--accent); font-size: 12px;
-}
-.session-name { font-weight: 600; font-size: 13px; }
-.session-sub { font-size: 11px; color: var(--text2); margin-top: 2px; font-family: var(--mono); }
-
-.mode-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700;
-  background: var(--bg3); border: 1px solid var(--border2); color: var(--text3);
-  font-family: var(--mono); text-transform: uppercase;
-}
-
-.duration-cell { color: var(--text3); font-size: 12px; font-family: var(--mono); }
-
-.state-badge {
-  display: inline-block; padding: 3px 8px; border-radius: 3px;
-  font-size: 10px; font-weight: 700; white-space: nowrap;
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
-}
-.state-badge.pending { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,200,255,0.3); }
-.state-badge.active { background: rgba(0,255,157,0.08); color: var(--green); border: 1px solid rgba(0,255,157,0.3); animation: statePulse 2s infinite; }
-.state-badge.ended { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
-@keyframes statePulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
-
-.action-btn {
-  padding: 6px 14px; border-radius: 3px; font-size: 11px; font-weight: 700;
-  cursor: pointer; border: 1px solid; white-space: nowrap; transition: all 0.15s;
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
-  text-decoration: none; display: inline-block;
-}
-.action-btn.start {
+.view-btn.active {
   background: var(--accent-dim); color: var(--accent); border-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
 }
-.action-btn.start:hover { background: var(--accent); color: var(--bg); box-shadow: 0 0 14px var(--accent-glow); text-decoration: none; }
-.action-btn.view {
-  background: var(--bg3); border-color: var(--border2); color: var(--text2);
-}
-.action-btn.view:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
 
-.actions-cell { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
-
-.menu-btn {
-  width: 26px; height: 26px; border-radius: 3px; border: 1px solid var(--border);
-  background: transparent; color: var(--text3); cursor: pointer; font-size: 14px;
-  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
-  position: relative;
-}
-.menu-btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border2); }
-
-.ctx-menu {
-  position: fixed;
-  background: var(--bg2); border: 1px solid var(--border2); border-radius: 4px;
-  padding: 3px; z-index: 9999; min-width: 150px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,200,255,0.06);
-  display: none;
-}
-.ctx-menu.open { display: block; }
-.ctx-item {
-  padding: 7px 10px; border-radius: 3px; font-size: 12px; cursor: pointer;
-  color: var(--text2); white-space: nowrap; transition: background 0.1s;
-  font-family: var(--mono);
-}
-.ctx-item:hover { background: var(--bg3); color: var(--text); }
-.ctx-item.danger { color: var(--red); }
-.ctx-item.danger:hover { background: rgba(255,71,87,0.1); }
-
-/* ── GRID VIEW ─────────────────────────────────────────── */
+/* ── SESSIONS GRID VIEW ── */
 .sessions-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px;
 }
 .session-card {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
-  padding: 14px; transition: border-color 0.15s, box-shadow 0.15s; position: relative;
-  overflow: hidden;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 18px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative;
+  overflow: hidden; box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; justify-content: space-between;
 }
 .session-card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: var(--accent); opacity: 0;
-  transition: opacity 0.15s;
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+  opacity: 0; transition: opacity 0.2s ease;
 }
-.session-card:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(0,200,255,0.06); }
-.session-card:hover::before { opacity: 0.6; }
-.session-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+.session-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.session-card:hover::before { opacity: 1; }
+
+.session-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
 .session-card-title {
-  font-size: 13px; font-weight: 700;
+  font-size: 15px; font-weight: 700; color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: -0.2px;
 }
 .session-card-company {
-  color: var(--accent); font-size: 11px; margin-bottom: 8px;
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--accent); font-size: 11px; margin-top: 2px;
+  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600;
 }
 .session-card-meta {
-  display: flex; gap: 8px; color: var(--text3); font-size: 11px; flex-wrap: wrap;
-  font-family: var(--mono);
+  display: flex; gap: 10px; color: var(--text3); font-size: 11px; flex-wrap: wrap;
+  font-family: var(--mono); margin-top: 6px;
 }
-.session-card-actions { display: flex; gap: 6px; margin-top: 10px; }
+.session-card-meta span {
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.session-card-actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
 
-/* Stats readout bar */
-.stats-bar {
-  display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+/* Badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 999px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--mono);
 }
-.stat {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
-  padding: 12px 16px; flex: 1; min-width: 100px;
-  position: relative; overflow: hidden;
+.badge-active {
+  background: rgba(16, 185, 129, 0.12); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3);
 }
-.stat::after {
-  content: '';
-  position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
-  background: var(--accent); opacity: 0.3;
+.badge-active::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green);
+  box-shadow: 0 0 6px var(--green); animation: pulse 1.2s infinite;
 }
-.stat-val {
-  font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: var(--accent);
-  line-height: 1.1; font-family: var(--mono);
+.badge-ended {
+  background: var(--bg3); color: var(--text3); border: 1px solid var(--border);
 }
-.stat-label {
-  font-size: 10px; color: var(--text3); margin-top: 3px; font-weight: 600;
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px;
+.badge-pending {
+  background: var(--accent-dim); color: var(--accent); border: 1px solid var(--border2);
 }
-
-.empty-state {
-  text-align: center; padding: 80px 24px; color: var(--text2);
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
-}
-.empty-state-icon { font-size: 48px; margin-bottom: 16px; }
-.empty-state h2 {
-  font-size: 16px; margin-bottom: 8px; color: var(--text); font-weight: 700;
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px;
-}
-.empty-state p { margin-bottom: 24px; font-size: 13px; color: var(--text3); max-width: 340px; margin-inline: auto; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 {% endblock %}
 
 {% block content %}
@@ -254,35 +228,57 @@ body.os-win .dl-btn-win { box-shadow: 0 0 0 2px currentColor; }
 
   <!-- ── OVERLAY DOWNLOAD BANNER ─────────────────────────────── -->
   <div class="download-banner" id="downloadBanner">
-    <div class="download-banner-icon">🤖</div>
+    <div class="download-banner-icon">⚡</div>
     <div class="download-banner-text">
-      <h3>// Desktop Overlay Module</h3>
-      <p>Always-on-top AI overlay for calls — transparent, screen-share invisible.</p>
+      <h3>Desktop AI Overlay · Live Copilot</h3>
+      <p>Always-on-top transparent assistant for Zoom, Teams & Google Meet — invisible to screen sharing.</p>
     </div>
     <div class="download-banner-btns">
       <a id="dlMacBtn" href="https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-1.2.0.dmg"
-         class="dl-btn dl-btn-mac" title="Download for macOS (Intel + Apple Silicon)">
+         class="dl-btn dl-btn-mac" title="Download for macOS (Apple Silicon + Intel)">
         <span>🍎</span>
         <span>
-          Download for Mac
-          <span class="dl-btn-os-hint">.dmg · macOS 11+</span>
+          Download Mac
+          <span class="dl-btn-os-hint">Apple Silicon &amp; Intel</span>
         </span>
       </a>
       <a id="dlWinBtn" href="https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-Setup-1.2.0.exe"
          class="dl-btn dl-btn-win" title="Download for Windows (64-bit installer)">
         <span>🪟</span>
         <span>
-          Download for Windows
-          <span class="dl-btn-os-hint">.exe · Windows 10/11</span>
+          Download Windows
+          <span class="dl-btn-os-hint">Windows 10 / 11</span>
         </span>
       </a>
+    </div>
+  </div>
+
+  <!-- ── HUD STATS BAR ──────────────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-val">{{ sessions|length }}</div>
+      <div class="stat-label">Total Sessions</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val green">{{ active_count|default:"0" }}</div>
+      <div class="stat-label">
+        <span class="status-dot"></span> Active Now
+      </div>
+    </div>
+    <div class="stat">
+      <div class="stat-val purple">{{ total_transcripts|default:"0" }}</div>
+      <div class="stat-label">Transcripts Processed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">{{ total_ai|default:"0" }}</div>
+      <div class="stat-label">AI Answers Generated</div>
     </div>
   </div>
 
   <div class="page-header">
     <div>
       <h1>// <span>SESSIONS</span></h1>
-      <p>[ active interfaces · session archive ]</p>
+      <p>[ Real-time intelligence &middot; Session history ]</p>
     </div>
     <a href="/session/new/" class="btn btn-primary">+ NEW SESSION</a>
   </div>

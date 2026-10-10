@@ -5,41 +5,44 @@
 
 {% block extrahead %}
 {{ block.super }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
 <style>
 :root {
-  --col-todo: #3b82f6;
+  --col-todo: #38bdf8;
   --col-inprogress: #f59e0b;
-  --col-inreview: #8b5cf6;
+  --col-inreview: #a855f7;
   --col-done: #10b981;
-  --col-blocked: #ef4444;
-  --bg-dark: #0f172a;
-  --bg-card: #1e293b;
-  --bg-col: #151e2e;
-  --text-main: #e2e8f0;
+  --col-blocked: #f43f5e;
+  --bg-dark: #03070c;
+  --bg-card: #0c1824;
+  --bg-col: #071018;
+  --text-main: #f8fafc;
   --text-muted: #64748b;
-  --border: #1e293b;
+  --border: rgba(255, 255, 255, 0.08);
 }
-body { background: var(--bg-dark) !important; color: var(--text-main) !important; }
+body { font-family: 'Plus Jakarta Sans', sans-serif !important; background: var(--bg-dark) !important; color: var(--text-main) !important; -webkit-font-smoothing: antialiased; }
 #content { background: var(--bg-dark) !important; }
 #content-main { padding: 0 !important; }
-#header { background: #0a1628 !important; }
+#header { background: #071018 !important; border-bottom: 1px solid var(--border) !important; }
 
 .board-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px 12px;
-  border-bottom: 1px solid #1e293b;
-  background: #0a1628;
+  padding: 22px 28px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #071018;
 }
 .board-title {
-  font-family: 'Courier New', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 20px;
-  font-weight: 700;
-  color: #38bdf8;
-  letter-spacing: 2px;
+  font-weight: 800;
+  color: #00f0ff;
+  letter-spacing: 1px;
 }
-.board-subtitle { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+.board-subtitle { color: var(--text-muted); font-size: 12px; margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
 
 .board-actions {
   display: flex;
@@ -47,7 +50,21 @@ body { background: var(--bg-dark) !important; color: var(--text-main) !important
   align-items: center;
 }
 .btn-add {
-  background: #3b82f6;
+  background: linear-gradient(135deg, rgba(0,240,255,0.2) 0%, rgba(129,140,248,0.2) 100%);
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(0,240,255,0.2);
+  transition: all 0.2s ease;
+}
+.btn-add:hover {
+  background: #00f0ff;
+  color: #03070c;
+  box-shadow: 0 0 20px rgba(0,240,255,0.4);
+}
   color: #fff;
   border: none;
   border-radius: 6px;

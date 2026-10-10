@@ -121,10 +121,14 @@ def home(request):
     )
     active_count = sessions.filter(status=InterviewSession.STATUS_ACTIVE).count()
     ended_count = sessions.filter(status=InterviewSession.STATUS_ENDED).count()
+    total_transcripts = TranscriptEntry.objects.filter(session__in=sessions).count()
+    total_ai = AIMessage.objects.filter(session__in=sessions).count()
     return render(request, "interview/home.html", {
         "sessions": sessions,
         "active_count": active_count,
         "ended_count": ended_count,
+        "total_transcripts": total_transcripts,
+        "total_ai": total_ai,
     })
 
 

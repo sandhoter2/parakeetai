@@ -5,30 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pricing — PARAKEETAI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:    #040b10;
-      --bg2:   #0a141c;
-      --bg3:   #111d27;
-      --border:#1a2d3d;
-      --accent:#00c8ff;
-      --accent2:#6c63ff;
-      --green: #00ff9d;
-      --red:   #ff4757;
-      --yellow:#ffd32a;
-      --text:  #e0f2ff;
-      --text2: #7ab0cc;
-      --text3: #3d6880;
+      --bg:    #03070c;
+      --bg2:   #071018;
+      --bg3:   #0e1c2a;
+      --border:rgba(255,255,255,0.08);
+      --border2:rgba(0,240,255,0.25);
+      --accent:#00f0ff;
+      --accent2:#818cf8;
+      --green: #10b981;
+      --red:   #f43f5e;
+      --yellow:#fbbf24;
+      --text:  #f8fafc;
+      --text2: #94a3b8;
+      --text3: #475569;
       --mono:  'JetBrains Mono', monospace;
-      --radius:4px;
+      --sans:  'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --radius:8px;
     }
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: var(--sans);
       background: var(--bg); color: var(--text);
       font-size: 15px; line-height: 1.6;
       position: relative; overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     body::before {
       content: ''; position: fixed; inset: 0;
