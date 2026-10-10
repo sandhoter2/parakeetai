@@ -8,6 +8,10 @@ dist/
 build/
 .venv/
 venv/
+.env
+.env.*
+*.env
+fixtures/db_backup.json
 # autoresearch experiment artifacts
 autoresearch*.md
 autoresearch*.sh
