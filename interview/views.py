@@ -425,6 +425,7 @@ def api_conversation_helper(request, session_id):
 
     def stream_sse():
         yield f"data: {json.dumps({'type': 'start'})}\n\n"
+        saved_content = []
         try:
             stream = client.chat.completions.create(
                 model=model,
@@ -438,9 +439,16 @@ def api_conversation_helper(request, session_id):
             for chunk in stream:
                 delta = chunk.choices[0].delta.content
                 if delta:
+                    saved_content.append(delta)
                     yield f"data: {json.dumps({'type': 'text', 'text': delta})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+        if saved_content:
+            AIMessage.objects.create(
+                session=session,
+                trigger_text=insight_prompt or "conversation_helper",
+                content="".join(saved_content),
+            )
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
     return StreamingHttpResponse(
