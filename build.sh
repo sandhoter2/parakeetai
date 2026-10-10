@@ -21,7 +21,11 @@ except Exception as e:
     sys.exit(1)
 PYCHECK
 
-# ── 2. Run migrations (creates tables; 0010 seeds templates for existing users) ──
+# ── 2. Create superuser before migrations so backfill (0013) finds the admin ──
+echo ">>> Creating superuser (if not exists) ..."
+python manage.py createsuperuser --noinput || true
+
+# ── 3. Run migrations (creates tables; 0010 seeds templates for existing users) ──
 echo ">>> Running migrations ..."
 python manage.py migrate --no-input
 
