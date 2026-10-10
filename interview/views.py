@@ -3,6 +3,8 @@ import os
 import uuid
 from datetime import timezone
 
+from django.db.models import Q
+
 import groq as groq_lib
 import openai as openai_lib
 from django.conf import settings
@@ -260,7 +262,9 @@ def api_list_sessions(request):
     ext_token = request.headers.get('X-Ext-Token', '').strip()
     profile = _profile_for_token(ext_token) if ext_token else None
     user = profile.user if profile else request.user
-    sessions = InterviewSession.objects.filter(owner=user).order_by('-created_at')[:20]
+    sessions = InterviewSession.objects.filter(
+        Q(owner=user) | Q(owner__isnull=True)
+    ).order_by('-created_at')[:20]
     return JsonResponse({"sessions": [
         {"id": str(s.id), "title": s.title, "company": s.company, "status": s.status,
          "created_at": s.created_at.isoformat() if s.created_at else None}
