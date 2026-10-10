@@ -257,7 +257,10 @@ def api_regenerate_token(request):
 def api_list_sessions(request):
     """List sessions for the extension picker."""
     if (r := _auth_required(request)): return r
-    sessions = InterviewSession.objects.order_by('-created_at')[:20]
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    sessions = InterviewSession.objects.filter(owner=user).order_by('-created_at')[:20]
     return JsonResponse({"sessions": [
         {"id": str(s.id), "title": s.title, "company": s.company, "status": s.status,
          "created_at": s.created_at.isoformat() if s.created_at else None}
@@ -1049,9 +1052,9 @@ def profile_page(request):
         form = UserProfileForm(instance=profile, user=request.user)
 
     from .models import TranscriptEntry as TE, AIMessage as AI
-    session_count = InterviewSession.objects.count()
-    transcript_count = TE.objects.count()
-    ai_count = AI.objects.count()
+    session_count = InterviewSession.objects.filter(owner=request.user).count()
+    transcript_count = TE.objects.filter(session__owner=request.user).count()
+    ai_count = AI.objects.filter(session__owner=request.user).count()
 
     return render(request, "interview/profile.html", {
         "form": form,
