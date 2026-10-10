@@ -29,6 +29,9 @@ INITIAL_TASKS = [
     # BLOCKED
     dict(title="Stripe payment integration (live keys)", description="Waiting on Stripe live API keys from account owner. Test mode wired; production keys pending.", status="blocked", priority="critical", category="feature", order=1),
     dict(title="Apple App Store submission for iOS companion app", description="Blocked on Apple Developer account enrollment ($99/yr). App built; cannot submit without account.", status="blocked", priority="medium", category="infra", order=2),
+
+    # NEW
+    dict(title="Add dark mode toggle to user settings page", description="Allow users to switch between light and dark themes from their profile settings. Persist preference in UserProfile model.", status="todo", priority="medium", category="improvement", order=6),
 ]
 
 
