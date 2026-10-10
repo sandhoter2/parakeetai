@@ -272,7 +272,10 @@ def api_list_sessions(request):
 @require_POST
 def api_activate_session(request, session_id):
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
     session.status = InterviewSession.STATUS_ACTIVE
     session.save()
     return JsonResponse({"status": "active", "id": str(session.id)})
@@ -282,7 +285,10 @@ def api_activate_session(request, session_id):
 @require_POST
 def api_end_session(request, session_id):
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
     session.status = InterviewSession.STATUS_ENDED
     session.ended_at = dj_timezone.now()
     session.save()
@@ -303,7 +309,10 @@ def api_end_session(request, session_id):
 @require_POST
 def api_transcript(request, session_id):
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -331,7 +340,10 @@ def api_transcript(request, session_id):
 def api_save_audio_chunk(request, session_id):
     """Save a raw audio chunk from MediaRecorder for the session recording."""
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
 
     audio_data = request.body
     if not audio_data:
@@ -427,7 +439,10 @@ def api_conversation_helper(request, session_id):
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
 
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
 
     try:
         data = json.loads(request.body)
@@ -505,7 +520,10 @@ def api_chat(request, session_id):
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
 
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
 
     try:
         data = json.loads(request.body)
@@ -574,7 +592,10 @@ def api_chat(request, session_id):
 def api_transcribe(request, session_id):
     """Transcribe an audio chunk using Groq Whisper and save it."""
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
     api_key = settings.GROQ_API_KEY
     if not api_key:
         return JsonResponse({"error": "GROQ_API_KEY not set"}, status=500)
@@ -624,7 +645,10 @@ def api_transcribe(request, session_id):
 def api_session_data(request, session_id):
     """Return recent transcripts and AI messages as JSON (used for polling)."""
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
     since_id = request.GET.get("since_transcript_id")
 
     transcripts_qs = session.transcripts.order_by("created_at")
@@ -666,7 +690,10 @@ def api_delete_session(request, session_id):
     if (r := _auth_required(request)): return r
     if request.method != "DELETE":
         return JsonResponse({"error": "DELETE required"}, status=405)
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
     session.delete()
     return JsonResponse({"ok": True})
 
@@ -675,7 +702,10 @@ def api_delete_session(request, session_id):
 @require_POST
 def api_edit_session(request, session_id):
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -692,7 +722,10 @@ def api_edit_session(request, session_id):
 @csrf_exempt
 def api_export_session(request, session_id):
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
     fmt = request.GET.get("fmt", "txt")
     transcripts = session.transcripts.order_by("created_at")
     ai_messages = session.ai_messages.order_by("created_at")
@@ -763,7 +796,10 @@ def api_export_session(request, session_id):
 @require_POST
 def api_add_note(request, session_id):
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -785,7 +821,10 @@ def api_add_note(request, session_id):
 def api_meeting_participants(request, session_id):
     """GET list of participants / POST to add one."""
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
 
     if request.method == "GET":
         ps = [
@@ -819,7 +858,10 @@ def api_meeting_participants(request, session_id):
 @require_POST
 def api_delete_participant(request, session_id, participant_id):
     if (r := _auth_required(request)): return r
-    p = get_object_or_404(MeetingParticipant, id=participant_id, session__id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    p = get_object_or_404(MeetingParticipant, id=participant_id, session__id=session_id, session__owner=user)
     p.delete()
     return JsonResponse({"ok": True})
 
@@ -830,7 +872,10 @@ def api_scan_participants(request, session_id):
     """Receive a screenshot, call Groq vision to extract participant names."""
     import base64, re
     if (r := _auth_required(request)): return r
-    get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    get_object_or_404(InterviewSession, id=session_id, owner=user)
 
     screenshot = request.FILES.get("screenshot")
     if not screenshot:
@@ -881,7 +926,10 @@ def api_scan_participants(request, session_id):
 def api_update_entry_speaker(request, session_id, entry_id):
     """Assign a speaker_name to a transcript entry."""
     if (r := _auth_required(request)): return r
-    entry = get_object_or_404(TranscriptEntry, id=entry_id, session__id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    entry = get_object_or_404(TranscriptEntry, id=entry_id, session__id=session_id, session__owner=user)
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -896,7 +944,10 @@ def api_update_entry_speaker(request, session_id, entry_id):
 def api_meeting_summary(request, session_id):
     """Generate AI meeting summary with action items, decisions, and open questions."""
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
     client, model, provider = _get_chat_client()
     if not client:
         return JsonResponse({"error": "No AI key set. Add OPENROUTER_API_KEY or GROQ_API_KEY."}, status=500)
@@ -1341,7 +1392,10 @@ def api_stats(request):
 def api_session_score(request, session_id):
     """Generate AI-powered performance score and feedback for a completed session."""
     if (r := _auth_required(request)): return r
-    session = get_object_or_404(InterviewSession, id=session_id)
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    user = profile.user if profile else request.user
+    session = get_object_or_404(InterviewSession, id=session_id, owner=user)
 
     client, model, provider = _get_chat_client()
     if not client:
