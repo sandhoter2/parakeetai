@@ -1,5 +1,5 @@
 {% extends "interview/base.html" %}
-{% block title %}Sessions — PARAKEETAI{% endblock %}
+{% block title %}Sessions — HAPPYHELPER{% endblock %}
 
 {% block extra_style %}
 /* ── DOWNLOAD BANNER — glassmorphic companion banner ── */
@@ -234,7 +234,7 @@
       <p>Always-on-top transparent assistant for Zoom, Teams & Google Meet — invisible to screen sharing.</p>
     </div>
     <div class="download-banner-btns">
-      <a id="dlMacBtn" href="https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-1.2.0.dmg"
+      <a id="dlMacBtn" href="https://github.com/sandhoter2/happyhelper/releases/latest/download/HappyHelper-1.2.0.dmg"
          class="dl-btn dl-btn-mac" title="Download for macOS (Apple Silicon + Intel)">
         <span>🍎</span>
         <span>
@@ -242,7 +242,7 @@
           <span class="dl-btn-os-hint">Apple Silicon &amp; Intel</span>
         </span>
       </a>
-      <a id="dlWinBtn" href="https://github.com/sandhoter2/parakeetai/releases/latest/download/ParakeetAI-Setup-1.2.0.exe"
+      <a id="dlWinBtn" href="https://github.com/sandhoter2/happyhelper/releases/latest/download/HappyHelper-Setup-1.2.0.exe"
          class="dl-btn dl-btn-win" title="Download for Windows (64-bit installer)">
         <span>🪟</span>
         <span>
@@ -506,7 +506,7 @@ document.addEventListener('click', e => {
   } else if (/Win/.test(ua)) {
     document.body.classList.add('os-win');
     // Try to fetch latest release version from GitHub API and update URLs
-    fetch('https://api.github.com/repos/sandhoter2/parakeetai/releases/latest', {cache:'no-store'})
+    fetch('https://api.github.com/repos/sandhoter2/happyhelper/releases/latest', {cache:'no-store'})
       .then(r => r.ok ? r.json() : null).then(data => {
         if (!data) return;
         const mac = document.getElementById('dlMacBtn');
