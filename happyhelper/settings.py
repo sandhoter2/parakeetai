@@ -38,7 +38,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://rlaihub.com",
     "https://www.rlaihub.com",
     "https://happyhome.rlaihub.com",
-    "https://parakeetai.onrender.com",
+    "https://happyhelper.onrender.com",
     "https://*.onrender.com",
 ]
 
@@ -63,7 +63,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "local_parakeet.urls"
+ROOT_URLCONF = "happyhelper.urls"
 
 TEMPLATES = [
     {
@@ -81,7 +81,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "local_parakeet.wsgi.application"
+WSGI_APPLICATION = "happyhelper.wsgi.application"
 
 _DATABASE_URL = os.environ.get("DATABASE_URL", "")
 _MYSQL_HOST = os.environ.get("MYSQL_HOST", "")

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ParakeetAI</title>
+<title>HappyHelper</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -325,11 +325,11 @@ html, body {
 
   <!-- ── Login screen ── -->
   <div id="loginScreen">
-    <div class="login-logo">✦ ParakeetAI</div>
+    <div class="login-logo">✦ HappyHelper</div>
     <div class="login-subtitle">Sign in to your account to continue</div>
     <div class="login-field">
       <label>Server URL</label>
-      <input type="text" id="loginBaseUrl" placeholder="https://parakeetai.onrender.com" value="https://parakeetai.onrender.com">
+      <input type="text" id="loginBaseUrl" placeholder="https://happyhelper.onrender.com" value="https://happyhelper.onrender.com">
     </div>
     <div class="login-field">
       <label>Username</label>
@@ -366,8 +366,8 @@ html, body {
       </div>
       <button class="ctrl-btn" id="pinBtn" onclick="togglePin()" title="Toggle always-on-top">📌</button>
       <button class="ctrl-btn" id="settingsBtn" onclick="toggleSettings()" title="Django settings">⚙</button>
-      <button class="ctrl-btn minimize-btn" onclick="window.parakeet.minimize()" title="Minimize">—</button>
-      <button class="ctrl-btn close-btn"    onclick="window.parakeet.close()"    title="Close">✕</button>
+      <button class="ctrl-btn minimize-btn" onclick="window.happyhelper.minimize()" title="Minimize">—</button>
+      <button class="ctrl-btn close-btn"    onclick="window.happyhelper.close()"    title="Close">✕</button>
     </div>
   </div>
 
@@ -422,7 +422,7 @@ html, body {
   <!-- ── Answer area ── -->
   <div class="answer-area" id="answerArea">
     <div class="empty-hint" id="emptyHint">
-      ✦ ParakeetAI<br>
+      ✦ HappyHelper<br>
       Type a question or speak<br>
       <small style="font-size:10px;opacity:0.6">⌘⇧Space to show/hide · ⚙ to connect Django</small>
     </div>
@@ -452,16 +452,16 @@ html, body {
 <script>
 // ── Auth & Plan ───────────────────────────────────────────────────────────────
 async function initAuth() {
-  if (!window.parakeet?.storeGet) return; // dev mode without IPC
-  const token = await window.parakeet.storeGet('token');
+  if (!window.happyhelper?.storeGet) return; // dev mode without IPC
+  const token = await window.happyhelper.storeGet('token');
   if (token) {
     // Already logged in — hide login screen, show main UI
     document.getElementById('loginScreen').classList.add('hidden');
-    const storedBase    = await window.parakeet.storeGet('baseUrl');
-    const storedUser    = await window.parakeet.storeGet('username');
-    const plan          = await window.parakeet.storeGet('plan');
-    const sessionLimit  = await window.parakeet.storeGet('sessionLimit');
-    const sessionsUsed  = await window.parakeet.storeGet('sessionsUsed');
+    const storedBase    = await window.happyhelper.storeGet('baseUrl');
+    const storedUser    = await window.happyhelper.storeGet('username');
+    const plan          = await window.happyhelper.storeGet('plan');
+    const sessionLimit  = await window.happyhelper.storeGet('sessionLimit');
+    const sessionsUsed  = await window.happyhelper.storeGet('sessionsUsed');
     cfg.baseUrl  = storedBase  || cfg.baseUrl;
     cfg.token    = token;
     document.getElementById('cfgBaseUrl').value = cfg.baseUrl;
@@ -471,7 +471,7 @@ async function initAuth() {
 }
 
 async function doLogin() {
-  const baseUrl  = document.getElementById('loginBaseUrl').value.trim() || 'https://parakeetai.onrender.com';
+  const baseUrl  = document.getElementById('loginBaseUrl').value.trim() || 'https://happyhelper.onrender.com';
   const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
   const errEl    = document.getElementById('loginError');
@@ -482,7 +482,7 @@ async function doLogin() {
 
   btn.disabled = true; btn.textContent = 'Signing in…';
   try {
-    const result = await window.parakeet.djangoLogin({ baseUrl, username, password });
+    const result = await window.happyhelper.djangoLogin({ baseUrl, username, password });
     if (result.statusCode === 200) {
       cfg.baseUrl = baseUrl;
       cfg.token   = result.token;
@@ -529,14 +529,14 @@ function showPlanBanner(username, plan, sessionsUsed, sessionLimit) {
 }
 
 function openUpgrade() {
-  const baseUrl = cfg.baseUrl || 'https://parakeetai.onrender.com';
+  const baseUrl = cfg.baseUrl || 'https://happyhelper.onrender.com';
   window.open(baseUrl + '/billing/checkout/pro/', '_blank');
 }
 
 async function autoLoadSession() {
   if (!cfg.token) return;
   try {
-    const data = await window.parakeet.djangoConfig({ baseUrl: cfg.baseUrl, token: cfg.token });
+    const data = await window.happyhelper.djangoConfig({ baseUrl: cfg.baseUrl, token: cfg.token });
     const sid = (data.active_sessions && data.active_sessions.length > 0)
       ? data.active_sessions[0].id
       : data.latest_session_id || '';
@@ -556,7 +556,7 @@ async function newSession() {
   const btn = document.getElementById('newSessionBtn');
   btn.disabled = true; btn.textContent = '⏳';
   try {
-    const result = await window.parakeet.djangoNewSession({
+    const result = await window.happyhelper.djangoNewSession({
       baseUrl: cfg.baseUrl, token: cfg.token, title: title.trim() || 'Session',
     });
     if (result.statusCode === 200) {
@@ -616,7 +616,7 @@ async function loadFromDjango() {
   btn.textContent = '⏳ Loading…'; btn.disabled = true;
   try {
     // Use IPC bridge to avoid CORS — main process has no origin restrictions
-    const data = await window.parakeet.djangoConfig({ baseUrl, token });
+    const data = await window.happyhelper.djangoConfig({ baseUrl, token });
     const sid = (data.active_sessions && data.active_sessions.length > 0)
       ? data.active_sessions[0].id
       : data.latest_session_id || '';
@@ -656,7 +656,7 @@ function saveSettings() {
 let pinned = true;
 function togglePin() {
   pinned = !pinned;
-  window.parakeet.setAlwaysOnTop(pinned);
+  window.happyhelper.setAlwaysOnTop(pinned);
   const btn = document.getElementById('pinBtn');
   btn.classList.toggle('active', pinned);
   btn.title = pinned ? 'Unpin (let other windows go on top)' : 'Pin on top';
@@ -666,7 +666,7 @@ function togglePin() {
 function setGlassOpacity(val) {
   const bgAlpha = Math.max(0.06, (val / 100) * 0.90).toFixed(2);
   document.getElementById('glassPanel').style.setProperty('--panel-bg-alpha', bgAlpha);
-  window.parakeet.setOpacity(Math.max(0.12, val / 100));
+  window.happyhelper.setOpacity(Math.max(0.12, val / 100));
 }
 
 // ── Bionic reading ────────────────────────────────────────────────────────────
@@ -747,7 +747,7 @@ async function askAI() {
   const { answerEl } = addBlock(q, '…');
 
   try {
-    const res = await window.parakeet.djangoChat({
+    const res = await window.happyhelper.djangoChat({
       baseUrl: cfg.baseUrl, sessionId: cfg.sessionId,
       token: cfg.token, question: q
     });
@@ -848,12 +848,12 @@ async function sendAudioChunk(blob, speakerType) {
   if (!cfg.sessionId || blob.size < 500) return; // skip silence / not configured
   try {
     const audioBase64 = await blobToBase64(blob);
-    // Save raw audio to ~/Documents/ParakeetAI/recordings/ (fire-and-forget)
-    if (window.parakeet?.saveAudioChunk) {
-      window.parakeet.saveAudioChunk({ data: audioBase64, speakerType, timestamp: Date.now() })
+    // Save raw audio to ~/Documents/HappyHelper/recordings/ (fire-and-forget)
+    if (window.happyhelper?.saveAudioChunk) {
+      window.happyhelper.saveAudioChunk({ data: audioBase64, speakerType, timestamp: Date.now() })
         .catch(() => {});
     }
-    const res = await window.parakeet.djangoTranscribeAudio({
+    const res = await window.happyhelper.djangoTranscribeAudio({
       baseUrl: cfg.baseUrl, sessionId: cfg.sessionId,
       token: cfg.token, audioBase64, speakerType
     });
@@ -952,7 +952,7 @@ async function toggleMic() {
     updateTranscriptStatus();
     startMicRecorder();
   } catch(e) {
-    alert('Mic access denied.\n\nGo to System Settings → Privacy → Microphone and allow ParakeetAI.');
+    alert('Mic access denied.\n\nGo to System Settings → Privacy → Microphone and allow HappyHelper.');
   }
 }
 
@@ -1033,7 +1033,7 @@ function startScreenRecorder() {
 
 // Keyboard: Escape hides overlay
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') window.parakeet.hide();
+  if (e.key === 'Escape') window.happyhelper.hide();
 });
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
@@ -1058,7 +1058,7 @@ async function loadContext() {
   const statusEl = document.getElementById('ctxStatus');
   statusEl.textContent = 'Loading…';
   try {
-    const res = await window.parakeet.djangoSessionContext({
+    const res = await window.happyhelper.djangoSessionContext({
       baseUrl: cfg.baseUrl, sessionId: cfg.sessionId, token: cfg.token, method: 'GET'
     });
     if (res.statusCode === 200) {
@@ -1080,7 +1080,7 @@ async function saveContext() {
   const statusEl = document.getElementById('ctxStatus');
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    const res = await window.parakeet.djangoSessionContext({
+    const res = await window.happyhelper.djangoSessionContext({
       baseUrl: cfg.baseUrl, sessionId: cfg.sessionId, token: cfg.token, method: 'PUT',
       payload: {
         extra_context:   document.getElementById('ctxBackground').value,

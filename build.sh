@@ -10,7 +10,7 @@ python manage.py collectstatic --no-input
 echo ">>> Checking database connection ..."
 python - <<'PYCHECK'
 import os, sys, django
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "local_parakeet.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "happyhelper.settings")
 django.setup()
 from django.db import connection
 try:
@@ -29,7 +29,7 @@ python manage.py migrate --no-input
 echo ">>> Creating/updating superuser ..."
 python - <<'PYSU'
 import os, django
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "local_parakeet.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "happyhelper.settings")
 django.setup()
 from django.contrib.auth.models import User
 username = os.environ.get("DJANGO_SUPERUSER_USERNAME", "superadmin")

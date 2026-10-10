@@ -1,7 +1,7 @@
 // preload.js — secure bridge between renderer and main process
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('parakeet', {
+contextBridge.exposeInMainWorld('happyhelper', {
   hide:                ()        => ipcRenderer.send('hide-overlay'),
   minimize:            ()        => ipcRenderer.send('minimize-overlay'),
   close:               ()        => ipcRenderer.send('close-overlay'),

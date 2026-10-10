@@ -5,10 +5,10 @@ const Store = require('electron-store');
 
 // Persistent encrypted store for auth credentials
 const store = new Store({
-  name: 'parakeetai-config',
-  encryptionKey: 'parakeetai-local-key-v1',
+  name: 'happyhelper-config',
+  encryptionKey: 'happyhelper-local-key-v1',
   defaults: {
-    baseUrl: 'https://parakeetai.onrender.com',
+    baseUrl: 'https://happyhelper.onrender.com',
     token: '',
     username: '',
     plan: 'free',
@@ -244,7 +244,7 @@ ipcMain.handle('store-set', (_, key, value) => { store.set(key, value); });
 ipcMain.handle('save-audio-chunk', async (_, { data, speakerType, timestamp }) => {
   const fs   = require('fs');
   const os   = require('os');
-  const dir  = path.join(os.homedir(), 'Documents', 'ParakeetAI', 'recordings');
+  const dir  = path.join(os.homedir(), 'Documents', 'HappyHelper', 'recordings');
   fs.mkdirSync(dir, { recursive: true });
   const buf  = Buffer.from(data, 'base64');
   fs.writeFileSync(path.join(dir, `${speakerType}-${timestamp}.webm`), buf);

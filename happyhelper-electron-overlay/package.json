@@ -1,8 +1,8 @@
 {
-  "name": "parakeetai-overlay",
+  "name": "happyhelper-overlay",
   "version": "1.2.0",
-  "description": "ParakeetAI transparent glass overlay for interviews",
-  "author": "ParakeetAI",
+  "description": "HappyHelper transparent glass overlay for interviews",
+  "author": "HappyHelper",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -19,9 +19,9 @@
     "electron-builder": "^26.15.3"
   },
   "build": {
-    "appId": "com.parakeetai.overlay",
-    "productName": "ParakeetAI",
-    "copyright": "Copyright © 2025 ParakeetAI",
+    "appId": "com.happyhelper.overlay",
+    "productName": "HappyHelper",
+    "copyright": "Copyright © 2026 HappyHelper",
     "files": [
       "main.js",
       "preload.js",
@@ -83,14 +83,14 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "artifactName": "ParakeetAI-Setup-${version}.exe"
+      "artifactName": "HappyHelper-Setup-${version}.exe"
     },
     "portable": {
-      "artifactName": "ParakeetAI-${version}-portable.exe"
+      "artifactName": "HappyHelper-${version}-portable.exe"
     },
     "dmg": {
-      "title": "ParakeetAI ${version}",
-      "artifactName": "ParakeetAI-${version}.dmg"
+      "title": "HappyHelper ${version}",
+      "artifactName": "HappyHelper-${version}.dmg"
     }
   }
 }
