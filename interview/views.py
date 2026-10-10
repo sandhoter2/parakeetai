@@ -123,12 +123,19 @@ def home(request):
     ended_count = sessions.filter(status=InterviewSession.STATUS_ENDED).count()
     total_transcripts = TranscriptEntry.objects.filter(session__in=sessions).count()
     total_ai = AIMessage.objects.filter(session__in=sessions).count()
+    _, sessions_used, session_limit = _check_session_limit(request.user)
+    profile = getattr(request.user, "profile", None)
+    sessions_remaining = (session_limit - sessions_used) if session_limit else None
     return render(request, "interview/home.html", {
         "sessions": sessions,
         "active_count": active_count,
         "ended_count": ended_count,
         "total_transcripts": total_transcripts,
         "total_ai": total_ai,
+        "sessions_used": sessions_used,
+        "session_limit": session_limit,
+        "sessions_remaining": sessions_remaining,
+        "is_free_plan": profile.is_free if profile else True,
     })
 
 
@@ -1746,3 +1753,11 @@ def api_toggle_theme(request):
     profile.save(update_fields=["theme"])
     return JsonResponse({"ok": True, "theme": theme})
 
+
+
+def error_404(request, exception=None):
+    return render(request, "404.html", status=404)
+
+
+def error_500(request):
+    return render(request, "500.html", status=500)

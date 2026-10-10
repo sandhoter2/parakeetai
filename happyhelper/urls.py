@@ -10,3 +10,6 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(next_page="/login/"), name="logout"),
     path("", include("interview.urls")),
 ]
+
+handler404 = "interview.views.error_404"
+handler500 = "interview.views.error_500"

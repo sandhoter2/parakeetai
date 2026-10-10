@@ -221,6 +221,40 @@
   background: var(--accent-dim); color: var(--accent); border: 1px solid var(--border2);
 }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── PLAN LIMIT BAR ── */
+.plan-limit-bar {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 18px;
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.plan-limit-bar.warn {
+  border-color: rgba(245,158,11,0.5);
+  background: rgba(245,158,11,0.06);
+}
+.plan-limit-bar.danger {
+  border-color: rgba(239,68,68,0.5);
+  background: rgba(239,68,68,0.06);
+}
+.plan-limit-label {
+  font-size: 12px; font-family: var(--mono); color: var(--text2);
+  text-transform: uppercase; letter-spacing: 0.6px; flex: 1;
+}
+.plan-limit-track {
+  display: flex; gap: 4px; align-items: center;
+}
+.plan-limit-pip {
+  width: 10px; height: 10px; border-radius: 2px;
+  background: var(--bg3); border: 1px solid var(--border);
+  transition: background 0.2s;
+}
+.plan-limit-pip.used { background: var(--accent); border-color: var(--accent); }
+.plan-limit-pip.used.warn { background: #f59e0b; border-color: #f59e0b; }
+.plan-limit-pip.used.danger { background: #ef4444; border-color: #ef4444; }
+.plan-limit-text {
+  font-size: 11px; font-family: var(--mono); color: var(--text3); margin-left: 6px;
+}
 {% endblock %}
 
 {% block content %}
@@ -252,6 +286,28 @@
       </a>
     </div>
   </div>
+
+  <!-- ── FREE PLAN LIMIT BAR ──────────────────────────────── -->
+  {% if is_free_plan and session_limit %}
+  {% with pct=sessions_used|default:0 %}
+  <div class="plan-limit-bar {% if sessions_used >= session_limit %}danger{% elif sessions_used >= 4 %}warn{% endif %}" id="planLimitBar">
+    <div class="plan-limit-label">
+      Free Plan &mdash; {{ sessions_used }}/{{ session_limit }} sessions used
+    </div>
+    <div class="plan-limit-track">
+      {% for i in "12345" %}
+        <div class="plan-limit-pip {% if forloop.counter <= sessions_used %}used {% if sessions_used >= session_limit %}danger{% elif sessions_used >= 4 %}warn{% endif %}{% endif %}"></div>
+      {% endfor %}
+      <span class="plan-limit-text">{{ sessions_remaining }} left</span>
+    </div>
+    {% if sessions_used >= session_limit %}
+    <a href="/pricing/" class="btn btn-primary btn-sm" style="margin-left:auto;flex-shrink:0">Upgrade to Pro</a>
+    {% elif sessions_used >= 4 %}
+    <a href="/pricing/" class="btn btn-secondary btn-sm" style="margin-left:auto;flex-shrink:0;color:#f59e0b;border-color:#f59e0b">Upgrade &rarr;</a>
+    {% endif %}
+  </div>
+  {% endwith %}
+  {% endif %}
 
   <!-- ── HUD STATS BAR ──────────────────────────────────────── -->
   <div class="stats-bar">
