@@ -16,4 +16,5 @@ contextBridge.exposeInMainWorld('parakeet', {
   storeGet:            (key)     => ipcRenderer.invoke('store-get', key),
   storeSet:            (key, v)  => ipcRenderer.invoke('store-set', key, v),
   saveAudioChunk:      (payload) => ipcRenderer.invoke('save-audio-chunk', payload),
+  djangoSessionContext:(payload) => ipcRenderer.invoke('django-session-context', payload),
 });

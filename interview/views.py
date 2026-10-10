@@ -353,6 +353,43 @@ def api_save_audio_chunk(request, session_id):
     return JsonResponse({"ok": True, "seq": seq, "bytes": len(audio_data)})
 
 
+_DEFAULT_PREP_NOTES = """\
+## Interview Preparation Tips
+
+### STAR Method (Behavioral Questions)
+Use this structure for any "Tell me about a time when..." question:
+- **Situation**: Set the context briefly (1-2 sentences)
+- **Task**: What was your specific responsibility?
+- **Action**: What did YOU do? (use "I", not "we") — be specific about your steps
+- **Result**: Quantify the outcome (%, $, time saved, team size)
+
+### Key Question Types
+- **Behavioral**: "Tell me about a time when you..."
+- **Technical**: System design, coding, architecture deep-dives
+- **Situational**: "What would you do if..." — show judgment and process
+- **Culture fit**: Values alignment, collaboration style, growth mindset
+
+### During the Interview
+- Listen fully before answering — it's OK to pause 5-10 seconds to think
+- Ask clarifying questions upfront for ambiguous problems
+- Think out loud so the interviewer follows your reasoning
+- Use concrete numbers and metrics in every answer
+- Tailor your examples to match the job description keywords
+
+### Common Mistakes to Avoid
+- Don't bad-mouth previous employers or managers
+- Don't say your weakness is "I work too hard"
+- Don't ramble — aim for 90-second answers unless asked for more
+- Don't forget to prepare 2-3 questions to ask them at the end
+
+### My Talking Points
+(Edit this section with specific examples from your experience)
+- Leadership example:
+- Challenge I overcame:
+- Technical achievement:
+- Why this company / role:
+"""
+
 _CONV_HELPER_PROMPT = """You are a real-time conversation analyst embedded in an interview or meeting assistant.
 
 Given the transcript entries below, do exactly two things:
@@ -1131,6 +1168,8 @@ def _build_system_prompt(session: InterviewSession) -> str:
             parts.append(f"\nJob description:\n{session.job_description[:1000]}")
         if session.extra_context:
             parts.append(f"\nCandidate background / resume:\n{session.extra_context[:2000]}")
+        if session.prep_notes:
+            parts.append(f"\nInterview preparation notes:\n{session.prep_notes[:1500]}")
     return "\n".join(parts)
 
 
@@ -1430,18 +1469,61 @@ def api_new_session(request):
     company = (data.get("company") or profile.company or "").strip()
     session_type = data.get("session_type", InterviewSession.SESSION_TYPE_INTERVIEW)
 
+    extra_context = (data.get("extra_context") or profile.background or "").strip()
     session = InterviewSession.objects.create(
         owner=profile.user,
         title=title,
         company=company,
         session_type=session_type,
         status=InterviewSession.STATUS_ACTIVE,
+        extra_context=extra_context,
+        prep_notes=_DEFAULT_PREP_NOTES,
     )
     return JsonResponse({
         "session_id": str(session.id),
         "title": session.title,
         "sessions_used": sessions_used + 1,
     })
+
+
+@csrf_exempt
+def api_session_context(request, session_id):
+    """GET or PUT the editable context fields for a session (extra_context + prep_notes)."""
+    ext_token = request.headers.get('X-Ext-Token', '').strip()
+    profile = _profile_for_token(ext_token) if ext_token else None
+    if not profile and not request.user.is_authenticated:
+        return JsonResponse({"error": "unauthorized"}, status=401)
+
+    session = get_object_or_404(InterviewSession, id=session_id)
+
+    if request.method == "GET":
+        return JsonResponse({
+            "session_id": str(session.id),
+            "title": session.title,
+            "company": session.company,
+            "extra_context": session.extra_context,
+            "prep_notes": session.prep_notes,
+            "job_description": session.job_description,
+        })
+
+    if request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "invalid JSON"}, status=400)
+
+        fields = {}
+        if "extra_context" in data:
+            fields["extra_context"] = data["extra_context"].strip()
+        if "prep_notes" in data:
+            fields["prep_notes"] = data["prep_notes"].strip()
+        if "job_description" in data:
+            fields["job_description"] = data["job_description"].strip()
+        if fields:
+            InterviewSession.objects.filter(id=session_id).update(**fields)
+        return JsonResponse({"ok": True})
+
+    return JsonResponse({"error": "GET or PUT required"}, status=405)
 
 
 # ── Admin: DB Sync Portal ──────────────────────────────────────────────────────

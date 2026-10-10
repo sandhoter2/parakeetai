@@ -272,6 +272,28 @@ ipcMain.handle('django-new-session', async (_, { baseUrl, token, title, company,
   });
 });
 
+// GET or PUT /api/session/<id>/context/ — editable background + prep notes
+ipcMain.handle('django-session-context', async (_, { baseUrl, sessionId, token, method, payload }) => {
+  const { net } = require('electron');
+  const url = `${baseUrl}/api/session/${sessionId}/context/`;
+  return new Promise((resolve, reject) => {
+    const req = net.request({ method: method || 'GET', url });
+    req.setHeader('Content-Type', 'application/json');
+    req.setHeader('X-Ext-Token', token);
+    let body = '';
+    req.on('response', res => {
+      res.on('data', chunk => { body += chunk.toString(); });
+      res.on('end', () => {
+        try { resolve({ statusCode: res.statusCode, ...JSON.parse(body) }); }
+        catch { reject(new Error('Invalid JSON response')); }
+      });
+    });
+    req.on('error', reject);
+    if (method === 'PUT' && payload) req.write(JSON.stringify(payload));
+    req.end();
+  });
+});
+
 // Fetch /api/config/ through main process — avoids renderer CORS restrictions
 ipcMain.handle('django-config', async (_, { baseUrl, token }) => {
   const { net } = require('electron');

@@ -101,6 +101,10 @@ class InterviewSession(models.Model):
         max_length=20, choices=SESSION_TYPE_CHOICES, default=SESSION_TYPE_INTERVIEW
     )
     meeting_agenda = models.TextField(blank=True, help_text="Agenda items for the meeting.")
+    prep_notes = models.TextField(
+        blank=True,
+        help_text="Interview preparation tips, talking points, and STAR examples.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True, blank=True)
 

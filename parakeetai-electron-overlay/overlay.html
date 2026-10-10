@@ -270,6 +270,54 @@ html, body {
   display: none; align-items: center; justify-content: center;
 }
 .send-btn:hover { background: rgba(255,180,0,1); }
+
+/* ── Tab bar ── */
+.tab-bar {
+  display: flex; align-items: center; gap: 2px;
+  padding: 4px 10px 0;
+  background: rgba(0,0,0,0.2);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+.tab-btn {
+  -webkit-app-region: no-drag;
+  padding: 4px 12px; border: none; border-radius: 6px 6px 0 0;
+  background: rgba(255,255,255,0.05); color: rgba(200,200,220,0.5);
+  cursor: pointer; font-size: 11px; font-weight: 600;
+  border-bottom: 2px solid transparent;
+  transition: all 0.12s;
+}
+.tab-btn:hover { background: rgba(108,99,255,0.2); color: rgba(200,200,220,0.85); }
+.tab-btn.active { background: rgba(108,99,255,0.25); color: #c8c2ff; border-bottom-color: #6c63ff; }
+
+/* ── Context pane ── */
+#contextPane {
+  display: none; flex-direction: column; gap: 8px;
+  flex: 1; overflow-y: auto; padding: 10px 12px;
+  scrollbar-width: thin; scrollbar-color: rgba(108,99,255,0.35) transparent;
+}
+#contextPane.visible { display: flex; }
+#contextPane label { font-size: 10px; color: rgba(168,159,255,0.7); font-weight: 600; margin-bottom: 1px; }
+#contextPane textarea {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.11);
+  border-radius: 8px; padding: 7px 9px;
+  color: #e0e0f0; font-size: 12px; outline: none;
+  resize: vertical; font-family: inherit; line-height: 1.5;
+  transition: border-color 0.12s;
+}
+#contextPane textarea:focus { border-color: rgba(108,99,255,0.65); }
+.ctx-save-row {
+  display: flex; align-items: center; gap: 8px; margin-top: 2px;
+}
+.ctx-save-btn {
+  padding: 5px 16px; border: none; border-radius: 7px;
+  background: rgba(108,99,255,0.8); color: #fff; cursor: pointer;
+  font-size: 12px; font-weight: 600; transition: background 0.12s;
+}
+.ctx-save-btn:hover { background: rgba(108,99,255,1); }
+.ctx-save-btn:disabled { background: rgba(108,99,255,0.3); cursor: default; }
+.ctx-status { font-size: 10px; color: rgba(168,159,255,0.6); }
 </style>
 </head>
 <body>
@@ -349,6 +397,26 @@ html, body {
     <button class="save-cfg-btn" onclick="saveSettings()">
       Save <span class="sync-dot" id="syncDot"></span>
     </button>
+  </div>
+
+  <!-- ── Tab bar ── -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabAI" onclick="switchTab('ai')">✦ AI</button>
+    <button class="tab-btn" id="tabContext" onclick="switchTab('context')">⊞ Context</button>
+  </div>
+
+  <!-- ── Context pane ── -->
+  <div id="contextPane">
+    <label>Your Background / Resume</label>
+    <textarea id="ctxBackground" rows="5" placeholder="Paste your resume, skills, and background here. The AI will use this to tailor answers to your experience."></textarea>
+    <label>Job Description</label>
+    <textarea id="ctxJobDesc" rows="3" placeholder="Paste the job description here to help the AI tailor answers."></textarea>
+    <label>Interview Prep Notes</label>
+    <textarea id="ctxPrepNotes" rows="8" placeholder="STAR method tips, talking points, questions to ask, etc."></textarea>
+    <div class="ctx-save-row">
+      <button class="ctx-save-btn" id="ctxSaveBtn" onclick="saveContext()">Save Context</button>
+      <span class="ctx-status" id="ctxStatus"></span>
+    </div>
   </div>
 
   <!-- ── Answer area ── -->
@@ -967,6 +1035,71 @@ function startScreenRecorder() {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') window.parakeet.hide();
 });
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+let activeTab = 'ai';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tabAI').classList.toggle('active', tab === 'ai');
+  document.getElementById('tabContext').classList.toggle('active', tab === 'context');
+
+  const aiEls = ['answerArea', 'transcriptPanel', 'inputRow'];
+  document.getElementById('answerArea').style.display      = tab === 'ai' ? '' : 'none';
+  document.getElementById('transcriptPanel').style.display = tab === 'ai' ? '' : 'none';
+  document.querySelector('.input-row').style.display       = tab === 'ai' ? '' : 'none';
+  document.getElementById('contextPane').classList.toggle('visible', tab === 'context');
+
+  if (tab === 'context') loadContext();
+}
+
+async function loadContext() {
+  if (!cfg.sessionId || !cfg.token) return;
+  const statusEl = document.getElementById('ctxStatus');
+  statusEl.textContent = 'Loading…';
+  try {
+    const res = await window.parakeet.djangoSessionContext({
+      baseUrl: cfg.baseUrl, sessionId: cfg.sessionId, token: cfg.token, method: 'GET'
+    });
+    if (res.statusCode === 200) {
+      document.getElementById('ctxBackground').value = res.extra_context || '';
+      document.getElementById('ctxJobDesc').value    = res.job_description || '';
+      document.getElementById('ctxPrepNotes').value  = res.prep_notes || '';
+      statusEl.textContent = '';
+    } else {
+      statusEl.textContent = res.error || 'Load failed';
+    }
+  } catch(e) {
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function saveContext() {
+  if (!cfg.sessionId || !cfg.token) { alert('No active session. Create or load a session first.'); return; }
+  const btn      = document.getElementById('ctxSaveBtn');
+  const statusEl = document.getElementById('ctxStatus');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const res = await window.parakeet.djangoSessionContext({
+      baseUrl: cfg.baseUrl, sessionId: cfg.sessionId, token: cfg.token, method: 'PUT',
+      payload: {
+        extra_context:   document.getElementById('ctxBackground').value,
+        job_description: document.getElementById('ctxJobDesc').value,
+        prep_notes:      document.getElementById('ctxPrepNotes').value,
+      }
+    });
+    if (res.ok || res.statusCode === 200) {
+      statusEl.textContent = '✓ Saved';
+      setTimeout(() => { statusEl.textContent = ''; }, 2500);
+    } else {
+      statusEl.textContent = res.error || 'Save failed';
+    }
+  } catch(e) {
+    statusEl.textContent = 'Error: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Context';
+  }
+}
 </script>
 </body>
 </html>
